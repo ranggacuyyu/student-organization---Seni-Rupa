@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { PanitiaService, RundownService } from '../../services/api';
 import { BOOTH_ZONES } from '../../data/mockData';
+import CameraQrScanner from '../../components/panitia/CameraQrScanner';
 
 export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUpdateRundownStatus }) {
   const containerRef = useRef(null);
@@ -281,23 +282,13 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                   </span>
                 </div>
 
-                {/* Simulated Camera Viewfinder */}
-                <div className="relative aspect-video sm:aspect-4/3 bg-neutral-900 border-3 border-black rounded-2xl overflow-hidden flex flex-col items-center justify-center p-6 text-center text-white">
-                  <div className="relative w-48 h-48 sm:w-56 sm:h-56 border-2 border-dashed border-[#00F0FF] rounded-2xl flex items-center justify-center p-4">
-                    <QrCode className="w-28 h-28 text-white/30" />
-                    {/* Scanning Laser Line */}
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-[#FF3388] shadow-[0_0_12px_#FF3388] animate-bounce"></div>
-                    
-                    {/* Viewfinder Corners */}
-                    <div className="absolute -top-1 -left-1 w-4 h-4 border-t-3 border-l-3 border-[#FFE600]"></div>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 border-t-3 border-r-3 border-[#FFE600]"></div>
-                    <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-3 border-l-3 border-[#FFE600]"></div>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-3 border-r-3 border-[#FFE600]"></div>
-                  </div>
-                  <p className="text-xs text-neutral-300 font-semibold mt-4">
-                    Arahkan QR Code Tiket Digital Peserta ke dalam kotak scanner
-                  </p>
-                </div>
+                {/* Live Device Camera & Image File QR Scanner */}
+                <CameraQrScanner
+                  onScanSuccess={(code) => {
+                    setScanQuery(code);
+                    handleVerifyTicket(code);
+                  }}
+                />
 
                 {/* Manual Input Search Fallback */}
                 <form onSubmit={(e) => { e.preventDefault(); handleVerifyTicket(scanQuery); }} className="space-y-2">

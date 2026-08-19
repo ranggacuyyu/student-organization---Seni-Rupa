@@ -15,7 +15,8 @@ import {
   Smile,
   Brush,
   ChevronDown,
-  ArrowUp
+  ArrowUp,
+  QrCode
 } from 'lucide-react';
 import { EVENT_INFO, BOOTH_ZONES } from '../data/mockData';
 import senrupLogo from '../assets/SENRUP.png';
@@ -26,7 +27,8 @@ export default function Home({
   artworks,
   attendancesCount,
   onSelectArtwork,
-  currentLiveSession
+  currentLiveSession,
+  currentUser
 }) {
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
@@ -99,14 +101,25 @@ export default function Home({
 
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <button
-                onClick={() => onNavigate('presensi')}
-                className="hero-cta-btn btn-retro-yellow text-base sm:text-lg px-8 py-3.5 flex items-center gap-2 active:scale-95"
-              >
-                <UserCheck className="w-5 h-5 text-black" />
-                <span>Presensi Kehadiran (Scan / Isi)</span>
-                <ArrowRight className="w-5 h-5" />
-              </button>
+              {currentUser ? (
+                <button
+                  onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin' : 'panitia')}
+                  className="hero-cta-btn btn-retro-yellow text-base sm:text-lg px-8 py-3.5 flex items-center gap-2 active:scale-95"
+                >
+                  <QrCode className="w-5 h-5 text-black" />
+                  <span>{currentUser.role === 'admin' ? 'Buka Super Admin' : 'Buka Portal Panitia'}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => onNavigate('presensi')}
+                  className="hero-cta-btn btn-retro-yellow text-base sm:text-lg px-8 py-3.5 flex items-center gap-2 active:scale-95"
+                >
+                  <UserCheck className="w-5 h-5 text-black" />
+                  <span>Presensi Kehadiran (Scan / Isi)</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              )}
 
               <button
                 onClick={() => onNavigate('katalog')}
@@ -198,24 +211,28 @@ export default function Home({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {/* Card 1: Presensi Smart IP */}
+          {/* Card 1: Presensi Smart IP OR Portal Petugas (if logged in) */}
           <div className="feature-card-item card-retro p-6 space-y-4 bg-white flex flex-col justify-between hover:-translate-y-2 transition-transform duration-200">
             <div className="space-y-3">
-              <div className="w-12 h-12 bg-[#FFE600] border-3 border-black rounded-2xl flex items-center justify-center shadow-retro-sm">
-                <UserCheck className="w-6 h-6 text-black" />
+              <div className={`w-12 h-12 ${currentUser ? (currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black') : 'bg-[#FFE600] text-black'} border-3 border-black rounded-2xl flex items-center justify-center shadow-retro-sm`}>
+                {currentUser ? <QrCode className="w-6 h-6" /> : <UserCheck className="w-6 h-6" />}
               </div>
               <h3 className="font-display font-black text-xl text-black">
-                Presensi Cepat & Deteksi IP
+                {currentUser ? (currentUser.role === 'admin' ? 'Pusat Kontrol Super Admin' : 'Portal Manajemen Panitia') : 'Presensi Cepat & Deteksi IP'}
               </h3>
               <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                Check-in otomatis merekam IP address & device kamu untuk mendapatkan <strong>Digital VIP Ticket</strong> tanpa antre panjang di pintu masuk.
+                {currentUser ? (
+                  <>Akses cepat ke <strong>scanner tiket QR</strong>, monitoring kebutuhan peserta, kelola rundown live, dan pantau log kehadiran secara real-time.</>
+                ) : (
+                  <>Check-in otomatis merekam IP address & device kamu untuk mendapatkan <strong>Digital VIP Ticket</strong> tanpa antre panjang di pintu masuk.</>
+                )}
               </p>
             </div>
             <button
-              onClick={() => onNavigate('presensi')}
-              className="btn-retro-yellow w-full text-xs sm:text-sm mt-4 active:scale-95"
+              onClick={() => onNavigate(currentUser ? (currentUser.role === 'admin' ? 'admin' : 'panitia') : 'presensi')}
+              className={`w-full text-xs sm:text-sm mt-4 active:scale-95 ${currentUser ? (currentUser.role === 'admin' ? 'btn-retro-pink' : 'btn-retro-yellow') : 'btn-retro-yellow'}`}
             >
-              Isi Presensi Sekarang 
+              {currentUser ? 'Buka Dashboard Petugas' : 'Isi Presensi Sekarang'}
             </button>
           </div>
 

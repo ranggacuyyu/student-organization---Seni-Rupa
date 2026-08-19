@@ -21,7 +21,26 @@ export const PanitiaDb = {
   // === 1. TIKET & SCAN QR CODE ===
   verifyTicket(query) {
     if (!query) return null;
-    const cleanQ = query.trim().toLowerCase();
+    let cleanQ = String(query).trim().toLowerCase();
+
+    // Check if query is JSON string from QR Code
+    if (cleanQ.startsWith('{') && cleanQ.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(query);
+        if (parsed.id) cleanQ = String(parsed.id).toLowerCase();
+        else if (parsed.identifier) cleanQ = String(parsed.identifier).toLowerCase();
+        else if (parsed.nim) cleanQ = String(parsed.nim).toLowerCase();
+      } catch (e) {
+        console.warn('JSON QR parse failed, using raw query');
+      }
+    }
+
+    // Check if query has prefix ART-PASS:id:nim:nama
+    if (cleanQ.startsWith('art-pass:')) {
+      const parts = cleanQ.split(':');
+      if (parts[1]) cleanQ = parts[1].trim();
+    }
+
     const attendances = JSON.parse(localStorage.getItem(ATTENDANCES_KEY) || '[]');
     const checkedInList = JSON.parse(localStorage.getItem(CHECKED_IN_KEY) || '[]');
     const souvenirList = JSON.parse(localStorage.getItem(SOUVENIR_KEY) || '[]');

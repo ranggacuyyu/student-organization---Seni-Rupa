@@ -213,14 +213,36 @@ export default function App() {
             attendancesCount={attendances.length}
             onSelectArtwork={handleOpenArtworkModal}
             currentLiveSession={currentLiveSession}
+            currentUser={currentUser}
           />
         )}
 
         {activeTab === 'presensi' && (
-          <AttendancePage
-            onOpenTicket={() => setIsTicketOpen(true)}
-            onAttendanceSuccess={handleAttendanceSuccess}
-          />
+          !currentUser ? (
+            <AttendancePage
+              onOpenTicket={() => setIsTicketOpen(true)}
+              onAttendanceSuccess={handleAttendanceSuccess}
+            />
+          ) : (
+            currentUser.role === 'admin' ? (
+              <AdminDashboard
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                attendances={attendances}
+                artworks={artworks}
+                rundowns={rundowns}
+                onRefreshData={loadAllData}
+                onUpdateRundownStatus={handleUpdateRundownStatus}
+              />
+            ) : (
+              <PanitiaDashboard
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                rundowns={rundowns}
+                onUpdateRundownStatus={handleUpdateRundownStatus}
+              />
+            )
+          )
         )}
 
         {activeTab === 'katalog' && (

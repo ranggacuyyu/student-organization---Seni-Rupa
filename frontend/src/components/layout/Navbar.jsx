@@ -34,7 +34,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
 
   const navItems = [
     { id: 'home', label: 'Beranda', icon: Palette },
-    { id: 'presensi', label: 'Presensi', icon: UserCheck, highlight: true },
+    ...(!currentUser ? [{ id: 'presensi', label: 'Presensi', icon: UserCheck, highlight: true }] : []),
     { id: 'katalog', label: 'Katalog', icon: ImageIcon },
     { id: 'denah', label: 'Denah', icon: Map },
     { id: 'rundown', label: 'Rundown', icon: Clock },
@@ -124,20 +124,22 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
         {/* Action Buttons (User / Login / Ticket / Mobile Toggle) */}
         <div className="flex items-center gap-2.5">
           
-          {/* Digital Ticket Button */}
-          <button
-            onClick={onOpenTicket}
-            className="flex items-center gap-2 bg-[#00F0FF] text-black font-display font-bold text-xs sm:text-sm px-3.5 py-2 border-3 border-black rounded-xl shadow-retro hover:bg-[#33F3FF] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all active:scale-95"
-            title="Lihat Bukti Tiket Presensi Digital"
-          >
-            <Ticket className="w-4 h-4 text-black" />
-            <span className="hidden sm:inline">Tiket Saya</span>
-            {ticketCount > 0 && (
-              <span className="w-5 h-5 bg-[#FF3388] text-white text-[10px] font-black rounded-full border border-black flex items-center justify-center animate-bounce">
-                1
-              </span>
-            )}
-          </button>
+          {/* Digital Ticket Button (Only for visitors / not logged in) */}
+          {!currentUser && (
+            <button
+              onClick={onOpenTicket}
+              className="flex items-center gap-2 bg-[#00F0FF] text-black font-display font-bold text-xs sm:text-sm px-3.5 py-2 border-3 border-black rounded-xl shadow-retro hover:bg-[#33F3FF] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all active:scale-95"
+              title="Lihat Bukti Tiket Presensi Digital"
+            >
+              <Ticket className="w-4 h-4 text-black" />
+              <span className="hidden sm:inline">Tiket Saya</span>
+              {ticketCount > 0 && (
+                <span className="w-5 h-5 bg-[#FF3388] text-white text-[10px] font-black rounded-full border border-black flex items-center justify-center animate-bounce">
+                  1
+                </span>
+              )}
+            </button>
+          )}
 
           {/* User Auth Status / Login Button */}
           {currentUser ? (

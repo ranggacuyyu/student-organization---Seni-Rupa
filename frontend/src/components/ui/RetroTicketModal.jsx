@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { X, QrCode, CheckCircle2, MapPin, Calendar, User, ShieldCheck, Printer, Share2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { EVENT_INFO } from '../../data/mockData';
 
 export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresensi }) {
@@ -100,20 +101,25 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                   </div>
                 </div>
 
-                {/* Simulated QR Code & Badge */}
+                {/* Real Scannable QR Code & Verification Badge */}
                 <div className="bg-[#FAF7EE] border-2 border-black rounded-xl p-3 flex items-center gap-4">
-                  <div className="p-2 bg-white border-2 border-black rounded-lg shrink-0">
-                    <QrCode className="w-12 h-12 text-black" />
+                  <div className="p-2 bg-white border-2 border-black rounded-xl shrink-0 shadow-retro-sm">
+                    <QRCodeSVG
+                      value={ticket.id || ticket.identifier || 'PASS-POLIBATAM'}
+                      size={72}
+                      level="M"
+                      includeMargin={false}
+                    />
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     <div className="flex items-center gap-1 text-[#22C55E] text-xs font-black">
-                      <ShieldCheck className="w-4 h-4" /> TERVERIFIKASI PANITIA
+                      <ShieldCheck className="w-4 h-4" /> QR TIKET DIGITAL RESMI
                     </div>
-                    <p className="text-[10px] text-neutral-600">
-                      Check-in ID: <span className="font-mono">{ticket.id || 'PASS-POLIBATAM'}</span>
+                    <p className="text-[11px] text-black font-mono font-bold">
+                      ID: <span className="bg-[#FFE600] px-1.5 py-0.5 rounded border border-black">{ticket.id || 'PASS-POLIBATAM'}</span>
                     </p>
-                    <p className="text-[10px] text-neutral-500">
-                      Tunjukkan tiket ini di Zona E Photobooth untuk suvenir!
+                    <p className="text-[10px] text-neutral-600">
+                      Arahkan QR ini ke kamera scanner panitia di meja registrasi & photobooth!
                     </p>
                   </div>
                 </div>

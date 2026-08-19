@@ -18,6 +18,7 @@ import {
   Info
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { QRCodeSVG } from 'qrcode.react';
 import { AttendanceService, detectClientInfo } from '../services/api';
 import { EVENT_INFO } from '../data/mockData';
 
@@ -243,6 +244,28 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
                   <div>
                     <span className="text-neutral-500 font-semibold block">Waktu Check-in:</span>
                     <strong className="text-black">{submittedTicket.waktu_kehadiran}</strong>
+                  </div>
+                </div>
+
+                {/* QR Code Pass Display */}
+                <div className="bg-white border-2 border-black rounded-xl p-3 flex items-center gap-3">
+                  <div className="p-1.5 bg-white border border-black rounded-lg shrink-0">
+                    <QRCodeSVG
+                      value={submittedTicket.id || submittedTicket.identifier || 'PASS-POLIBATAM'}
+                      size={60}
+                      level="M"
+                    />
+                  </div>
+                  <div className="space-y-0.5 text-left">
+                    <span className="text-[10px] font-black text-green-600 uppercase flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" /> QR TIKET AKTIF
+                    </span>
+                    <p className="text-xs font-mono font-bold text-black">
+                      ID: {submittedTicket.id || 'PASS-POLIBATAM'}
+                    </p>
+                    <p className="text-[10px] text-neutral-500">
+                      Tunjukkan QR ini ke scanner petugas di meja registrasi
+                    </p>
                   </div>
                 </div>
               </div>
