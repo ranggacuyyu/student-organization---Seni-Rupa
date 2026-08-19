@@ -30,6 +30,7 @@ const saveLocalAttendances = (list) => {
 export const AttendanceDb = {
   /**
    * Catat presensi baru (Cloud Supabase + Local Cache)
+   * Alias: submitAttendance (kompatibel dengan AttendancePage.jsx)
    * @param {Object} data - { nama_lengkap, identifier, kategori, jurusan_prodi, ip_address, user_agent, device_type, catatan }
    */
   async recordAttendance(data) {
@@ -120,5 +121,17 @@ export const AttendanceDb = {
     } catch {
       return null;
     }
+  },
+
+  /**
+   * Alias untuk recordAttendance — kompatibel dengan AttendancePage.jsx
+   * Mengembalikan { data: ticket, success, totalCount }
+   */
+  async submitAttendance(data) {
+    const result = await this.recordAttendance(data);
+    return {
+      ...result,
+      data: result.ticket, // AttendancePage mengakses result.data
+    };
   },
 };
