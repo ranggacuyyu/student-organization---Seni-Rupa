@@ -36,13 +36,13 @@ export default function LoginPage({ onLoginSuccess, onNavigateHome }) {
     }
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const result = AuthService.login(username, password);
+    setTimeout(async () => {
+      const result = await AuthService.login(username, password);
       setIsLoading(false);
 
       if (result.success) {
@@ -60,11 +60,13 @@ export default function LoginPage({ onLoginSuccess, onNavigateHome }) {
     setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const result = AuthService.login(demoUsername, demoPassword);
+    setTimeout(async () => {
+      const result = await AuthService.login(demoUsername, demoPassword);
       setIsLoading(false);
       if (result.success) {
         onLoginSuccess(result.user);
+      } else {
+        setErrorMessage(result.message || 'Username atau password salah.');
       }
     }, 300);
   };

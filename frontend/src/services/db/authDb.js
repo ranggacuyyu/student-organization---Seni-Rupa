@@ -34,8 +34,9 @@ export const AuthDb = {
           .select('*')
           .ilike('username', cleanUser)
           .eq('password', password)
-          .single();
+          .maybeSingle(); // pakai maybeSingle agar tidak error saat 0 baris
 
+        // Hanya return jika user benar-benar ditemukan di Cloud
         if (!error && data) {
           if (data.status !== 'active') {
             return { success: false, message: 'Akun ini dinonaktifkan oleh Koordinator.' };
@@ -56,6 +57,7 @@ export const AuthDb = {
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userSession));
           return { success: true, user: userSession };
         }
+        // Jika data null (tidak ditemukan di Cloud), lanjut ke fallback lokal
       } catch (err) {
         console.warn('Supabase auth failed, fallback to local accounts:', err);
       }
