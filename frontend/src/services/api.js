@@ -1,94 +1,44 @@
+/**
+ * 🎨 ART SHOW CASE "HISTORY" - UNIFIED API & DATABASE GATEWAY
+ * Standar Rekayasa Perangkat Lunak: Modular Service Layer & Zero Hardcoded Secret
+ * Sesuai Dokumen: BLUEPRINT_ART_SHOWCASE.md & Kerapian kode.md
+ */
 import axios from 'axios';
-import { 
-  INITIAL_ARTWORKS, 
-  INITIAL_ATTENDANCES, 
-  INITIAL_GUESTBOOKS, 
-  RUNDOWN_SCHEDULE, 
-  BOOTH_ZONES,
-  EVENT_INFO,
-  INITIAL_PANITIA_ACCOUNTS,
-  INITIAL_PANITIA_TASKS,
-  INITIAL_PANITIA_SHIFTS,
-  INITIAL_PANITIA_ANNOUNCEMENTS
-} from '../data/mockData';
+import { supabase, isSupabaseConfigured, testDatabaseConnection } from './supabaseClient';
+import { AttendanceDb } from './db/attendanceDb';
+import { ArtworkDb } from './db/artworkDb';
+import { RundownDb } from './db/rundownDb';
+import { GuestbookDb } from './db/guestbookDb';
+import { AuthDb } from './db/authDb';
+import { PanitiaDb } from './db/panitiaDb';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-// Create Axios Instance
+/**
+ * Axios Instance untuk integrasi opsional Laravel REST API
+ */
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
-  timeout: 4000,
+  timeout: 5000,
 });
 
-// Helper: Local Storage Keys
-export const STORAGE_KEYS = {
-  ATTENDANCES: 'senrup_attendances_v1',
-  ARTWORKS: 'senrup_artworks_v1',
-  LIKED_ARTWORKS: 'senrup_liked_artworks_v1',
-  RUNDOWNS: 'senrup_rundowns_v1',
-  GUESTBOOKS: 'senrup_guestbooks_v1',
-  MY_TICKET: 'senrup_my_attendance_ticket_v1',
-  AUTH_USER: 'senrup_auth_user_v1',
-  PANITIA_ACCOUNTS: 'senrup_panitia_accounts_v1',
-  PANITIA_TASKS: 'senrup_panitia_tasks_v1',
-  PANITIA_ANNOUNCEMENTS: 'senrup_panitia_announcements_v1',
-  CHECKED_IN_TICKETS: 'senrup_checked_in_tickets_v1',
-  SOUVENIR_CLAIMS: 'senrup_souvenir_claims_v1'
-};
-
-// Initialize LocalStorage with mock data if not existing
-const initStorage = () => {
-  if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCES)) {
-    localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(INITIAL_ATTENDANCES));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.ARTWORKS)) {
-    localStorage.setItem(STORAGE_KEYS.ARTWORKS, JSON.stringify(INITIAL_ARTWORKS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.RUNDOWNS)) {
-    localStorage.setItem(STORAGE_KEYS.RUNDOWNS, JSON.stringify(RUNDOWN_SCHEDULE));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.GUESTBOOKS)) {
-    localStorage.setItem(STORAGE_KEYS.GUESTBOOKS, JSON.stringify(INITIAL_GUESTBOOKS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.LIKED_ARTWORKS)) {
-    localStorage.setItem(STORAGE_KEYS.LIKED_ARTWORKS, JSON.stringify([]));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS)) {
-    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(INITIAL_PANITIA_ACCOUNTS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS)) {
-    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(INITIAL_PANITIA_TASKS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS)) {
-    localStorage.setItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS, JSON.stringify(INITIAL_PANITIA_ANNOUNCEMENTS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS)) {
-    localStorage.setItem(STORAGE_KEYS.CHECKED_IN_TICKETS, JSON.stringify(['att-1', 'att-2']));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS)) {
-    localStorage.setItem(STORAGE_KEYS.SOUVENIR_CLAIMS, JSON.stringify(['att-1']));
-  }
-};
-
-initStorage();
-
-
 /**
- * Deteksi IP dan Device Client secara pintar
+ * Deteksi IP Address dan Tipe Perangkat Client
+ * Sesuai Aturan: BLUEPRINT_ART_SHOWCASE.md (Attendance & IP Logging)
  */
 export const detectClientInfo = async () => {
-  let ipAddress = '180.254.88.99'; // default fallback IP Batam
+  let ipAddress = '180.254.88.99'; // Default Batam fallback IP
   try {
     const res = await axios.get('https://api64.ipify.org?format=json', { timeout: 2500 });
     if (res.data && res.data.ip) {
       ipAddress = res.data.ip;
     }
   } catch (err) {
-    console.log('Using simulated local network IP:', ipAddress);
+    console.log('Menggunakan simulated network IP:', ipAddress);
   }
 
   const userAgent = navigator.userAgent;
@@ -99,384 +49,15 @@ export const detectClientInfo = async () => {
   else if (/Windows/i.test(userAgent)) deviceType = 'Desktop (Windows)';
   else if (/Linux/i.test(userAgent)) deviceType = 'Desktop (Linux)';
 
-  return {
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    device_type: deviceType,
-  };
+  return { ipAddress, userAgent, deviceType };
 };
 
-/**
- * Service Presensi (Attendance)
- */
-export const AttendanceService = {
-  async submitAttendance(data) {
-    const clientInfo = await detectClientInfo();
-    const payload = {
-      ...data,
-      ip_address: data.ip_address || clientInfo.ip_address,
-      user_agent: clientInfo.user_agent,
-      device_type: clientInfo.device_type,
-      waktu_kehadiran: new Date().toISOString().replace('T', ' ').substring(0, 19),
-    };
+// ================= RE-EXPORT MODULAR DATABASE SERVICES =================
+export const AttendanceService = AttendanceDb;
+export const ArtworkService = ArtworkDb;
+export const RundownService = RundownDb;
+export const GuestbookService = GuestbookDb;
+export const AuthService = AuthDb;
+export const PanitiaService = PanitiaDb;
 
-    try {
-      const response = await apiClient.post('/attendance', payload);
-      const result = response.data;
-      localStorage.setItem(STORAGE_KEYS.MY_TICKET, JSON.stringify(result.data || payload));
-      return result;
-    } catch (err) {
-      // Offline / Standalone Mock Persistence
-      console.log('Backend not reachable, saving to local storage mock');
-      const currentList = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTENDANCES) || '[]');
-      const newEntry = {
-        id: 'att-' + Date.now(),
-        ...payload,
-      };
-      currentList.unshift(newEntry);
-      localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(currentList));
-      localStorage.setItem(STORAGE_KEYS.MY_TICKET, JSON.stringify(newEntry));
-      return {
-        success: true,
-        message: 'Presensi berhasil dicatat! Selamat datang di Art Showcase.',
-        data: newEntry,
-      };
-    }
-  },
-
-  async getAllAttendances() {
-    try {
-      const response = await apiClient.get('/admin/attendances');
-      return response.data.data;
-    } catch (err) {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTENDANCES) || '[]');
-    }
-  },
-
-  getMyTicket() {
-    const ticket = localStorage.getItem(STORAGE_KEYS.MY_TICKET);
-    return ticket ? JSON.parse(ticket) : null;
-  }
-};
-
-/**
- * Service Katalog Karya (Artworks)
- */
-export const ArtworkService = {
-  async getAllArtworks() {
-    try {
-      const res = await apiClient.get('/artworks');
-      return res.data.data;
-    } catch (err) {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.ARTWORKS) || '[]');
-    }
-  },
-
-  async getArtworkBySlug(slug) {
-    const all = await this.getAllArtworks();
-    return all.find(a => a.slug === slug || a.id === slug) || null;
-  },
-
-  async toggleLike(artworkId) {
-    const likedList = JSON.parse(localStorage.getItem(STORAGE_KEYS.LIKED_ARTWORKS) || '[]');
-    const isAlreadyLiked = likedList.includes(artworkId);
-
-    try {
-      await apiClient.post(`/artworks/${artworkId}/like`, { isLiked: !isAlreadyLiked });
-    } catch (e) {
-      // Mock Fallback
-    }
-
-    const currentArtworks = JSON.parse(localStorage.getItem(STORAGE_KEYS.ARTWORKS) || '[]');
-    const updated = currentArtworks.map(art => {
-      if (art.id === artworkId) {
-        return {
-          ...art,
-          likesCount: isAlreadyLiked ? Math.max(0, art.likesCount - 1) : art.likesCount + 1
-        };
-      }
-      return art;
-    });
-
-    localStorage.setItem(STORAGE_KEYS.ARTWORKS, JSON.stringify(updated));
-
-    if (isAlreadyLiked) {
-      const filtered = likedList.filter(id => id !== artworkId);
-      localStorage.setItem(STORAGE_KEYS.LIKED_ARTWORKS, JSON.stringify(filtered));
-      return { isLiked: false, updatedList: updated };
-    } else {
-      likedList.push(artworkId);
-      localStorage.setItem(STORAGE_KEYS.LIKED_ARTWORKS, JSON.stringify(likedList));
-      return { isLiked: true, updatedList: updated };
-    }
-  },
-
-  getLikedIds() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.LIKED_ARTWORKS) || '[]');
-  },
-
-  async addArtwork(newArt) {
-    try {
-      const res = await apiClient.post('/admin/artworks', newArt);
-      return res.data.data;
-    } catch (err) {
-      const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.ARTWORKS) || '[]');
-      const created = {
-        id: 'art-' + Date.now(),
-        slug: newArt.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        likesCount: 0,
-        ...newArt
-      };
-      list.unshift(created);
-      localStorage.setItem(STORAGE_KEYS.ARTWORKS, JSON.stringify(list));
-      return created;
-    }
-  }
-};
-
-/**
- * Service Rundown Acara
- */
-export const RundownService = {
-  async getRundowns() {
-    try {
-      const res = await apiClient.get('/rundown');
-      return res.data.data;
-    } catch (err) {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.RUNDOWNS) || '[]');
-    }
-  },
-
-  async updateStatus(id, newStatus) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.RUNDOWNS) || '[]');
-    const updated = list.map(item => item.id === id ? { ...item, status: newStatus } : item);
-    localStorage.setItem(STORAGE_KEYS.RUNDOWNS, JSON.stringify(updated));
-    return updated;
-  }
-};
-
-/**
- * Service Guestbook (Kesan & Pesan)
- */
-export const GuestbookService = {
-  async getMessages() {
-    try {
-      const res = await apiClient.get('/guestbook');
-      return res.data.data;
-    } catch (err) {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.GUESTBOOKS) || '[]');
-    }
-  },
-
-  async addMessage(msg) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.GUESTBOOKS) || '[]');
-    const colors = ['bg-[#FFE600]', 'bg-[#FF3388]', 'bg-[#00F0FF]', 'bg-[#CCFF00]', 'bg-[#FF6B35]'];
-    const stickers = ['retro-star', 'retro-heart', 'retro-brush', 'retro-smile'];
-    
-    const newEntry = {
-      id: 'gb-' + Date.now(),
-      name: msg.name,
-      role: msg.role || 'Pengunjung',
-      message: msg.message,
-      sticker: msg.sticker || stickers[Math.floor(Math.random() * stickers.length)],
-      color: colors[Math.floor(Math.random() * colors.length)],
-      textColor: msg.color === 'bg-[#FF3388]' ? 'text-white' : 'text-black',
-      createdAt: 'Baru saja'
-    };
-
-    list.unshift(newEntry);
-    localStorage.setItem(STORAGE_KEYS.GUESTBOOKS, JSON.stringify(list));
-    return newEntry;
-  }
-};
-
-/**
- * Service Autentikasi (Super Admin & Panitia)
- */
-export const AuthService = {
-  login(username, password) {
-    const accounts = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
-    const user = accounts.find(
-      (acc) => acc.username.trim().toLowerCase() === username.trim().toLowerCase() && acc.password === password
-    );
-
-    if (!user) {
-      return { success: false, message: 'Username atau password tidak cocok!' };
-    }
-
-    if (user.status !== 'active') {
-      return { success: false, message: 'Akun ini sedang dinonaktifkan oleh Koordinator.' };
-    }
-
-    // Save session
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
-    return { success: true, user };
-  },
-
-  logout() {
-    localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
-  },
-
-  getCurrentUser() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  }
-};
-
-/**
- * Service Khusus Panitia & Admin Portal
- */
-export const PanitiaService = {
-  // === 1. TIKET & SCAN QR CODE ===
-  verifyTicket(query) {
-    if (!query) return null;
-    const cleanQ = query.trim().toLowerCase();
-    const attendances = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTENDANCES) || '[]');
-    const checkedInList = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS) || '[]');
-    const souvenirList = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS) || '[]');
-
-    const match = attendances.find(
-      (a) =>
-        (a.id && a.id.toLowerCase() === cleanQ) ||
-        (a.identifier && a.identifier.toLowerCase() === cleanQ) ||
-        (a.nama_lengkap && a.nama_lengkap.toLowerCase().includes(cleanQ)) ||
-        (a.ip_address && a.ip_address.toLowerCase() === cleanQ)
-    );
-
-    if (!match) return null;
-
-    return {
-      ...match,
-      isCheckedIn: checkedInList.includes(match.id),
-      isSouvenirClaimed: souvenirList.includes(match.id),
-    };
-  },
-
-  toggleCheckIn(ticketId) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS) || '[]');
-    let updated;
-    if (list.includes(ticketId)) {
-      updated = list.filter((id) => id !== ticketId);
-    } else {
-      updated = [...list, ticketId];
-    }
-    localStorage.setItem(STORAGE_KEYS.CHECKED_IN_TICKETS, JSON.stringify(updated));
-    return updated.includes(ticketId);
-  },
-
-  toggleSouvenir(ticketId) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS) || '[]');
-    let updated;
-    if (list.includes(ticketId)) {
-      updated = list.filter((id) => id !== ticketId);
-    } else {
-      updated = [...list, ticketId];
-    }
-    localStorage.setItem(STORAGE_KEYS.SOUVENIR_CLAIMS, JSON.stringify(updated));
-    return updated.includes(ticketId);
-  },
-
-  // === 2. KEBUTUHAN PESERTA ===
-  getParticipantNeeds() {
-    const attendances = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTENDANCES) || '[]');
-    const checkedInList = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS) || '[]');
-    const souvenirList = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS) || '[]');
-
-    return attendances.map((att) => ({
-      ...att,
-      isCheckedIn: checkedInList.includes(att.id),
-      isSouvenirClaimed: souvenirList.includes(att.id),
-      hasPassCard: true,
-      hasBooklet: checkedInList.includes(att.id),
-      hasPhotoboothAccess: att.kategori === 'Mahasiswa Baru' || souvenirList.includes(att.id),
-    }));
-  },
-
-  // === 3. AKUN PANITIA (ADMIN ONLY) ===
-  getPanitiaAccounts() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
-  },
-
-  addPanitiaAccount(newAcc) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
-    const colors = ['bg-[#FF3388]', 'bg-[#FFE600]', 'bg-[#00F0FF]', 'bg-[#7B2CBF]', 'bg-[#22C55E]'];
-    const created = {
-      id: 'user-panitia-' + Date.now(),
-      status: 'active',
-      avatarBg: colors[Math.floor(Math.random() * colors.length)],
-      ...newAcc,
-    };
-    list.push(created);
-    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(list));
-    return list;
-  },
-
-  updatePanitiaAccount(id, updatedData) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
-    const updated = list.map((acc) => (acc.id === id ? { ...acc, ...updatedData } : acc));
-    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(updated));
-    return updated;
-  },
-
-  deletePanitiaAccount(id) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
-    const filtered = list.filter((acc) => acc.id !== id);
-    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(filtered));
-    return filtered;
-  },
-
-  // === 4. TUGAS & LOGISTIK PANITIA ===
-  getPanitiaTasks() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
-  },
-
-  toggleTask(id) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
-    const updated = list.map((task) => (task.id === id ? { ...task, isCompleted: !task.isCompleted } : task));
-    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(updated));
-    return updated;
-  },
-
-  addTask(newTask) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
-    const created = {
-      id: 'task-' + Date.now(),
-      isCompleted: false,
-      priority: newTask.priority || 'Sedang',
-      ...newTask,
-    };
-    list.unshift(created);
-    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(list));
-    return list;
-  },
-
-  deleteTask(id) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
-    const filtered = list.filter((t) => t.id !== id);
-    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(filtered));
-    return filtered;
-  },
-
-  // === 5. PENGUMUMAN INTERNAL ===
-  getAnnouncements() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS) || '[]');
-  },
-
-  addAnnouncement(newAnn) {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS) || '[]');
-    const created = {
-      id: 'ann-' + Date.now(),
-      waktu: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' WIB',
-      isPinned: false,
-      ...newAnn,
-    };
-    list.unshift(created);
-    localStorage.setItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS, JSON.stringify(list));
-    return list;
-  },
-};
-
+export { supabase, isSupabaseConfigured, testDatabaseConnection };

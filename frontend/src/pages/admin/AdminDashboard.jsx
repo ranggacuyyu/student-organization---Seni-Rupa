@@ -32,7 +32,7 @@ import {
   Send
 } from 'lucide-react';
 import { BOOTH_ZONES, INITIAL_PANITIA_SHIFTS } from '../../data/mockData';
-import { ArtworkService, PanitiaService } from '../../services/api';
+import { ArtworkService, PanitiaService, testDatabaseConnection, isSupabaseConfigured } from '../../services/api';
 
 export default function AdminDashboard({ 
   currentUser,
@@ -75,6 +75,20 @@ export default function AdminDashboard({
   const [announcements, setAnnouncements] = useState(() => PanitiaService.getAnnouncements());
   const [newAnnouncementText, setNewAnnouncementText] = useState('');
   const [newAnnouncementTitle, setNewAnnouncementTitle] = useState('');
+
+  // Database Connection Status
+  const [dbStatus, setDbStatus] = useState({
+    isConnected: null,
+    message: 'Memeriksa koneksi database...',
+  });
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      const result = await testDatabaseConnection();
+      setDbStatus(result);
+    };
+    checkConnection();
+  }, []);
 
   // Attendance Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -285,7 +299,22 @@ export default function AdminDashboard({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 relative z-10 w-full md:w-auto">
+        <div className="flex flex-col items-start md:items-end gap-3 relative z-10 w-full md:w-auto">
+          {/* Database Connection Status Badge */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${
+            dbStatus.isConnected === null
+              ? 'bg-neutral-700 border-neutral-500 text-neutral-300'
+              : dbStatus.isConnected
+              ? 'bg-green-900 border-green-400 text-green-300'
+              : 'bg-yellow-900 border-yellow-400 text-yellow-300'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              dbStatus.isConnected === null ? 'bg-neutral-400 animate-pulse' :
+              dbStatus.isConnected ? 'bg-green-400 shadow-[0_0_6px_#4ade80]' : 'bg-yellow-400'
+            }`} />
+            {dbStatus.isConnected === null ? '⏳ Memeriksa Database...' :
+             dbStatus.isConnected ? '☁️ Cloud Supabase (Online)' : '💾 Local Engine (Offline Mode)'}
+          </div>
           {onLogout && (
             <button
               onClick={onLogout}

@@ -188,10 +188,11 @@ export default function Home({
       <section id="section-features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="feature-section-header text-center max-w-2xl mx-auto space-y-3 mb-10">
           <div className="inline-block bg-[#00F0FF] border-2 border-black text-black text-xs font-black px-3 py-1 rounded-md uppercase shadow-retro-sm">
-            Fitur Portal Pameran
+            Portal Pameran
           </div>
           <h2 className="font-display font-black text-3xl sm:text-4xl text-black">
-            Semua yang Kamu Butuhkan di Art Showcase
+            Semua yang Kamu Butuhkan di{' '}
+            <span className="text-[#00F0FF] drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">Art Showcase</span>
           </h2>
         </div>
 
