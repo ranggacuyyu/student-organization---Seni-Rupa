@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FAF7EE;
+    color: #121212;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Syne', sans-serif;
+    font-weight: 700;
+  }
+}
+
+/* Custom Memphis Pattern Backgrounds */
+.bg-retro-dots {
+  background-image: radial-gradient(#121212 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+.bg-retro-grid {
+  background-image: 
+    linear-gradient(to right, rgba(18, 18, 18, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(18, 18, 18, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.bg-retro-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    #FFE600,
+    #FFE600 12px,
+    #121212 12px,
+    #121212 24px
+  );
+}
+
+.bg-retro-checker {
+  background-image: conic-gradient(
+    #121212 90deg, 
+    #FAF7EE 90deg 180deg, 
+    #121212 180deg 270deg, 
+    #FAF7EE 270deg
+  );
+  background-size: 20px 20px;
+}
+
+/* Neo-Brutalism Interactive Classes */
+.btn-retro {
+  @apply inline-flex items-center justify-center font-display font-bold text-sm sm:text-base px-5 py-2.5 
+         border-3 border-black rounded-xl transition-all duration-150 active:translate-x-1 active:translate-y-1;
+}
+
+.btn-retro-yellow {
+  @apply btn-retro bg-[#FFE600] text-black shadow-retro hover:bg-[#FFF04D] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
+}
+
+.btn-retro-pink {
+  @apply btn-retro bg-[#FF3388] text-white shadow-retro hover:bg-[#FF4D99] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
+}
+
+.btn-retro-cyan {
+  @apply btn-retro bg-[#00F0FF] text-black shadow-retro hover:bg-[#33F3FF] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
+}
+
+.btn-retro-purple {
+  @apply btn-retro bg-[#7B2CBF] text-white shadow-retro hover:bg-[#8D3DD1] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
+}
+
+.btn-retro-white {
+  @apply btn-retro bg-white text-black shadow-retro hover:bg-gray-50 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
+}
+
+.card-retro {
+  @apply bg-white border-3 border-black rounded-2xl shadow-retro transition-all duration-200;
+}
+
+.card-retro-hover {
+  @apply card-retro hover:-translate-x-1 hover:-translate-y-1 hover:shadow-retro-lg;
+}
+
+.input-retro {
+  @apply w-full px-4 py-3 bg-white border-3 border-black rounded-xl font-body text-black 
+         focus:outline-none focus:ring-2 focus:ring-[#00F0FF] focus:border-black shadow-retro-sm transition-all;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7EE;
+  border-left: 2px solid #121212;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FFE600;
+  border: 2px solid #121212;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF3388;
+}
