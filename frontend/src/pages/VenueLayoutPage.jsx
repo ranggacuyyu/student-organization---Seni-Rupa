@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   MapPin, 
   Palette, 
@@ -14,16 +15,61 @@ import {
 import { BOOTH_ZONES } from '../data/mockData';
 
 export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoothId, onNavigateCatalogue }) {
+  const containerRef = useRef(null);
+  const detailBoxRef = useRef(null);
+
   const [activeZoneId, setActiveZoneId] = useState(selectedBoothId || 'booth-a');
 
   const activeZone = BOOTH_ZONES.find(z => z.id === activeZoneId) || BOOTH_ZONES[0];
   const zoneArtworks = artworks.filter(a => a.boothId === activeZone.id);
 
+  // Entrance animations on mount
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.denah-header-banner',
+        { y: -30, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+
+      gsap.fromTo(
+        '.denah-map-card',
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', delay: 0.15 }
+      );
+
+      gsap.fromTo(
+        '.denah-booth-node',
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, stagger: 0.08, duration: 0.5, ease: 'back.out(1.5)', delay: 0.3 }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Zone Change Transition for detail panel
+  useEffect(() => {
+    if (detailBoxRef.current) {
+      gsap.fromTo(
+        detailBoxRef.current,
+        { opacity: 0, y: 15, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'power2.out' }
+      );
+
+      gsap.fromTo(
+        '.denah-artwork-item',
+        { opacity: 0, x: 10 },
+        { opacity: 1, x: 0, stagger: 0.05, duration: 0.3, ease: 'power1.out', delay: 0.1 }
+      );
+    }
+  }, [activeZoneId]);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
       
       {/* Header Banner */}
-      <div className="bg-[#00F0FF] text-black border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+      <div className="denah-header-banner bg-[#00F0FF] text-black border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
         <div className="max-w-3xl space-y-3 relative z-10">
           <div className="inline-flex items-center gap-2 bg-black text-[#00F0FF] px-3 py-1 rounded-lg text-xs font-black uppercase">
             <Compass className="w-3.5 h-3.5 text-[#FFE600]" /> DENAH & PETA INTERAKTIF
@@ -42,7 +88,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
         
         {/* Left Column: Interactive Visual Floor Plan Map */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="card-retro p-6 bg-white space-y-4">
+          <div className="denah-map-card card-retro p-6 bg-white space-y-4">
             
             <div className="flex items-center justify-between border-b-2 border-neutral-200 pb-3">
               <div>
@@ -63,7 +109,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
             <div className="relative bg-[#FAF7EE] border-3 border-black rounded-2xl p-6 overflow-hidden min-h-[380px] flex flex-col justify-between bg-retro-grid">
               
               {/* North Indicator */}
-              <div className="absolute top-2 right-3 font-mono text-[10px] font-black bg-white px-2 py-0.5 rounded border border-black flex items-center gap-1">
+              <div className="absolute top-2 right-3 font-mono text-[10px] font-black bg-white px-2 py-0.5 rounded border border-black flex items-center gap-1 shadow-retro-sm">
                 <span>⬆ UTARA</span>
               </div>
 
@@ -71,7 +117,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
               <div className="w-full">
                 <button
                   onClick={() => setActiveZoneId('booth-a')}
-                  className={`w-full p-4 rounded-xl border-3 border-black text-left transition-all duration-150 ${
+                  className={`denah-booth-node w-full p-4 rounded-xl border-3 border-black text-left transition-all duration-150 active:scale-95 ${
                     activeZoneId === 'booth-a'
                       ? 'bg-[#FFE600] shadow-retro scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50'
@@ -91,7 +137,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                 {/* Zona D: Panggung Barat */}
                 <button
                   onClick={() => setActiveZoneId('booth-d')}
-                  className={`p-3 rounded-xl border-3 border-black text-left transition-all ${
+                  className={`denah-booth-node p-3 rounded-xl border-3 border-black text-left transition-all active:scale-95 ${
                     activeZoneId === 'booth-d'
                       ? 'bg-[#7B2CBF] text-white shadow-retro scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50 text-black'
@@ -99,14 +145,14 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                 >
                   <span className="font-display font-black text-xs block">🎤 ZONA D: STAGE</span>
                   <p className={`text-[10px] mt-1 ${activeZoneId === 'booth-d' ? 'text-white/80' : 'text-neutral-600'}`}>
-                    Talkshow, Seminar & Games
+                    Talkshow & Games
                   </p>
                 </button>
 
                 {/* Zona C: Pusat Tengah Live Painting */}
                 <button
                   onClick={() => setActiveZoneId('booth-c')}
-                  className={`p-3 rounded-xl border-3 border-black text-left transition-all ${
+                  className={`denah-booth-node p-3 rounded-xl border-3 border-black text-left transition-all active:scale-95 ${
                     activeZoneId === 'booth-c'
                       ? 'bg-[#00F0FF] text-black shadow-retro scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50 text-black'
@@ -114,14 +160,14 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                 >
                   <span className="font-display font-black text-xs block">🖌️ ZONA C: POJOK GAMBAR</span>
                   <p className="text-[10px] text-neutral-700 mt-1">
-                    Live Painting & Buku Bersama
+                    Live Painting
                   </p>
                 </button>
 
                 {/* Zona B: Kriya Kerajinan Timur */}
                 <button
                   onClick={() => setActiveZoneId('booth-b')}
-                  className={`p-3 rounded-xl border-3 border-black text-left transition-all ${
+                  className={`denah-booth-node p-3 rounded-xl border-3 border-black text-left transition-all active:scale-95 ${
                     activeZoneId === 'booth-b'
                       ? 'bg-[#FF3388] text-white shadow-retro scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50 text-black'
@@ -129,7 +175,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                 >
                   <span className="font-display font-black text-xs block">🏺 ZONA B: KERAJINAN</span>
                   <p className={`text-[10px] mt-1 ${activeZoneId === 'booth-b' ? 'text-white/80' : 'text-neutral-600'}`}>
-                    Display 3D & Kriya Tangan
+                    Display 3D Kriya
                   </p>
                 </button>
 
@@ -139,7 +185,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
               <div className="w-full">
                 <button
                   onClick={() => setActiveZoneId('booth-e')}
-                  className={`w-full p-3.5 rounded-xl border-3 border-black text-left transition-all ${
+                  className={`denah-booth-node w-full p-3.5 rounded-xl border-3 border-black text-left transition-all active:scale-95 ${
                     activeZoneId === 'booth-e'
                       ? 'bg-[#FF6B35] text-white shadow-retro scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50 text-black'
@@ -156,11 +202,11 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
 
             {/* Venue Advantages Highlights */}
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="p-3 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs flex items-center gap-2">
+              <div className="p-3 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs flex items-center gap-2 hover:-translate-y-0.5 transition-transform">
                 <Wind className="w-4 h-4 text-[#00F0FF] shrink-0" />
                 <span className="font-bold">Sirkulasi Udara Terbuka & Sejuk</span>
               </div>
-              <div className="p-3 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs flex items-center gap-2">
+              <div className="p-3 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs flex items-center gap-2 hover:-translate-y-0.5 transition-transform">
                 <SunMedium className="w-4 h-4 text-[#FFE600] shrink-0" />
                 <span className="font-bold">Pencahayaan Alami Estetik</span>
               </div>
@@ -171,7 +217,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
 
         {/* Right Column: Selected Zone Details & Featured Artworks */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="card-retro p-6 sm:p-8 bg-white space-y-6">
+          <div ref={detailBoxRef} className="card-retro p-6 sm:p-8 bg-white space-y-6">
             
             {/* Zone Title Header */}
             <div className="space-y-3 border-b-2 border-neutral-200 pb-4">
@@ -227,7 +273,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                     <div
                       key={art.id}
                       onClick={() => onSelectArtwork(art)}
-                      className="p-3 bg-[#FAF7EE] hover:bg-[#FFE600]/20 border-2 border-black rounded-xl flex items-center justify-between gap-3 cursor-pointer group transition-all"
+                      className="denah-artwork-item p-3 bg-[#FAF7EE] hover:bg-[#FFE600]/20 border-2 border-black rounded-xl flex items-center justify-between gap-3 cursor-pointer group transition-all"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         <img
@@ -265,3 +311,4 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
     </div>
   );
 }
+

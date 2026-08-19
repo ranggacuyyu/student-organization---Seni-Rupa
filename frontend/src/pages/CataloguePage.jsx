@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   Palette, 
   Search, 
@@ -20,6 +21,9 @@ export default function CataloguePage({
   onLikeArtwork, 
   likedIds 
 }) {
+  const containerRef = useRef(null);
+  const gridRef = useRef(null);
+
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular'); // 'popular' | 'newest' | 'title'
@@ -46,11 +50,64 @@ export default function CataloguePage({
       });
   }, [artworks, selectedCategory, searchQuery, sortBy]);
 
+  // Initial Page Elements Entrance Animation
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.cat-header-banner',
+        { y: -30, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+
+      gsap.fromTo(
+        '.cat-filter-bar',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out', delay: 0.15 }
+      );
+
+      gsap.fromTo(
+        '.cat-tab-btn',
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, stagger: 0.06, duration: 0.4, ease: 'back.out(1.8)', delay: 0.25 }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const isFirstGridRender = useRef(true);
+
+  // Stagger Grid Items on Filter or Search Change (only on changes, not on initial mount)
+  useEffect(() => {
+    if (isFirstGridRender.current) {
+      isFirstGridRender.current = false;
+      return;
+    }
+    if (gridRef.current) {
+      const cards = gridRef.current.querySelectorAll('.cat-artwork-card');
+      if (cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          { y: 30, opacity: 0, scale: 0.96 },
+          {
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            stagger: 0.06,
+            duration: 0.4,
+            ease: 'power2.out'
+          }
+        );
+      }
+    }
+  }, [selectedCategory, searchQuery, sortBy]);
+
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
       
       {/* Header Banner */}
-      <div className="bg-[#FF3388] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+      <div className="cat-header-banner bg-[#FF3388] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
         <div className="max-w-3xl space-y-3 relative z-10">
           <div className="inline-flex items-center gap-2 bg-black text-[#FFE600] px-3 py-1 rounded-lg text-xs font-black uppercase">
             <Sparkles className="w-3.5 h-3.5" /> EKSPLORASI KARYA SENI
@@ -65,7 +122,7 @@ export default function CataloguePage({
       </div>
 
       {/* Filter, Search, and Controls Bar */}
-      <div className="bg-white border-3 border-black rounded-2xl p-4 sm:p-6 shadow-retro space-y-4">
+      <div className="cat-filter-bar bg-white border-3 border-black rounded-2xl p-4 sm:p-6 shadow-retro space-y-4">
         
         {/* Top: Category Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
@@ -75,9 +132,9 @@ export default function CataloguePage({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all ${
+                className={`cat-tab-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5'
+                    ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
                     : 'bg-[#FAF7EE] text-neutral-700 border-black/30 hover:bg-neutral-100 hover:border-black'
                 }`}
               >
@@ -124,25 +181,25 @@ export default function CataloguePage({
 
       {/* Artworks Grid */}
       {filteredArtworks.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {filteredArtworks.map((art) => {
             const isLiked = likedIds.includes(art.id);
             return (
               <div
                 key={art.id}
-                className="card-retro-hover bg-white overflow-hidden flex flex-col justify-between group"
+                className="cat-artwork-card card-retro-hover bg-white overflow-hidden flex flex-col justify-between group"
               >
                 
                 {/* Artwork Thumbnail Container */}
                 <div>
                   <div 
                     onClick={() => onSelectArtwork(art)}
-                    className="relative aspect-4/3 overflow-hidden bg-neutral-900 border-b-3 border-black cursor-pointer"
+                    className="relative aspect-[3/4] overflow-hidden bg-neutral-800 border-b-3 border-black cursor-pointer flex items-center justify-center"
                   >
                     <img
                       src={art.imageUrl}
                       alt={art.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
 
                     {/* Category Pill */}
@@ -202,7 +259,7 @@ export default function CataloguePage({
                       e.stopPropagation();
                       onLikeArtwork(art.id);
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-black font-display font-bold text-xs transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-black font-display font-bold text-xs transition-all active:scale-90 ${
                       isLiked
                         ? 'bg-[#FF3388] text-white shadow-retro-sm'
                         : 'bg-white text-black hover:bg-neutral-100'
@@ -244,3 +301,4 @@ export default function CataloguePage({
     </div>
   );
 }
+

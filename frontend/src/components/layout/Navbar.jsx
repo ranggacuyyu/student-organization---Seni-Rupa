@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   Palette, 
   UserCheck, 
@@ -10,11 +11,26 @@ import {
   Menu, 
   X, 
   Ticket, 
-  Sparkles 
+  Sparkles,
+  QrCode,
+  Lock,
+  LogOut,
+  User
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCount }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCount, currentUser, onLogout }) {
+  const navRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (navRef.current) {
+      gsap.fromTo(
+        navRef.current,
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }
+      );
+    }
+  }, []);
 
   const navItems = [
     { id: 'home', label: 'Beranda', icon: Palette },
@@ -23,8 +39,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
     { id: 'denah', label: 'Denah', icon: Map },
     { id: 'rundown', label: 'Rundown', icon: Clock },
     { id: 'pesan-kesan', label: 'Pojok Ekspresi', icon: MessageSquare },
-    { id: 'admin', label: 'Panitia Portal', icon: ShieldAlert },
   ];
+
+  // Tambahkan link portal panitia jika sudah login sebagai panitia atau admin
+  if (currentUser) {
+    navItems.push({ id: 'panitia', label: 'Portal Panitia', icon: QrCode, badgeColor: 'bg-[#FFE600]' });
+    if (currentUser.role === 'admin') {
+      navItems.push({ id: 'admin', label: 'Super Admin', icon: ShieldAlert, badgeColor: 'bg-[#FF3388]' });
+    }
+  }
 
   const handleNavClick = (id) => {
     setActiveTab(id);
@@ -33,7 +56,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#FAF7EE]/95 backdrop-blur-md border-b-3 border-black">
+    <header ref={navRef} className="sticky top-0 z-40 w-full bg-[#FAF7EE]/95 backdrop-blur-md border-b-3 border-black">
       {/* Top Retro Marquee Ticker */}
       <div className="bg-[#FFE600] border-b-2 border-black py-1 overflow-hidden font-display text-xs font-bold tracking-wider select-none">
         <div className="flex whitespace-nowrap animate-marquee">
@@ -83,7 +106,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-display text-sm font-bold border-2 transition-all duration-150 ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-display text-sm font-bold border-2 transition-all duration-150 active:scale-95 ${
                   isActive
                     ? 'bg-[#121212] text-white border-black shadow-retro-sm -translate-y-0.5'
                     : item.highlight
@@ -98,21 +121,55 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
           })}
         </nav>
 
-        {/* Action Buttons (Digital Pass / Ticket & Mobile Toggle) */}
+        {/* Action Buttons (User / Login / Ticket / Mobile Toggle) */}
         <div className="flex items-center gap-2.5">
+          
+          {/* Digital Ticket Button */}
           <button
             onClick={onOpenTicket}
-            className="flex items-center gap-2 bg-[#00F0FF] text-black font-display font-bold text-xs sm:text-sm px-3.5 py-2 border-3 border-black rounded-xl shadow-retro hover:bg-[#33F3FF] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+            className="flex items-center gap-2 bg-[#00F0FF] text-black font-display font-bold text-xs sm:text-sm px-3.5 py-2 border-3 border-black rounded-xl shadow-retro hover:bg-[#33F3FF] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all active:scale-95"
             title="Lihat Bukti Tiket Presensi Digital"
           >
             <Ticket className="w-4 h-4 text-black" />
             <span className="hidden sm:inline">Tiket Saya</span>
             {ticketCount > 0 && (
-              <span className="w-5 h-5 bg-[#FF3388] text-white text-[10px] font-black rounded-full border border-black flex items-center justify-center">
+              <span className="w-5 h-5 bg-[#FF3388] text-white text-[10px] font-black rounded-full border border-black flex items-center justify-center animate-bounce">
                 1
               </span>
             )}
           </button>
+
+          {/* User Auth Status / Login Button */}
+          {currentUser ? (
+            <div className="hidden sm:flex items-center gap-2">
+              <div 
+                onClick={() => handleNavClick(currentUser.role === 'admin' ? 'admin' : 'panitia')}
+                className="flex items-center gap-2 bg-white border-3 border-black px-3 py-1.5 rounded-xl shadow-retro-sm cursor-pointer hover:bg-[#FFE600]/20 transition-all"
+                title="Buka Portal Petugas"
+              >
+                <div className={`w-6 h-6 rounded-lg border border-black flex items-center justify-center font-black text-[10px] ${currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'}`}>
+                  {currentUser.role === 'admin' ? '👑' : '📋'}
+                </div>
+                <span className="text-xs font-black text-black max-w-[100px] truncate">{currentUser.nama.split(' ')[0]}</span>
+              </div>
+
+              <button
+                onClick={onLogout}
+                className="p-2 bg-white border-2 border-black rounded-xl hover:bg-red-50 text-red-500 shadow-retro-sm active:scale-95"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleNavClick('login')}
+              className="hidden sm:flex items-center gap-1.5 bg-[#FAF7EE] text-black font-display font-bold text-xs sm:text-sm px-3.5 py-2 border-2 border-black rounded-xl hover:bg-[#FFE600] shadow-retro-sm transition-all active:scale-95"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Login Petugas</span>
+            </button>
+          )}
 
           {/* Mobile Menu Toggle Button */}
           <button
@@ -135,7 +192,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-display text-base font-bold border-2 text-left transition-all ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-display text-base font-bold border-2 text-left transition-all active:scale-95 ${
                   isActive
                     ? 'bg-[#121212] text-white border-black shadow-retro'
                     : item.highlight
@@ -154,15 +211,42 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                     {item.id === 'denah' && 'Peta booth Student Centre Lt 3'}
                     {item.id === 'rundown' && 'Jadwal & live acara pameran'}
                     {item.id === 'pesan-kesan' && 'Papan ulasan & sticky notes'}
-                    {item.id === 'admin' && 'Portal log IP & controller panitia'}
+                    {item.id === 'panitia' && 'Scan QR & kelola kebutuhan peserta'}
+                    {item.id === 'admin' && 'Kelola akun panitia & master data'}
                     {item.id === 'home' && 'Halaman utama showcase'}
                   </div>
                 </div>
               </button>
             );
           })}
+
+          {/* Mobile Login / Logout Button */}
+          <div className="pt-2 border-t-2 border-dashed border-neutral-300">
+            {currentUser ? (
+              <button
+                onClick={() => {
+                  onLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 border-2 border-black rounded-xl font-display font-bold text-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Keluar ({currentUser.nama})</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => handleNavClick('login')}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-[#FFE600] text-black border-2 border-black rounded-xl font-display font-bold text-sm shadow-retro-sm"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Login Petugas / Panitia</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </header>
   );
 }
+
+

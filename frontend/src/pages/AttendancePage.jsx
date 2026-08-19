@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   UserCheck, 
   Wifi, 
@@ -21,6 +22,9 @@ import { AttendanceService, detectClientInfo } from '../services/api';
 import { EVENT_INFO } from '../data/mockData';
 
 export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
+  const containerRef = useRef(null);
+  const formBoxRef = useRef(null);
+
   const [formData, setFormData] = useState({
     nama_lengkap: '',
     identifier: '',
@@ -52,6 +56,64 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
     fetchInfo();
     loadRecentAttendances();
   }, []);
+
+  // GSAP Entrance Animations
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Header Banner pop
+      gsap.fromTo(
+        '.att-header-banner',
+        { y: -25, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+
+      // Form Box Entrance
+      gsap.fromTo(
+        '.att-form-box',
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', delay: 0.15 }
+      );
+
+      // Form Fields Stagger
+      gsap.fromTo(
+        '.att-form-field',
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.08, duration: 0.5, ease: 'power2.out', delay: 0.25 }
+      );
+
+      // Right Column (IP Tracker & Recent stream)
+      gsap.fromTo(
+        '.att-ip-tracker',
+        { x: 30, opacity: 0, scale: 0.96 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.7, ease: 'back.out(1.5)', delay: 0.2 }
+      );
+
+      gsap.fromTo(
+        '.att-recent-stream',
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', delay: 0.35 }
+      );
+
+      gsap.fromTo(
+        '.att-recent-item',
+        { opacity: 0, x: 10 },
+        { opacity: 1, x: 0, stagger: 0.08, duration: 0.4, ease: 'power1.out', delay: 0.45 }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Success Ticket Entrance Animation
+  useEffect(() => {
+    if (submittedTicket) {
+      gsap.fromTo(
+        '.att-success-pass',
+        { scale: 0.85, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.8)' }
+      );
+    }
+  }, [submittedTicket]);
 
   const loadRecentAttendances = async () => {
     const list = await AttendanceService.getAllAttendances();
@@ -114,10 +176,10 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
       
       {/* Header Title Banner */}
-      <div className="bg-[#FFE600] border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+      <div className="att-header-banner bg-[#FFE600] border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
         <div className="max-w-3xl space-y-3 relative z-10">
           <div className="inline-flex items-center gap-2 bg-black text-[#FFE600] px-3 py-1 rounded-lg text-xs font-black uppercase">
             <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" /> MODUL PRESENSI RESMI ART SHOWCASE
@@ -138,7 +200,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
         <div className="lg:col-span-7 space-y-6">
           {submittedTicket ? (
             /* Success State After Check-In */
-            <div className="card-retro p-6 sm:p-8 bg-white space-y-6 animate-in zoom-in-95">
+            <div className="att-success-pass card-retro p-6 sm:p-8 bg-white space-y-6">
               <div className="flex items-center gap-3 bg-[#22C55E]/15 border-2 border-[#22C55E] p-4 rounded-2xl">
                 <CheckCircle2 className="w-8 h-8 text-[#22C55E] shrink-0" />
                 <div>
@@ -211,7 +273,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
             </div>
           ) : (
             /* Main Form Input */
-            <div className="card-retro p-6 sm:p-8 bg-white space-y-6">
+            <div ref={formBoxRef} className="att-form-box card-retro p-6 sm:p-8 bg-white space-y-6">
               
               <div className="border-b-2 border-neutral-200 pb-4 flex items-center justify-between">
                 <div>
@@ -230,7 +292,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
               <form onSubmit={handleSubmit} className="space-y-5">
                 
                 {/* Field 1: Nama Lengkap */}
-                <div className="space-y-1.5">
+                <div className="att-form-field space-y-1.5">
                   <label className="block font-display font-bold text-xs sm:text-sm text-black flex items-center gap-1.5">
                     <User className="w-4 h-4 text-[#FF3388]" /> Nama Lengkap <span className="text-red-500">*</span>
                   </label>
@@ -246,7 +308,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
                 </div>
 
                 {/* Field 2: NIM / No Identitas & Kategori */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="att-form-field grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="block font-display font-bold text-xs sm:text-sm text-black flex items-center gap-1.5">
                       <Hash className="w-4 h-4 text-[#00F0FF]" /> NIM / No. Identitas <span className="text-red-500">*</span>
@@ -273,7 +335,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
                       className="input-retro text-sm font-bold bg-white"
                     >
                       <option value="Mahasiswa Baru">Mahasiswa Baru (Maba)</option>
-                      <option value="Mahasiswa Polibatam">Mahasiswa Aktif Polibatam</option>
+                      <option value="Mahasiswa Aktif">Mahasiswa Aktif Polibatam</option>
                       <option value="Dosen/Staff">Dosen / Tendik Polibatam</option>
                       <option value="Tamu Umum">Tamu Undangan / Umum</option>
                     </select>
@@ -281,7 +343,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
                 </div>
 
                 {/* Field 3: Jurusan / Program Studi */}
-                <div className="space-y-1.5">
+                <div className="att-form-field space-y-1.5">
                   <label className="block font-display font-bold text-xs sm:text-sm text-black flex items-center gap-1.5">
                     <Building className="w-4 h-4 text-[#FF6B35]" /> Program Studi / Jurusan
                   </label>
@@ -298,7 +360,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
                 </div>
 
                 {/* Field 4: Catatan / Minat Pameran */}
-                <div className="space-y-1.5">
+                <div className="att-form-field space-y-1.5">
                   <label className="block font-display font-bold text-xs sm:text-sm text-black">
                     Kesan Awal / Zona yang Ingin Dikunjungi (Opsional)
                   </label>
@@ -316,7 +378,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full btn-retro-yellow py-4 text-base flex items-center justify-center gap-2 font-display font-black"
+                  className="att-form-field w-full btn-retro-yellow py-4 text-base flex items-center justify-center gap-2 font-display font-black hover:scale-[1.02] active:scale-95 transition-transform"
                 >
                   {isSubmitting ? (
                     <>
@@ -340,7 +402,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
         <div className="lg:col-span-5 space-y-6">
           
           {/* IP Detector Card */}
-          <div className="card-retro p-6 bg-[#00F0FF]/15 border-3 border-black space-y-4">
+          <div className="att-ip-tracker card-retro p-6 bg-[#00F0FF]/15 border-3 border-black space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-[#00F0FF] border-2 border-black rounded-xl shadow-retro-sm">
@@ -361,7 +423,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
             <div className="bg-white border-2 border-black rounded-xl p-4 space-y-2 text-xs">
               <div>
                 <span className="text-neutral-500 font-bold block uppercase text-[10px]">Alamat IP Anda</span>
-                <span className="font-mono text-sm sm:text-base font-black text-black bg-[#FFE600] px-2 py-0.5 rounded border border-black inline-block mt-0.5">
+                <span className="font-mono text-sm sm:text-base font-black text-black bg-[#FFE600] px-2 py-0.5 rounded border border-black inline-block mt-0.5 shadow-retro-sm">
                   {clientInfo.ip_address}
                 </span>
               </div>
@@ -382,7 +444,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
           </div>
 
           {/* Recent Visitors Ticker */}
-          <div className="card-retro p-6 bg-white space-y-4">
+          <div className="att-recent-stream card-retro p-6 bg-white space-y-4">
             <div className="flex items-center justify-between border-b-2 border-neutral-200 pb-2">
               <h4 className="font-display font-bold text-sm text-black flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-[#7B2CBF]" /> Presensi Terbaru Hari Ini
@@ -394,7 +456,7 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
 
             <div className="space-y-2.5">
               {recentAttendances.map((item, idx) => (
-                <div key={item.id || idx} className="p-2.5 bg-[#FAF7EE] border-2 border-black rounded-xl flex items-center justify-between text-xs">
+                <div key={item.id || idx} className="att-recent-item p-2.5 bg-[#FAF7EE] border-2 border-black rounded-xl flex items-center justify-between text-xs hover:-translate-y-0.5 transition-transform">
                   <div>
                     <strong className="text-black font-display block">{item.nama_lengkap}</strong>
                     <span className="text-[10px] text-neutral-500">{item.jurusan_prodi || item.kategori}</span>
@@ -414,3 +476,4 @@ export default function AttendancePage({ onOpenTicket, onAttendanceSuccess }) {
     </div>
   );
 }
+

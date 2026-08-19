@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   MessageSquare, 
   Sparkles, 
@@ -15,6 +16,9 @@ import confetti from 'canvas-confetti';
 import { GuestbookService } from '../services/api';
 
 export default function GuestbookPage({ messages, onAddMessage }) {
+  const containerRef = useRef(null);
+  const wallRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: '',
     role: 'Mahasiswa Baru (Maba)',
@@ -29,6 +33,46 @@ export default function GuestbookPage({ messages, onAddMessage }) {
     { id: 'retro-brush', label: '🖌️ Kuas Lukis', icon: Brush },
     { id: 'retro-smile', label: '😃 Keren Banget', icon: Smile },
   ];
+
+  // Entrance animations on mount
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.guestbook-header-banner',
+        { y: -30, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+
+      gsap.fromTo(
+        '.guestbook-form-card',
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', delay: 0.15 }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Staggered Sticky Notes drop-in
+  useEffect(() => {
+    if (wallRef.current) {
+      const notes = wallRef.current.querySelectorAll('.guestbook-sticky-note');
+      if (notes.length > 0) {
+        gsap.fromTo(
+          notes,
+          { scale: 0.8, opacity: 0, y: 25 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            stagger: 0.08,
+            duration: 0.55,
+            ease: 'back.out(1.8)'
+          }
+        );
+      }
+    }
+  }, [messages.length]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,10 +106,10 @@ export default function GuestbookPage({ messages, onAddMessage }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
       
       {/* Header Banner */}
-      <div className="bg-[#CCFF00] text-black border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+      <div className="guestbook-header-banner bg-[#CCFF00] text-black border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
         <div className="max-w-3xl space-y-3 relative z-10">
           <div className="inline-flex items-center gap-2 bg-black text-[#CCFF00] px-3 py-1 rounded-lg text-xs font-black uppercase">
             <Sparkles className="w-3.5 h-3.5 text-[#FF3388]" /> POJOK EKSPRESI & KESAN PESAN
@@ -84,7 +128,7 @@ export default function GuestbookPage({ messages, onAddMessage }) {
         
         {/* Left: Input Form */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="card-retro p-6 bg-white space-y-5 sticky top-28">
+          <div className="guestbook-form-card card-retro p-6 bg-white space-y-5 sticky top-28">
             <div className="border-b-2 border-neutral-200 pb-3 flex items-center justify-between">
               <div>
                 <h3 className="font-display font-black text-xl text-black">
@@ -138,10 +182,10 @@ export default function GuestbookPage({ messages, onAddMessage }) {
                       key={stk.id}
                       type="button"
                       onClick={() => setFormData({ ...formData, sticker: stk.id })}
-                      className={`p-2 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 justify-center transition-all ${
+                      className={`p-2 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 justify-center transition-all active:scale-95 ${
                         formData.sticker === stk.id
-                          ? 'bg-[#FFE600] border-black shadow-retro-sm text-black'
-                          : 'bg-[#FAF7EE] border-neutral-300 text-neutral-600'
+                          ? 'bg-[#FFE600] border-black shadow-retro-sm text-black scale-105'
+                          : 'bg-[#FAF7EE] border-neutral-300 text-neutral-600 hover:border-black'
                       }`}
                     >
                       <span>{stk.label}</span>
@@ -167,7 +211,7 @@ export default function GuestbookPage({ messages, onAddMessage }) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full btn-retro-pink py-3 text-sm flex items-center justify-center gap-2"
+                className="w-full btn-retro-pink py-3 text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? 'Mengirim...' : 'Tempelkan Catatan ✨'}</span>
@@ -193,13 +237,13 @@ export default function GuestbookPage({ messages, onAddMessage }) {
           </div>
 
           {/* Sticky Notes Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div ref={wallRef} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {messages.map((item, idx) => (
               <div
                 key={item.id || idx}
-                className={`p-6 rounded-2xl border-3 border-black shadow-retro space-y-3 transition-transform hover:-translate-y-1 ${
+                className={`guestbook-sticky-note p-6 rounded-2xl border-3 border-black shadow-retro space-y-3 transition-transform hover:-translate-y-1.5 hover:rotate-0 ${
                   item.color || 'bg-[#FFE600]'
-                } ${item.textColor || 'text-black'}`}
+                } ${item.textColor || 'text-black'} ${idx % 2 === 0 ? 'rotate-[-1deg]' : 'rotate-[1.5deg]'}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-0.5">
@@ -210,7 +254,7 @@ export default function GuestbookPage({ messages, onAddMessage }) {
                       {item.role}
                     </span>
                   </div>
-                  <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center text-lg">
+                  <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center text-lg shadow-sm">
                     {item.sticker === 'retro-heart' ? '💖' : item.sticker === 'retro-brush' ? '🖌️' : item.sticker === 'retro-smile' ? '😃' : '⭐'}
                   </div>
                 </div>
@@ -236,3 +280,4 @@ export default function GuestbookPage({ messages, onAddMessage }) {
     </div>
   );
 }
+

@@ -371,3 +371,171 @@ export const INITIAL_GUESTBOOKS = [
     createdAt: "10:48 WIB"
   }
 ];
+
+// ================= AKUN MASTER: ADMIN & PANITIA =================
+export const INITIAL_PANITIA_ACCOUNTS = [
+  {
+    id: "user-admin-1",
+    username: "admin_senrup",
+    password: "admin123",
+    nama: "Muhammad Rangga",
+    role: "admin", // 'admin' | 'panitia'
+    divisi: "Koordinator Utama & Pameran",
+    assignedBooth: "Semua Zona (Lt. 3)",
+    kontak: "0812-3456-7890",
+    status: "active",
+    avatarBg: "bg-[#FF3388]"
+  },
+  {
+    id: "user-panitia-1",
+    username: "panitia_registrasi",
+    password: "panitia123",
+    nama: "Samuel Siregar",
+    role: "panitia",
+    divisi: "Divisi Registrasi & Presensi",
+    assignedBooth: "Pintu Masuk (Lobby Lt. 3)",
+    kontak: "0813-8899-1122",
+    status: "active",
+    avatarBg: "bg-[#FFE600]"
+  },
+  {
+    id: "user-panitia-2",
+    username: "panitia_acara",
+    password: "panitia123",
+    nama: "Aiko Valerie",
+    role: "panitia",
+    divisi: "Divisi Acara & Rundown",
+    assignedBooth: "Zona D - Panggung Utama",
+    kontak: "0821-4455-6677",
+    status: "active",
+    avatarBg: "bg-[#00F0FF]"
+  },
+  {
+    id: "user-panitia-3",
+    username: "panitia_galeri",
+    password: "panitia123",
+    nama: "Ibra Pratama",
+    role: "panitia",
+    divisi: "Divisi Perlengkapan & Display",
+    assignedBooth: "Zona A & Zona B (Galeri)",
+    kontak: "0856-7788-9900",
+    status: "active",
+    avatarBg: "bg-[#7B2CBF]"
+  },
+  {
+    id: "user-panitia-4",
+    username: "panitia_souvenir",
+    password: "panitia123",
+    nama: "Yurila Ananda",
+    role: "panitia",
+    divisi: "Divisi Suvenir & Photobooth",
+    assignedBooth: "Zona E - Photobooth Retro",
+    kontak: "0877-1122-3344",
+    status: "active",
+    avatarBg: "bg-[#22C55E]"
+  }
+];
+
+// ================= CHECKLIST KEBUTUHAN & LOGISTIK PANITIA =================
+export const INITIAL_PANITIA_TASKS = [
+  {
+    id: "task-1",
+    title: "Cek Sound System & Mic Panggung Utama",
+    location: "Zona D - Panggung",
+    assignedTo: "Aiko Valerie",
+    priority: "Tinggi",
+    isCompleted: true,
+    category: "Peralatan"
+  },
+  {
+    id: "task-2",
+    title: "Setup Standby QR Scanner Pintu Masuk",
+    location: "Lobby Pintu Masuk Lt. 3",
+    assignedTo: "Samuel Siregar",
+    priority: "Tinggi",
+    isCompleted: true,
+    category: "Registrasi"
+  },
+  {
+    id: "task-3",
+    title: "Pemeriksaan Pencahayaan Spotlight Zona Lukis",
+    location: "Zona A - Galeri Lukis",
+    assignedTo: "Ibra Pratama",
+    priority: "Sedang",
+    isCompleted: false,
+    category: "Display Seni"
+  },
+  {
+    id: "task-4",
+    title: "Restock Suvenir Sticker Pack & Digital Pass",
+    location: "Zona E - Photobooth",
+    assignedTo: "Yurila Ananda",
+    priority: "Tinggi",
+    isCompleted: false,
+    category: "Logistik Peserta"
+  },
+  {
+    id: "task-5",
+    title: "Siapkan Cat Akrilik & Kanvas Kosong Live Painting",
+    location: "Zona C - Live Painting",
+    assignedTo: "Ibra Pratama",
+    priority: "Sedang",
+    isCompleted: true,
+    category: "Display Seni"
+  }
+];
+
+// ================= JADWAL SHIFT PANITIA =================
+export const INITIAL_PANITIA_SHIFTS = [
+  {
+    id: "shift-1",
+    waktu: "10:00 - 12:30 WIB",
+    namaShift: "Sesi Pagi (Opening & Registrasi Maba)",
+    petugas: [
+      { nama: "Samuel Siregar", role: "QR Scanner Gate 1" },
+      { nama: "Ibra Pratama", role: "Pengawas Galeri Zona A-B" },
+      { nama: "Aiko Valerie", role: "Operator Rundown Panggung" }
+    ]
+  },
+  {
+    id: "shift-2",
+    waktu: "12:30 - 15:00 WIB",
+    namaShift: "Sesi Siang (Live Painting & Workshop)",
+    petugas: [
+      { nama: "Yurila Ananda", role: "Klaim Suvenir Photobooth" },
+      { nama: "Samuel Siregar", role: "QR Scanner Gate 2" },
+      { nama: "Muhammad Rangga", role: "Supervisi Keseluruhan" }
+    ]
+  },
+  {
+    id: "shift-3",
+    waktu: "15:00 - 17:30 WIB",
+    namaShift: "Sesi Sore (Closing & Awarding Karya Favorit)",
+    petugas: [
+      { nama: "Aiko Valerie", role: "MC & Pemandu Awarding" },
+      { nama: "Ibra Pratama", role: "Perapihan Display Karya" },
+      { nama: "Yurila Ananda", role: "Rekapitulasi Suvenir & Tamu" }
+    ]
+  }
+];
+
+// ================= PENGUMUMAN INTERNAL PANITIA =================
+export const INITIAL_PANITIA_ANNOUNCEMENTS = [
+  {
+    id: "ann-1",
+    title: "Briefing Tim Pagi di Lantai 3 Student Centre",
+    content: "Seluruh koordinator harap kumpul jam 09.30 WIB untuk cek sound, koneksi scanner QR, dan stok stiker souvenir.",
+    author: "Muhammad Rangga (Ketua)",
+    waktu: "08:45 WIB",
+    isPinned: true
+  },
+  {
+    id: "ann-2",
+    title: "Kupon Photobooth Khusus Mahasiswa Baru",
+    content: "Maba yang menunjukkan tiket digital dengan status terverifikasi berhak mendapatkan 1x sesi gratis di Zona E Photobooth.",
+    author: "Yurila Ananda (Suvenir)",
+    waktu: "09:15 WIB",
+    isPinned: false
+  }
+];
+

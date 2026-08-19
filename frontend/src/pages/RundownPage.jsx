@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   Clock, 
   Sparkles, 
@@ -13,12 +14,54 @@ import {
 import { RUNDOWN_SCHEDULE, EVENT_INFO } from '../data/mockData';
 
 export default function RundownPage({ rundowns, onNavigateBooth }) {
+  const containerRef = useRef(null);
+  const timelineListRef = useRef(null);
+
   const [filterStatus, setFilterStatus] = useState('all');
 
   const filteredRundowns = rundowns.filter((item) => {
     if (filterStatus === 'all') return true;
     return item.status === filterStatus;
   });
+
+  // Entrance animations on mount
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.rundown-header-banner',
+        { y: -30, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+
+      gsap.fromTo(
+        '.rundown-filter-btn',
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, stagger: 0.08, duration: 0.4, ease: 'back.out(1.8)', delay: 0.2 }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Stagger Timeline Cards whenever filterStatus or items change
+  useEffect(() => {
+    if (timelineListRef.current) {
+      const cards = timelineListRef.current.querySelectorAll('.rundown-timeline-card');
+      if (cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          { x: -30, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            stagger: 0.1,
+            duration: 0.5,
+            ease: 'power2.out'
+          }
+        );
+      }
+    }
+  }, [filterStatus, filteredRundowns.length]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -44,10 +87,10 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
       
       {/* Header Banner */}
-      <div className="bg-[#7B2CBF] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+      <div className="rundown-header-banner bg-[#7B2CBF] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
         <div className="max-w-3xl space-y-3 relative z-10">
           <div className="inline-flex items-center gap-2 bg-[#FFE600] text-black px-3 py-1 rounded-lg text-xs font-black uppercase">
             <Clock className="w-3.5 h-3.5 text-black" /> TIMELINE & SUSUNAN ACARA
@@ -62,12 +105,12 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
         <button
           onClick={() => setFilterStatus('all')}
-          className={`px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 transition-all ${
+          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'all'
-              ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5'
+              ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
@@ -75,9 +118,9 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('ongoing')}
-          className={`px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 transition-all ${
+          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'ongoing'
-              ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5'
+              ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
@@ -85,9 +128,9 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('upcoming')}
-          className={`px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 transition-all ${
+          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'upcoming'
-              ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5'
+              ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
@@ -95,9 +138,9 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('completed')}
-          className={`px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 transition-all ${
+          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'completed'
-              ? 'bg-neutral-800 text-white border-black shadow-retro-sm -translate-y-0.5'
+              ? 'bg-neutral-800 text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
@@ -106,16 +149,16 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
       </div>
 
       {/* Vertical Timeline List */}
-      <div className="space-y-6">
+      <div ref={timelineListRef} className="space-y-6">
         {filteredRundowns.map((item, index) => {
           const isOngoing = item.status === 'ongoing';
           return (
             <div
               key={item.id}
-              className={`card-retro p-6 sm:p-8 transition-all ${
+              className={`rundown-timeline-card card-retro p-6 sm:p-8 transition-all hover:-translate-y-1 ${
                 isOngoing
                   ? 'bg-[#FAF7EE] border-3 border-[#FF3388] shadow-retro-lg ring-4 ring-[#FF3388]/20'
-                  : 'bg-white hover:-translate-y-0.5'
+                  : 'bg-white'
               }`}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -166,3 +209,4 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
     </div>
   );
 }
+

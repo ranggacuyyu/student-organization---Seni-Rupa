@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { X, QrCode, CheckCircle2, MapPin, Calendar, User, ShieldCheck, Printer, Share2 } from 'lucide-react';
 import { EVENT_INFO } from '../../data/mockData';
 
 export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresensi }) {
+  const modalBoxRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && modalBoxRef.current) {
+      gsap.fromTo(
+        modalBoxRef.current,
+        { scale: 0.82, y: -40, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.8)' }
+      );
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-lg bg-[#FAF7EE] border-3 border-black rounded-3xl shadow-retro-xl overflow-hidden animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+      <div 
+        ref={modalBoxRef}
+        className="relative w-full max-w-lg bg-[#FAF7EE] border-3 border-black rounded-3xl shadow-retro-xl overflow-hidden"
+      >
         
         {/* Header Ribbon */}
         <div className="bg-[#FFE600] border-b-3 border-black p-4 flex items-center justify-between">
@@ -152,3 +168,4 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
     </div>
   );
 }
+

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { 
   ShieldCheck, 
   Users, 
@@ -18,20 +19,63 @@ import {
   Layers,
   Sparkles,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  UserPlus,
+  KeyRound,
+  Shield,
+  Megaphone,
+  Calendar,
+  ClipboardList,
+  CheckSquare,
+  LogOut,
+  MapPin,
+  Send
 } from 'lucide-react';
-import { BOOTH_ZONES } from '../../data/mockData';
-import { ArtworkService, RundownService } from '../../services/api';
+import { BOOTH_ZONES, INITIAL_PANITIA_SHIFTS } from '../../data/mockData';
+import { ArtworkService, PanitiaService } from '../../services/api';
 
 export default function AdminDashboard({ 
+  currentUser,
+  onLogout,
   attendances, 
   artworks, 
   rundowns, 
   onRefreshData,
   onUpdateRundownStatus 
 }) {
-  const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' | 'artworks' | 'rundown'
+  const containerRef = useRef(null);
+  const tabContentRef = useRef(null);
+
+  const [activeTab, setActiveTab] = useState('accounts'); // 'accounts' | 'logistics' | 'master' | 'artworks'
   
+  // Panitia Accounts State
+  const [panitiaAccounts, setPanitiaAccounts] = useState(() => PanitiaService.getPanitiaAccounts());
+  const [isAddingPanitia, setIsAddingPanitia] = useState(false);
+  const [newPanitia, setNewPanitia] = useState({
+    username: '',
+    password: '',
+    nama: '',
+    role: 'panitia',
+    divisi: 'Divisi Registrasi & Presensi',
+    assignedBooth: 'Pintu Masuk (Lobby Lt. 3)',
+    kontak: '',
+  });
+
+  // Panitia Tasks & Announcements State
+  const [tasks, setTasks] = useState(() => PanitiaService.getPanitiaTasks());
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: '',
+    location: 'Zona A - Galeri Lukis',
+    assignedTo: 'Samuel Siregar',
+    priority: 'Sedang',
+    category: 'Display Seni'
+  });
+
+  const [announcements, setAnnouncements] = useState(() => PanitiaService.getAnnouncements());
+  const [newAnnouncementText, setNewAnnouncementText] = useState('');
+  const [newAnnouncementTitle, setNewAnnouncementTitle] = useState('');
+
   // Attendance Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('Semua');
@@ -72,12 +116,125 @@ export default function AdminDashboard({
   const metrics = useMemo(() => {
     const total = attendances.length;
     const maba = attendances.filter(a => a.kategori === 'Mahasiswa Baru').length;
-    const mahasiswa = attendances.filter(a => a.kategori === 'Mahasiswa Polibatam').length;
     const uniqueIps = new Set(attendances.map(a => a.ip_address)).size;
-    return { total, maba, mahasiswa, uniqueIps };
-  }, [attendances]);
+    const activePanitia = panitiaAccounts.filter(p => p.status === 'active').length;
+    return { total, maba, uniqueIps, activePanitia };
+  }, [attendances, panitiaAccounts]);
 
-  // Export to CSV / Excel
+  // Entrance animations on mount
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.admin-header-banner',
+        { y: -30, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+
+      gsap.fromTo(
+        '.admin-metric-card',
+        { y: 25, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, stagger: 0.08, duration: 0.5, ease: 'back.out(1.5)', delay: 0.15 }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const isFirstTabRender = useRef(true);
+  useEffect(() => {
+    if (isFirstTabRender.current) {
+      isFirstTabRender.current = false;
+      return;
+    }
+    if (tabContentRef.current) {
+      gsap.fromTo(
+        tabContentRef.current,
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }
+      );
+    }
+  }, [activeTab]);
+
+  // === PANITIA ACCOUNTS ACTIONS ===
+  const handleAddPanitia = (e) => {
+    e.preventDefault();
+    if (!newPanitia.username || !newPanitia.password || !newPanitia.nama) return;
+
+    const updated = PanitiaService.addPanitiaAccount(newPanitia);
+    setPanitiaAccounts(updated);
+    setIsAddingPanitia(false);
+    setNewPanitia({
+      username: '',
+      password: '',
+      nama: '',
+      role: 'panitia',
+      divisi: 'Divisi Registrasi & Presensi',
+      assignedBooth: 'Pintu Masuk (Lobby Lt. 3)',
+      kontak: '',
+    });
+  };
+
+  const handleTogglePanitiaStatus = (id, currentStatus) => {
+    const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const updated = PanitiaService.updatePanitiaAccount(id, { status: nextStatus });
+    setPanitiaAccounts(updated);
+  };
+
+  const handleDeletePanitia = (id, nama) => {
+    if (confirm(`Yakin ingin menghapus akun panitia "${nama}"?`)) {
+      const updated = PanitiaService.deletePanitiaAccount(id);
+      setPanitiaAccounts(updated);
+    }
+  };
+
+  // === TASKS & ANNOUNCEMENTS ACTIONS ===
+  const handleToggleTask = (taskId) => {
+    const updated = PanitiaService.toggleTask(taskId);
+    setTasks(updated);
+  };
+
+  const handleAddTask = (e) => {
+    e.preventDefault();
+    if (!newTask.title) return;
+    const updated = PanitiaService.addTask(newTask);
+    setTasks(updated);
+    setIsAddingTask(false);
+    setNewTask({
+      title: '',
+      location: 'Zona A - Galeri Lukis',
+      assignedTo: panitiaAccounts[0]?.nama || 'Petugas',
+      priority: 'Sedang',
+      category: 'Display Seni'
+    });
+  };
+
+  const handleDeleteTask = (taskId) => {
+    const updated = PanitiaService.deleteTask(taskId);
+    setTasks(updated);
+  };
+
+  const handleAddAnnouncement = (e) => {
+    e.preventDefault();
+    if (!newAnnouncementTitle || !newAnnouncementText) return;
+    const updated = PanitiaService.addAnnouncement({
+      title: newAnnouncementTitle,
+      content: newAnnouncementText,
+      author: currentUser?.nama || 'Super Admin'
+    });
+    setAnnouncements(updated);
+    setNewAnnouncementTitle('');
+    setNewAnnouncementText('');
+  };
+
+  // === ARTWORK ACTIONS ===
+  const handleAddArtwork = async (e) => {
+    e.preventDefault();
+    await ArtworkService.addArtwork(newArtwork);
+    setIsAddingArt(false);
+    onRefreshData && onRefreshData();
+  };
+
+  // Export to CSV
   const handleExportCSV = () => {
     if (attendances.length === 0) {
       alert('Belum ada data presensi untuk diekspor.');
@@ -104,67 +261,62 @@ export default function AdminDashboard({
     link.setAttribute('download', `rekap_presensi_art_showcase_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-  };
-
-  // Submit New Artwork
-  const handleAddArtwork = async (e) => {
-    e.preventDefault();
-    if (!newArtwork.title.trim() || !newArtwork.artist.trim() || !newArtwork.description.trim()) {
-      alert('Lengkapi seluruh data karya wajib.');
-      return;
-    }
-
-    const booth = BOOTH_ZONES.find(b => b.id === newArtwork.boothId);
-    const payload = {
-      ...newArtwork,
-      boothName: booth ? booth.name : 'Student Centre Lt. 3',
-      tags: newArtwork.tags.split(',').map(t => t.trim()).filter(Boolean)
-    };
-
-    await ArtworkService.addArtwork(payload);
-    alert('Karya seni berhasil ditambahkan ke katalog!');
-    setIsAddingArt(false);
-    onRefreshData && onRefreshData();
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
       
-      {/* Header Banner Panitia */}
-      <div className="bg-[#121212] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro-xl relative overflow-hidden bg-retro-dots">
-        <div className="max-w-3xl space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-2 bg-[#FFE600] text-black px-3 py-1 rounded-lg text-xs font-black uppercase">
-            <ShieldCheck className="w-4 h-4 text-black" /> PORTAL RESMI PANITIA DIVISI SENI RUPA
+      {/* ================= HEADER BANNER ================= */}
+      <div className="admin-header-banner bg-[#121212] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden bg-retro-dots">
+        <div className="space-y-1.5 relative z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="bg-[#FF3388] text-white text-xs font-black px-3 py-0.5 rounded-lg border border-black uppercase shadow-retro-sm">
+              👑 SUPER ADMIN CONTROL PANEL
+            </span>
+            <span className="bg-[#FFE600] text-black font-mono text-xs font-black px-2.5 py-0.5 rounded border border-black">
+              Koordinator Utama
+            </span>
           </div>
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white">
-            Dashboard Kontrol & Rekap Presensi
+          <h1 className="font-display font-black text-2xl sm:text-4xl text-white">
+            Pusat Kontrol & Manajemen Panitia
           </h1>
-          <p className="text-neutral-300 text-xs sm:text-base font-medium">
-            Monitor log IP presensi pengunjung, kelola katalog karya pameran, dan atur status timeline rundown secara real-time.
+          <p className="text-xs sm:text-sm text-neutral-300 font-medium">
+            Kelola akun panitia, checklist logistik acara, jadwal shift, dan pantau master data pameran secara real-time.
           </p>
+        </div>
+
+        <div className="flex items-center gap-3 relative z-10 w-full md:w-auto">
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto"
+            >
+              <LogOut className="w-4 h-4 text-red-500" />
+              <span>Keluar (Logout)</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Metrics Counter Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="card-retro p-5 bg-white space-y-1">
+      {/* ================= SUMMARY STATS CARDS ================= */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
           <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-[#FF3388]" /> Total Pengunjung
+            <Shield className="w-3.5 h-3.5 text-[#FF3388]" /> Total Akun Panitia
           </span>
-          <div className="font-display font-black text-3xl text-black">{metrics.total}</div>
-          <span className="text-[10px] text-neutral-400 font-semibold">Tercatat di sistem</span>
+          <div className="font-display font-black text-3xl text-black">{panitiaAccounts.length} Akun</div>
+          <span className="text-[10px] text-green-600 font-bold">{metrics.activePanitia} Aktif bertugas</span>
         </div>
 
-        <div className="card-retro p-5 bg-white space-y-1">
+        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
           <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#FFE600]" /> Mahasiswa Baru (Maba)
+            <Users className="w-3.5 h-3.5 text-[#FFE600]" /> Pengunjung Terdaftar
           </span>
-          <div className="font-display font-black text-3xl text-[#FF3388]">{metrics.maba}</div>
-          <span className="text-[10px] text-neutral-400 font-semibold">Target utama pameran</span>
+          <div className="font-display font-black text-3xl text-[#FF3388]">{metrics.total} Orang</div>
+          <span className="text-[10px] text-neutral-400 font-semibold">{metrics.maba} Mahasiswa Baru</span>
         </div>
 
-        <div className="card-retro p-5 bg-white space-y-1">
+        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
           <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
             <Wifi className="w-3.5 h-3.5 text-[#00F0FF]" /> IP Address Unik
           </span>
@@ -172,378 +324,648 @@ export default function AdminDashboard({
           <span className="text-[10px] text-neutral-400 font-semibold">Validitas jaringan</span>
         </div>
 
-        <div className="card-retro p-5 bg-white space-y-1">
+        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
           <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Palette className="w-3.5 h-3.5 text-[#7B2CBF]" /> Total Karya
+            <Palette className="w-3.5 h-3.5 text-[#7B2CBF]" /> Total Karya Seni
           </span>
           <div className="font-display font-black text-3xl text-[#7B2CBF]">{artworks.length}</div>
-          <span className="text-[10px] text-neutral-400 font-semibold">Di Student Centre Lt 3</span>
+          <span className="text-[10px] text-neutral-400 font-semibold">Di Student Centre Lt. 3</span>
         </div>
       </div>
 
-      {/* Admin Nav Tabs */}
+      {/* ================= ADMIN NAVIGATION TABS ================= */}
       <div className="flex items-center gap-2 border-b-3 border-black pb-3 overflow-x-auto">
         <button
-          onClick={() => setActiveTab('attendance')}
-          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all ${
-            activeTab === 'attendance'
-              ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5'
+          onClick={() => setActiveTab('accounts')}
+          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'accounts'
+              ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Log Presensi & IP Pengunjung ({attendances.length})</span>
+          <span>Kelola Akun Panitia ({panitiaAccounts.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('logistics')}
+          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'logistics'
+              ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
+              : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
+          }`}
+        >
+          <ClipboardList className="w-4 h-4" />
+          <span>Kebutuhan & Logistik Panitia</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('master')}
+          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'master'
+              ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
+              : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          <span>Master Data Presensi & IP ({attendances.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('artworks')}
-          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all ${
+          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
             activeTab === 'artworks'
-              ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5'
+              ? 'bg-[#7B2CBF] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
           <Palette className="w-4 h-4" />
-          <span>Kelola Karya Seni ({artworks.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('rundown')}
-          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all ${
-            activeTab === 'rundown'
-              ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5'
-              : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          <span>Kontrol Sesi Rundown</span>
+          <span>Katalog Karya Seni ({artworks.length})</span>
         </button>
       </div>
 
-      {/* ================= TAB 1: ATTENDANCE & IP LOG TABLE ================= */}
-      {activeTab === 'attendance' && (
-        <div className="space-y-6">
-          
-          {/* Action Bar: Search, Category Filter, Export */}
-          <div className="bg-white border-3 border-black rounded-2xl p-4 sm:p-5 shadow-retro flex flex-col md:flex-row items-center justify-between gap-4">
-            
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
-              {/* Search */}
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari Nama, NIM, atau IP..."
-                  className="w-full pl-10 pr-4 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#00F0FF]"
-                />
+      {/* ================= DYNAMIC TAB CONTENTS ================= */}
+      <div ref={tabContentRef}>
+
+        {/* ================= TAB 1: KELOLA AKUN PANITIA ================= */}
+        {activeTab === 'accounts' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-black text-2xl text-black">
+                  Daftar Akun Panitia & Koordinator
+                </h3>
+                <p className="text-xs text-neutral-500 font-semibold">
+                  Atur hak akses login, divisi, dan penugasan booth panitia di lantai 3.
+                </p>
               </div>
 
-              {/* Category Filter */}
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-bold text-black focus:outline-none"
+              <button
+                onClick={() => setIsAddingPanitia(!isAddingPanitia)}
+                className="btn-retro-yellow text-xs sm:text-sm px-4 py-2.5 flex items-center gap-1.5 active:scale-95"
               >
-                <option value="Semua">Semua Kategori</option>
-                <option value="Mahasiswa Baru">Mahasiswa Baru</option>
-                <option value="Mahasiswa Polibatam">Mahasiswa Polibatam</option>
-                <option value="Dosen/Staff">Dosen/Staff</option>
-                <option value="Tamu Umum">Tamu Umum</option>
-              </select>
+                <UserPlus className="w-4 h-4" />
+                <span>{isAddingPanitia ? 'Tutup Form' : 'Tambah Panitia Baru'}</span>
+              </button>
             </div>
 
-            {/* Export Button */}
-            <button
-              onClick={handleExportCSV}
-              className="btn-retro-yellow text-xs sm:text-sm px-5 py-2.5 flex items-center gap-2 w-full md:w-auto justify-center"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-black" />
-              <span>Ekspor Rekap (CSV / Excel)</span>
-            </button>
+            {/* New Panitia Form */}
+            {isAddingPanitia && (
+              <form onSubmit={handleAddPanitia} className="card-retro p-6 bg-white space-y-4 animate-in zoom-in-95">
+                <h4 className="font-display font-black text-lg text-black border-b-2 border-neutral-200 pb-2 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-[#FF3388]" />
+                  <span>Formulir Tambah Akun Panitia Baru</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Nama Lengkap *</label>
+                    <input
+                      type="text"
+                      value={newPanitia.nama}
+                      onChange={(e) => setNewPanitia({ ...newPanitia, nama: e.target.value })}
+                      placeholder="Contoh: Budi Santoso"
+                      required
+                      className="input-retro text-xs sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Username Login *</label>
+                    <input
+                      type="text"
+                      value={newPanitia.username}
+                      onChange={(e) => setNewPanitia({ ...newPanitia, username: e.target.value })}
+                      placeholder="Contoh: panitia_stand1"
+                      required
+                      className="input-retro text-xs sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Password *</label>
+                    <input
+                      type="text"
+                      value={newPanitia.password}
+                      onChange={(e) => setNewPanitia({ ...newPanitia, password: e.target.value })}
+                      placeholder="Contoh: panitia123"
+                      required
+                      className="input-retro text-xs sm:text-sm font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Divisi Panitia</label>
+                    <select
+                      value={newPanitia.divisi}
+                      onChange={(e) => setNewPanitia({ ...newPanitia, divisi: e.target.value })}
+                      className="input-retro text-xs sm:text-sm bg-white"
+                    >
+                      <option value="Divisi Registrasi & Presensi">Divisi Registrasi & Presensi</option>
+                      <option value="Divisi Acara & Rundown">Divisi Acara & Rundown</option>
+                      <option value="Divisi Perlengkapan & Display">Divisi Perlengkapan & Display</option>
+                      <option value="Divisi Suvenir & Photobooth">Divisi Suvenir & Photobooth</option>
+                      <option value="Divisi Dokumentasi & Publikasi">Divisi Dokumentasi & Publikasi</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Penugasan Booth / Lokasi</label>
+                    <input
+                      type="text"
+                      value={newPanitia.assignedBooth}
+                      onChange={(e) => setNewPanitia({ ...newPanitia, assignedBooth: e.target.value })}
+                      placeholder="Contoh: Zona A - Galeri Lukis"
+                      className="input-retro text-xs sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">No. WhatsApp / Kontak</label>
+                    <input
+                      type="text"
+                      value={newPanitia.kontak}
+                      onChange={(e) => setNewPanitia({ ...newPanitia, kontak: e.target.value })}
+                      placeholder="Contoh: 0812-xxxx-xxxx"
+                      className="input-retro text-xs sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingPanitia(false)}
+                    className="btn-retro-white text-xs px-4 py-2"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-retro-yellow text-xs px-6 py-2"
+                  >
+                    Simpan Akun Panitia 💾
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Accounts Table */}
+            <div className="card-retro bg-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-[#FAF7EE] border-b-2 border-black font-display font-black text-black">
+                      <th className="py-3.5 px-4">Nama & Akun</th>
+                      <th className="py-3.5 px-4">Role / Peran</th>
+                      <th className="py-3.5 px-4">Divisi</th>
+                      <th className="py-3.5 px-4">Penugasan Stand</th>
+                      <th className="py-3.5 px-4">Kontak</th>
+                      <th className="py-3.5 px-4 text-center">Status</th>
+                      <th className="py-3.5 px-4 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200">
+                    {panitiaAccounts.map((acc) => (
+                      <tr key={acc.id} className="hover:bg-neutral-50 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-8 h-8 rounded-xl border border-black flex items-center justify-center font-black text-xs ${acc.avatarBg || 'bg-[#FFE600]'}`}>
+                              {acc.nama.charAt(0)}
+                            </div>
+                            <div>
+                              <strong className="font-bold text-black block">{acc.nama}</strong>
+                              <span className="font-mono text-[11px] text-neutral-500">@{acc.username}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded border border-black ${
+                            acc.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
+                          }`}>
+                            {acc.role === 'admin' ? '👑 SUPER ADMIN' : '📋 PANITIA'}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 font-semibold text-neutral-700">
+                          {acc.divisi}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-medium text-neutral-600">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-[#FF3388]" />
+                            {acc.assignedBooth}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 font-mono text-neutral-600">
+                          {acc.kontak || '-'}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center">
+                          <button
+                            onClick={() => handleTogglePanitiaStatus(acc.id, acc.status)}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold ${
+                              acc.status === 'active'
+                                ? 'bg-[#22C55E]/20 text-[#22C55E] border-black'
+                                : 'bg-neutral-200 text-neutral-500 border-neutral-400'
+                            }`}
+                          >
+                            {acc.status === 'active' ? '🟢 Aktif' : '🔴 Non-Aktif'}
+                          </button>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right">
+                          {acc.role !== 'admin' && (
+                            <button
+                              onClick={() => handleDeletePanitia(acc.id, acc.nama)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
+                              title="Hapus Akun"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
           </div>
+        )}
 
-          {/* Table Responsive Container */}
-          <div className="card-retro overflow-hidden bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-[#121212] text-white border-b-3 border-black font-display font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-4">No</th>
-                    <th className="py-3.5 px-4">Nama Lengkap</th>
-                    <th className="py-3.5 px-4">NIM / Identitas</th>
-                    <th className="py-3.5 px-4">Kategori</th>
-                    <th className="py-3.5 px-4">Program Studi</th>
-                    <th className="py-3.5 px-4 bg-neutral-900 text-[#00F0FF]">IP Address</th>
-                    <th className="py-3.5 px-4">Perangkat & OS</th>
-                    <th className="py-3.5 px-4">Waktu Check-in</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y-2 divide-neutral-200 font-medium">
-                  {filteredAttendances.length > 0 ? (
-                    filteredAttendances.map((att, idx) => (
-                      <tr key={att.id || idx} className="hover:bg-[#FFE600]/10 transition-colors">
-                        <td className="py-3 px-4 font-mono font-bold text-neutral-400">{idx + 1}</td>
+        {/* ================= TAB 2: KEBUTUHAN & LOGISTIK PANITIA ================= */}
+        {activeTab === 'logistics' && (
+          <div className="space-y-8">
+            
+            {/* 1. Broadcast Announcement Bar */}
+            <div className="card-retro p-6 bg-white space-y-4">
+              <h3 className="font-display font-black text-xl text-black flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-[#FF3388]" />
+                <span>Broadcast Pengumuman Internal Panitia</span>
+              </h3>
+
+              <form onSubmit={handleAddAnnouncement} className="space-y-3">
+                <input
+                  type="text"
+                  value={newAnnouncementTitle}
+                  onChange={(e) => setNewAnnouncementTitle(e.target.value)}
+                  placeholder="Judul Pengumuman (Contoh: Briefing Evaluasi Sesi Siang)..."
+                  required
+                  className="input-retro text-xs sm:text-sm font-bold"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newAnnouncementText}
+                    onChange={(e) => setNewAnnouncementText(e.target.value)}
+                    placeholder="Isi pesan broadcast untuk seluruh panitia..."
+                    required
+                    className="input-retro text-xs sm:text-sm flex-1"
+                  />
+                  <button type="submit" className="btn-retro-pink px-5 py-2 text-xs sm:text-sm flex items-center gap-1.5 shrink-0">
+                    <Send className="w-4 h-4" />
+                    <span>Kirim Broadcast</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Announcements List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                {announcements.map((ann) => (
+                  <div key={ann.id} className="p-3.5 bg-[#FAF7EE] border-2 border-black rounded-2xl space-y-1">
+                    <div className="flex items-center justify-between text-xs font-black">
+                      <span className="text-black">{ann.title}</span>
+                      <span className="font-mono text-[10px] text-neutral-500">{ann.waktu}</span>
+                    </div>
+                    <p className="text-xs text-neutral-700">{ann.content}</p>
+                    <span className="text-[10px] text-neutral-500 font-semibold block pt-1">Oleh: {ann.author}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Tasks & Logistics Checklist */}
+            <div className="card-retro p-6 sm:p-8 bg-white space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display font-black text-xl text-black flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-[#7B2CBF]" />
+                  <span>Checklist Kebutuhan & Tugas Lapangan</span>
+                </h3>
+                <button
+                  onClick={() => setIsAddingTask(!isAddingTask)}
+                  className="btn-retro-yellow text-xs px-3 py-1.5 flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Tambah Tugas</span>
+                </button>
+              </div>
+
+              {isAddingTask && (
+                <form onSubmit={handleAddTask} className="p-4 bg-[#FAF7EE] border-2 border-black rounded-2xl space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                      placeholder="Nama Tugas / Kebutuhan..."
+                      required
+                      className="input-retro text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={newTask.location}
+                      onChange={(e) => setNewTask({ ...newTask, location: e.target.value })}
+                      placeholder="Lokasi (Contoh: Zona A)"
+                      required
+                      className="input-retro text-xs"
+                    />
+                    <select
+                      value={newTask.assignedTo}
+                      onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
+                      className="input-retro text-xs bg-white"
+                    >
+                      {panitiaAccounts.map(p => (
+                        <option key={p.id} value={p.nama}>{p.nama} ({p.divisi.split(' ')[1]})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => setIsAddingTask(false)} className="btn-retro-white text-xs px-3 py-1">Batal</button>
+                    <button type="submit" className="btn-retro-pink text-xs px-4 py-1">Simpan Tugas</button>
+                  </div>
+                </form>
+              )}
+
+              <div className="space-y-2">
+                {tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className={`p-3.5 rounded-2xl border-2 border-black flex items-center justify-between gap-3 ${
+                      task.isCompleted ? 'bg-[#FAF7EE] opacity-75' : 'bg-white shadow-retro-sm'
+                    }`}
+                  >
+                    <div 
+                      onClick={() => handleToggleTask(task.id)}
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                    >
+                      <div className={`p-1 rounded-lg border border-black ${task.isCompleted ? 'bg-[#22C55E] text-white' : 'bg-white'}`}>
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h5 className={`font-display font-bold text-sm text-black ${task.isCompleted ? 'line-through text-neutral-500' : ''}`}>
+                          {task.title}
+                        </h5>
+                        <p className="text-xs text-neutral-500 font-semibold">
+                          Lokasi: {task.location} • Penanggung Jawab: <strong>{task.assignedTo}</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-black bg-[#FFE600]">
+                        {task.category || 'Logistik'}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="p-1 text-neutral-400 hover:text-red-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Shift Schedule */}
+            <div className="card-retro p-6 sm:p-8 bg-white space-y-4">
+              <h3 className="font-display font-black text-xl text-black flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#00F0FF]" />
+                <span>Jadwal Shift Jaga Stand & Gate Panitia</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {INITIAL_PANITIA_SHIFTS.map((shift) => (
+                  <div key={shift.id} className="p-5 bg-[#FAF7EE] border-2 border-black rounded-2xl space-y-3">
+                    <div>
+                      <span className="font-mono text-xs font-bold bg-[#FFE600] px-2 py-0.5 rounded border border-black">
+                        {shift.waktu}
+                      </span>
+                      <h4 className="font-display font-black text-base text-black mt-2">{shift.namaShift}</h4>
+                    </div>
+
+                    <div className="space-y-1.5 pt-2 border-t border-neutral-300 text-xs">
+                      {shift.petugas.map((ptg, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <span className="font-bold text-black">{ptg.nama}</span>
+                          <span className="text-[10px] text-neutral-500">{ptg.role}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ================= TAB 3: MASTER DATA PRESENSI & IP ================= */}
+        {activeTab === 'master' && (
+          <div className="space-y-6">
+            
+            {/* Actions Bar */}
+            <div className="card-retro p-4 sm:p-5 bg-white flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari Nama, NIM, atau IP..."
+                    className="w-full pl-10 pr-4 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-medium focus:outline-none"
+                  />
+                </div>
+
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="w-full sm:w-auto px-3 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-bold"
+                >
+                  <option value="Semua">Semua Kategori</option>
+                  <option value="Mahasiswa Baru">Mahasiswa Baru</option>
+                  <option value="Mahasiswa Polibatam">Mahasiswa Polibatam</option>
+                  <option value="Dosen/Staff">Dosen/Staff</option>
+                  <option value="Umum">Umum</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleExportCSV}
+                className="btn-retro-yellow text-xs sm:text-sm px-4 py-2.5 flex items-center gap-2 shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                <span>Unduh Rekap CSV / Excel</span>
+              </button>
+            </div>
+
+            {/* Attendance Table */}
+            <div className="card-retro bg-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-[#FAF7EE] border-b-2 border-black font-display font-black text-black">
+                      <th className="py-3.5 px-4">Nama Lengkap</th>
+                      <th className="py-3.5 px-4">NIM / Identitas</th>
+                      <th className="py-3.5 px-4">Kategori</th>
+                      <th className="py-3.5 px-4">Program Studi</th>
+                      <th className="py-3.5 px-4">IP Address Log</th>
+                      <th className="py-3.5 px-4">Perangkat</th>
+                      <th className="py-3.5 px-4">Waktu</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200">
+                    {filteredAttendances.map((att) => (
+                      <tr key={att.id} className="hover:bg-neutral-50">
+                        <td className="py-3 px-4 font-bold text-black">{att.nama_lengkap}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-neutral-700">{att.identifier || '-'}</td>
                         <td className="py-3 px-4">
-                          <strong className="font-display font-bold text-sm text-black block">{att.nama_lengkap}</strong>
-                          {att.catatan && <span className="text-[10px] text-neutral-500 italic">"{att.catatan}"</span>}
-                        </td>
-                        <td className="py-3 px-4 font-mono font-bold text-black">{att.identifier || '-'}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black border uppercase ${
-                            att.kategori === 'Mahasiswa Baru' 
-                              ? 'bg-[#FF3388]/20 text-[#FF3388] border-[#FF3388]'
-                              : 'bg-[#FFE600]/30 text-black border-black'
-                          }`}>
+                          <span className="bg-[#FAF7EE] px-2 py-0.5 rounded border border-black text-[10px] font-bold">
                             {att.kategori}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-neutral-700">{att.jurusan_prodi || 'Polibatam'}</td>
-                        <td className="py-3 px-4 font-mono font-bold bg-[#00F0FF]/15 text-black">
-                          {att.ip_address}
-                        </td>
-                        <td className="py-3 px-4 text-neutral-600">
-                          <span className="flex items-center gap-1">
-                            <Smartphone className="w-3.5 h-3.5 text-neutral-400" />
-                            {att.device_type || 'Desktop'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-neutral-500 font-mono text-[11px] whitespace-nowrap">
-                          {att.waktu_kehadiran || 'Hari ini'}
-                        </td>
+                        <td className="py-3 px-4 text-neutral-600">{att.jurusan_prodi || 'Polibatam'}</td>
+                        <td className="py-3 px-4 font-mono font-bold bg-[#00F0FF]/15 text-black">{att.ip_address}</td>
+                        <td className="py-3 px-4 text-neutral-500">{att.device_type || 'Desktop'}</td>
+                        <td className="py-3 px-4 font-mono text-[11px] text-neutral-500">{att.waktu_kehadiran}</td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="8" className="py-12 text-center text-neutral-500">
-                        Tidak ada data presensi yang sesuai kriteria pencarian.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* ================= TAB 2: ARTWORK MANAGEMENT ================= */}
-      {activeTab === 'artworks' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display font-black text-2xl text-black">
-              Daftar Karya Seni Pameran
-            </h3>
-            <button
-              onClick={() => setIsAddingArt(!isAddingArt)}
-              className="btn-retro-pink text-xs sm:text-sm px-4 py-2.5 flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{isAddingArt ? 'Tutup Form' : 'Tambah Karya Baru'}</span>
-            </button>
-          </div>
-
-          {/* New Artwork Form */}
-          {isAddingArt && (
-            <div className="card-retro p-6 sm:p-8 bg-white space-y-6 animate-in slide-in-from-top-2">
-              <h4 className="font-display font-black text-xl text-black border-b-2 border-neutral-200 pb-2">
-                Input Data Karya Seni Baru
-              </h4>
-
-              <form onSubmit={handleAddArtwork} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="block font-bold text-xs">Judul Karya *</label>
-                  <input
-                    type="text"
-                    value={newArtwork.title}
-                    onChange={(e) => setNewArtwork({ ...newArtwork, title: e.target.value })}
-                    required
-                    placeholder="Contoh: Metamorfosis Warna Polibatam"
-                    className="input-retro text-xs py-2"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-xs">Nama Seniman / Anggota *</label>
-                  <input
-                    type="text"
-                    value={newArtwork.artist}
-                    onChange={(e) => setNewArtwork({ ...newArtwork, artist: e.target.value })}
-                    required
-                    placeholder="Contoh: Muhammad Rangga"
-                    className="input-retro text-xs py-2"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-xs">Kategori Karya</label>
-                  <select
-                    value={newArtwork.category}
-                    onChange={(e) => setNewArtwork({ ...newArtwork, category: e.target.value })}
-                    className="input-retro text-xs py-2 bg-white"
-                  >
-                    <option value="Lukis">Lukis</option>
-                    <option value="Kerajinan">Kerajinan</option>
-                    <option value="Sketsa & Ilustrasi">Sketsa & Ilustrasi</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-xs">Medium & Bahan</label>
-                  <input
-                    type="text"
-                    value={newArtwork.medium}
-                    onChange={(e) => setNewArtwork({ ...newArtwork, medium: e.target.value })}
-                    placeholder="Contoh: Acrylic & Resin on Canvas"
-                    className="input-retro text-xs py-2"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-xs">Lokasi Booth (Lt. 3)</label>
-                  <select
-                    value={newArtwork.boothId}
-                    onChange={(e) => setNewArtwork({ ...newArtwork, boothId: e.target.value })}
-                    className="input-retro text-xs py-2 bg-white"
-                  >
-                    {BOOTH_ZONES.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
                     ))}
-                  </select>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ================= TAB 4: KATALOG KARYA SENI ================= */}
+        {activeTab === 'artworks' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-black text-2xl text-black">Daftar Karya Seni Pameran</h3>
+              <button
+                onClick={() => setIsAddingArt(!isAddingArt)}
+                className="btn-retro-pink text-xs sm:text-sm px-4 py-2.5 flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isAddingArt ? 'Tutup Form' : 'Tambah Karya Baru'}</span>
+              </button>
+            </div>
+
+            {/* New Artwork Form */}
+            {isAddingArt && (
+              <form onSubmit={handleAddArtwork} className="card-retro p-6 bg-white space-y-4">
+                <h4 className="font-display font-bold text-lg text-black border-b-2 border-neutral-200 pb-2">
+                  Formulir Tambah Karya Baru
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Judul Karya *</label>
+                    <input
+                      type="text"
+                      value={newArtwork.title}
+                      onChange={(e) => setNewArtwork({ ...newArtwork, title: e.target.value })}
+                      placeholder="Contoh: Senandung Hang Nadim"
+                      required
+                      className="input-retro text-xs sm:text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Nama Seniman *</label>
+                    <input
+                      type="text"
+                      value={newArtwork.artist}
+                      onChange={(e) => setNewArtwork({ ...newArtwork, artist: e.target.value })}
+                      placeholder="Contoh: Rangga & Tim Seni Rupa"
+                      required
+                      className="input-retro text-xs sm:text-sm"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="block font-bold text-xs">URL Foto Karya (Supabase Storage / Image URL) *</label>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-black">URL Gambar *</label>
                   <input
                     type="url"
                     value={newArtwork.imageUrl}
                     onChange={(e) => setNewArtwork({ ...newArtwork, imageUrl: e.target.value })}
+                    placeholder="https://..."
                     required
-                    className="input-retro text-xs py-2 font-mono"
+                    className="input-retro text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="block font-bold text-xs">Makna & Filosofi Karya *</label>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-black">Deskripsi & Filosofi *</label>
                   <textarea
                     rows="3"
                     value={newArtwork.description}
                     onChange={(e) => setNewArtwork({ ...newArtwork, description: e.target.value })}
+                    placeholder="Jelaskan makna di balik karya..."
                     required
-                    placeholder="Jelaskan pesan dan cerita di balik pembuatan karya seni ini..."
-                    className="input-retro text-xs py-2 resize-none"
+                    className="input-retro text-xs sm:text-sm resize-none"
                   ></textarea>
                 </div>
 
-                <div className="sm:col-span-2 pt-2">
-                  <button type="submit" className="btn-retro-yellow w-full py-3 text-sm">
-                    Simpan Karya ke Katalog ✨
-                  </button>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setIsAddingArt(false)} className="btn-retro-white text-xs px-4 py-2">Batal</button>
+                  <button type="submit" className="btn-retro-yellow text-xs px-6 py-2">Simpan ke Katalog</button>
                 </div>
               </form>
+            )}
+
+            {/* Artworks List Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {artworks.map((art) => (
+                <div key={art.id} className="card-retro p-4 bg-white space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden border-2 border-black bg-neutral-800 flex items-center justify-center">
+                      <img src={art.imageUrl} alt={art.title} className="w-full h-full object-contain" />
+                      <span className="absolute top-2 left-2 bg-[#FFE600] text-black text-[10px] font-black px-2 py-0.5 rounded border border-black">
+                        {art.category}
+                      </span>
+                    </div>
+                    <h4 className="font-display font-bold text-base text-black line-clamp-1">{art.title}</h4>
+                    <p className="text-xs text-neutral-500 font-semibold">Oleh: {art.artist}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#7B2CBF]">{art.boothName?.split('-')[0]}</span>
+                    <button
+                      onClick={async () => {
+                        if (confirm(`Hapus karya "${art.title}"?`)) {
+                          await ArtworkService.deleteArtwork(art.id);
+                          onRefreshData && onRefreshData();
+                        }
+                      }}
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
 
-          {/* Artwork Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {artworks.map((art) => (
-              <div key={art.id} className="card-retro p-4 bg-white flex flex-col justify-between space-y-3">
-                <div className="space-y-2">
-                  <img
-                    src={art.imageUrl}
-                    alt={art.title}
-                    className="w-full h-36 object-cover rounded-xl border-2 border-black"
-                  />
-                  <div>
-                    <span className="bg-[#FFE600] text-black text-[10px] font-black px-2 py-0.5 rounded border border-black uppercase">
-                      {art.category}
-                    </span>
-                    <h4 className="font-display font-black text-base text-black mt-1 line-clamp-1">
-                      {art.title}
-                    </h4>
-                    <p className="text-xs text-neutral-600">Oleh: <strong>{art.artist}</strong></p>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-neutral-200 flex items-center justify-between text-xs">
-                  <span className="text-[#7B2CBF] font-bold">{art.boothName?.split('-')[0]}</span>
-                  <span className="text-neutral-500">❤️ {art.likesCount} Likes</span>
-                </div>
-              </div>
-            ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ================= TAB 3: RUNDOWN CONTROLLER ================= */}
-      {activeTab === 'rundown' && (
-        <div className="space-y-6">
-          <div className="border-b-2 border-neutral-200 pb-3">
-            <h3 className="font-display font-black text-2xl text-black">
-              Kontroler Status Live Sesi Acara
-            </h3>
-            <p className="text-xs text-neutral-500">
-              Ubah status sesi kegiatan agar status <strong>"🔴 LIVE NOW"</strong> pada homepage dan rundown page terupdate secara real-time untuk pengunjung.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {rundowns.map((item) => (
-              <div
-                key={item.id}
-                className="card-retro p-5 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-xs bg-[#FFE600] px-2 py-0.5 rounded border border-black">
-                      {item.time} WIB
-                    </span>
-                    <span className="text-xs text-neutral-500 font-bold">{item.location}</span>
-                  </div>
-                  <h4 className="font-display font-black text-lg text-black">{item.title}</h4>
-                  <p className="text-xs text-neutral-600">{item.speaker}</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onUpdateRundownStatus(item.id, 'ongoing')}
-                    className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs transition-all ${
-                      item.status === 'ongoing'
-                        ? 'bg-[#FF3388] text-white border-black shadow-retro-sm'
-                        : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-                    }`}
-                  >
-                    🔴 Set Live Now
-                  </button>
-                  <button
-                    onClick={() => onUpdateRundownStatus(item.id, 'completed')}
-                    className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs transition-all ${
-                      item.status === 'completed'
-                        ? 'bg-[#22C55E] text-white border-black shadow-retro-sm'
-                        : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-                    }`}
-                  >
-                    ✅ Selesai
-                  </button>
-                  <button
-                    onClick={() => onUpdateRundownStatus(item.id, 'upcoming')}
-                    className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs transition-all ${
-                      item.status === 'upcoming'
-                        ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm'
-                        : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-                    }`}
-                  >
-                    ⏳ Reset
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
     </div>
   );

@@ -5,7 +5,11 @@ import {
   INITIAL_GUESTBOOKS, 
   RUNDOWN_SCHEDULE, 
   BOOTH_ZONES,
-  EVENT_INFO 
+  EVENT_INFO,
+  INITIAL_PANITIA_ACCOUNTS,
+  INITIAL_PANITIA_TASKS,
+  INITIAL_PANITIA_SHIFTS,
+  INITIAL_PANITIA_ANNOUNCEMENTS
 } from '../data/mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -21,13 +25,19 @@ export const apiClient = axios.create({
 });
 
 // Helper: Local Storage Keys
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   ATTENDANCES: 'senrup_attendances_v1',
   ARTWORKS: 'senrup_artworks_v1',
   LIKED_ARTWORKS: 'senrup_liked_artworks_v1',
   RUNDOWNS: 'senrup_rundowns_v1',
   GUESTBOOKS: 'senrup_guestbooks_v1',
   MY_TICKET: 'senrup_my_attendance_ticket_v1',
+  AUTH_USER: 'senrup_auth_user_v1',
+  PANITIA_ACCOUNTS: 'senrup_panitia_accounts_v1',
+  PANITIA_TASKS: 'senrup_panitia_tasks_v1',
+  PANITIA_ANNOUNCEMENTS: 'senrup_panitia_announcements_v1',
+  CHECKED_IN_TICKETS: 'senrup_checked_in_tickets_v1',
+  SOUVENIR_CLAIMS: 'senrup_souvenir_claims_v1'
 };
 
 // Initialize LocalStorage with mock data if not existing
@@ -47,9 +57,25 @@ const initStorage = () => {
   if (!localStorage.getItem(STORAGE_KEYS.LIKED_ARTWORKS)) {
     localStorage.setItem(STORAGE_KEYS.LIKED_ARTWORKS, JSON.stringify([]));
   }
+  if (!localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS)) {
+    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(INITIAL_PANITIA_ACCOUNTS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS)) {
+    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(INITIAL_PANITIA_TASKS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS)) {
+    localStorage.setItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS, JSON.stringify(INITIAL_PANITIA_ANNOUNCEMENTS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS)) {
+    localStorage.setItem(STORAGE_KEYS.CHECKED_IN_TICKETS, JSON.stringify(['att-1', 'att-2']));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS)) {
+    localStorage.setItem(STORAGE_KEYS.SOUVENIR_CLAIMS, JSON.stringify(['att-1']));
+  }
 };
 
 initStorage();
+
 
 /**
  * Deteksi IP dan Device Client secara pintar
@@ -263,3 +289,194 @@ export const GuestbookService = {
     return newEntry;
   }
 };
+
+/**
+ * Service Autentikasi (Super Admin & Panitia)
+ */
+export const AuthService = {
+  login(username, password) {
+    const accounts = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
+    const user = accounts.find(
+      (acc) => acc.username.trim().toLowerCase() === username.trim().toLowerCase() && acc.password === password
+    );
+
+    if (!user) {
+      return { success: false, message: 'Username atau password tidak cocok!' };
+    }
+
+    if (user.status !== 'active') {
+      return { success: false, message: 'Akun ini sedang dinonaktifkan oleh Koordinator.' };
+    }
+
+    // Save session
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    return { success: true, user };
+  },
+
+  logout() {
+    localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+  },
+
+  getCurrentUser() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }
+};
+
+/**
+ * Service Khusus Panitia & Admin Portal
+ */
+export const PanitiaService = {
+  // === 1. TIKET & SCAN QR CODE ===
+  verifyTicket(query) {
+    if (!query) return null;
+    const cleanQ = query.trim().toLowerCase();
+    const attendances = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTENDANCES) || '[]');
+    const checkedInList = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS) || '[]');
+    const souvenirList = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS) || '[]');
+
+    const match = attendances.find(
+      (a) =>
+        (a.id && a.id.toLowerCase() === cleanQ) ||
+        (a.identifier && a.identifier.toLowerCase() === cleanQ) ||
+        (a.nama_lengkap && a.nama_lengkap.toLowerCase().includes(cleanQ)) ||
+        (a.ip_address && a.ip_address.toLowerCase() === cleanQ)
+    );
+
+    if (!match) return null;
+
+    return {
+      ...match,
+      isCheckedIn: checkedInList.includes(match.id),
+      isSouvenirClaimed: souvenirList.includes(match.id),
+    };
+  },
+
+  toggleCheckIn(ticketId) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS) || '[]');
+    let updated;
+    if (list.includes(ticketId)) {
+      updated = list.filter((id) => id !== ticketId);
+    } else {
+      updated = [...list, ticketId];
+    }
+    localStorage.setItem(STORAGE_KEYS.CHECKED_IN_TICKETS, JSON.stringify(updated));
+    return updated.includes(ticketId);
+  },
+
+  toggleSouvenir(ticketId) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS) || '[]');
+    let updated;
+    if (list.includes(ticketId)) {
+      updated = list.filter((id) => id !== ticketId);
+    } else {
+      updated = [...list, ticketId];
+    }
+    localStorage.setItem(STORAGE_KEYS.SOUVENIR_CLAIMS, JSON.stringify(updated));
+    return updated.includes(ticketId);
+  },
+
+  // === 2. KEBUTUHAN PESERTA ===
+  getParticipantNeeds() {
+    const attendances = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTENDANCES) || '[]');
+    const checkedInList = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_IN_TICKETS) || '[]');
+    const souvenirList = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUVENIR_CLAIMS) || '[]');
+
+    return attendances.map((att) => ({
+      ...att,
+      isCheckedIn: checkedInList.includes(att.id),
+      isSouvenirClaimed: souvenirList.includes(att.id),
+      hasPassCard: true,
+      hasBooklet: checkedInList.includes(att.id),
+      hasPhotoboothAccess: att.kategori === 'Mahasiswa Baru' || souvenirList.includes(att.id),
+    }));
+  },
+
+  // === 3. AKUN PANITIA (ADMIN ONLY) ===
+  getPanitiaAccounts() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
+  },
+
+  addPanitiaAccount(newAcc) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
+    const colors = ['bg-[#FF3388]', 'bg-[#FFE600]', 'bg-[#00F0FF]', 'bg-[#7B2CBF]', 'bg-[#22C55E]'];
+    const created = {
+      id: 'user-panitia-' + Date.now(),
+      status: 'active',
+      avatarBg: colors[Math.floor(Math.random() * colors.length)],
+      ...newAcc,
+    };
+    list.push(created);
+    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(list));
+    return list;
+  },
+
+  updatePanitiaAccount(id, updatedData) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
+    const updated = list.map((acc) => (acc.id === id ? { ...acc, ...updatedData } : acc));
+    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(updated));
+    return updated;
+  },
+
+  deletePanitiaAccount(id) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ACCOUNTS) || '[]');
+    const filtered = list.filter((acc) => acc.id !== id);
+    localStorage.setItem(STORAGE_KEYS.PANITIA_ACCOUNTS, JSON.stringify(filtered));
+    return filtered;
+  },
+
+  // === 4. TUGAS & LOGISTIK PANITIA ===
+  getPanitiaTasks() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
+  },
+
+  toggleTask(id) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
+    const updated = list.map((task) => (task.id === id ? { ...task, isCompleted: !task.isCompleted } : task));
+    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(updated));
+    return updated;
+  },
+
+  addTask(newTask) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
+    const created = {
+      id: 'task-' + Date.now(),
+      isCompleted: false,
+      priority: newTask.priority || 'Sedang',
+      ...newTask,
+    };
+    list.unshift(created);
+    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(list));
+    return list;
+  },
+
+  deleteTask(id) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_TASKS) || '[]');
+    const filtered = list.filter((t) => t.id !== id);
+    localStorage.setItem(STORAGE_KEYS.PANITIA_TASKS, JSON.stringify(filtered));
+    return filtered;
+  },
+
+  // === 5. PENGUMUMAN INTERNAL ===
+  getAnnouncements() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS) || '[]');
+  },
+
+  addAnnouncement(newAnn) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS) || '[]');
+    const created = {
+      id: 'ann-' + Date.now(),
+      waktu: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+      isPinned: false,
+      ...newAnn,
+    };
+    list.unshift(created);
+    localStorage.setItem(STORAGE_KEYS.PANITIA_ANNOUNCEMENTS, JSON.stringify(list));
+    return list;
+  },
+};
+

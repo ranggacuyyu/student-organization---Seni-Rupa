@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { X, Heart, Sparkles, MapPin, User, Layers, Maximize2, Tag, Calendar } from 'lucide-react';
 
 export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked, onGoToBooth }) {
+  const modalBoxRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && modalBoxRef.current) {
+      gsap.fromTo(
+        modalBoxRef.current,
+        { scale: 0.85, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.6)' }
+      );
+    }
+  }, [isOpen, artwork?.id]);
+
   if (!isOpen || !artwork) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto animate-in fade-in">
-      <div className="relative w-full max-w-4xl my-auto bg-[#FAF7EE] border-3 border-black rounded-3xl shadow-retro-xl overflow-hidden animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
+      <div 
+        ref={modalBoxRef}
+        className="relative w-full max-w-4xl my-auto bg-[#FAF7EE] border-3 border-black rounded-3xl shadow-retro-xl overflow-hidden"
+      >
         
         {/* Top Bar Ribbon */}
         <div className="bg-[#FFE600] border-b-3 border-black px-6 py-3.5 flex items-center justify-between">
@@ -114,7 +130,7 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
             <div className="pt-4 border-t-2 border-dashed border-neutral-300 flex items-center gap-3">
               <button
                 onClick={() => onLike(artwork.id)}
-                className={`flex-1 flex items-center justify-center gap-2 font-display font-bold text-sm py-3 px-4 rounded-xl border-3 border-black shadow-retro transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 font-display font-bold text-sm py-3 px-4 rounded-xl border-3 border-black shadow-retro transition-all active:scale-95 ${
                   isLiked
                     ? 'bg-[#FF3388] text-white shadow-retro-lg -translate-y-0.5'
                     : 'bg-white text-black hover:bg-neutral-100 hover:-translate-y-0.5'
@@ -133,7 +149,7 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
                     onClose();
                     onGoToBooth(artwork.boothId);
                   }}
-                  className="btn-retro-cyan px-4 py-3 flex items-center gap-1.5 text-xs sm:text-sm"
+                  className="btn-retro-cyan px-4 py-3 flex items-center gap-1.5 text-xs sm:text-sm active:scale-95"
                   title="Lihat Titik Booth di Denah Lt. 3"
                 >
                   <MapPin className="w-4 h-4" /> Lihat di Denah
@@ -149,3 +165,4 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
     </div>
   );
 }
+
