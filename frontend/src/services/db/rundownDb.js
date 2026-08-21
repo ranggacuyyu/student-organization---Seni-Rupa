@@ -2,10 +2,12 @@
  * ⏰ Rundown & Timeline Acara Database Service
  * Sesuai Spesifikasi: BLUEPRINT_ART_SHOWCASE.md (Tabel: rundowns)
  */
+import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { RUNDOWN_SCHEDULE } from '../../data/mockData';
 
 const LOCAL_STORAGE_KEY = 'senrup_rundowns_v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const getLocalRundowns = () => {
   try {
@@ -29,6 +31,18 @@ export const RundownDb = {
    * Ambil jadwal kegiatan rundown
    */
   async getRundowns() {
+    // 1. Coba dari Laravel REST API
+    try {
+      const res = await axios.get(`${API_BASE_URL}/rundown`, { timeout: 4000 });
+      if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        saveLocalRundowns(res.data.data);
+        return res.data.data;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API fetch rundowns failed, fallback to Supabase/Local:', apiErr.message);
+    }
+
+    // 2. Coba dari Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -66,6 +80,22 @@ export const RundownDb = {
     const updated = list.map((item) => (item.id === id ? { ...item, status: newStatus } : item));
     saveLocalRundowns(updated);
 
+    // 1. Coba via Laravel REST API
+    try {
+      const res = await axios.patch(
+        `${API_BASE_URL}/rundown/${id}/status`,
+        { status: newStatus },
+        { timeout: 4000 }
+      );
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        saveLocalRundowns(res.data.data);
+        return res.data.data;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API update rundown status failed, fallback:', apiErr.message);
+    }
+
+    // 2. Coba via Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         await supabase

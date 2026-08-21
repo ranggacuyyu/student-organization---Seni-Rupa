@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import RetroTicketModal from './components/ui/RetroTicketModal';
 import ArtworkModal from './components/ui/ArtworkModal';
+import LockedAccessGate from './components/ui/LockedAccessGate';
 
 import Home from './pages/Home';
 import AttendancePage from './pages/AttendancePage';
@@ -39,8 +40,6 @@ export default function App() {
     if (validTabs.includes(hash)) return hash;
     return localStorage.getItem('senrup_active_tab') || 'home';
   });
-
-
 
   // Synchronous initial state from localStorage to prevent re-render flashing
   const [artworks, setArtworks] = useState(() => {
@@ -86,6 +85,31 @@ export default function App() {
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
   const [targetBoothId, setTargetBoothId] = useState('booth-a');
+
+  // Calculate if visitor is verified (or is Panitia / Super Admin)
+  const isVerified = useMemo(() => {
+    if (currentUser) return true; // Panitia & Super Admin always have full access
+
+    const checkedInList = JSON.parse(localStorage.getItem('senrup_checked_in_tickets_v1') || '[]');
+
+    // 1. Check if myTicket is in checkedInList
+    if (myTicket && myTicket.id && checkedInList.includes(myTicket.id)) {
+      return true;
+    }
+    if (myTicket && (myTicket.isCheckedIn || myTicket.is_checked_in || myTicket.status === 'checked_in')) {
+      return true;
+    }
+
+    // 2. Check if any attendance with the user's IP or ticket ID is checked in
+    if (myTicket && myTicket.ip_address) {
+      const match = attendances.find(a => (a.ip_address && a.ip_address === myTicket.ip_address) || (a.id && a.id === myTicket.id));
+      if (match && (checkedInList.includes(match.id) || match.isCheckedIn || match.is_checked_in)) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [currentUser, myTicket, attendances]);
 
   // Sync hash routing and activeTab
   const handleSetActiveTab = (tab) => {
@@ -149,15 +173,38 @@ export default function App() {
     }
   };
 
-  // Handle Like Artwork
-  const handleLikeArtwork = async (artworkId) => {
-    const result = await ArtworkService.toggleLike(artworkId);
-    setArtworks(result.updatedList);
-    setLikedIds(ArtworkService.getLikedIds());
+  // Handle Like Artwork (Optimistic UI Update: Langsung berubah di UI, data disinkronkan di background)
+  const handleLikeArtwork = (artworkId) => {
+    const isCurrentlyLiked = likedIds.includes(artworkId);
+    const delta = isCurrentlyLiked ? -1 : 1; 
+    const nextLikedIds = isCurrentlyLiked
+      ? likedIds.filter(id => id !== artworkId)
+      : [...likedIds, artworkId];
+
+    // 1. Update state secara instan (0ms) agar warna & status like langsung berubah di UI
+    setLikedIds(nextLikedIds);
+
+    setArtworks(prevArtworks =>
+      prevArtworks.map(art => {
+        if (art.id === artworkId) {
+          return {
+            ...art,
+            likesCount: Math.max(0, (art.likesCount || 0) + delta),
+          };
+        }
+        return art;
+      })
+    );
+
     if (selectedArtwork && selectedArtwork.id === artworkId) {
-      const updatedItem = result.updatedList.find(a => a.id === artworkId);
-      if (updatedItem) setSelectedArtwork(updatedItem);
+      setSelectedArtwork(prev => prev ? {
+        ...prev,
+        likesCount: Math.max(0, (prev.likesCount || 0) + delta),
+      } : prev);
     }
+
+    // 2. Jalankan background sync ke database & backend tanpa memblokir antarmuka
+    ArtworkService.toggleLike(artworkId);
   };
 
   // Handle Select Artwork Modal
@@ -199,8 +246,10 @@ export default function App() {
         ticketCount={myTicket ? 1 : 0}
         currentUser={currentUser}
         onLogout={handleLogout}
+        isVerified={isVerified}
       />
 
+      
       {/* Main Page Routing */}
       <main className="flex-1">
         {activeTab === 'home' && (
@@ -246,12 +295,24 @@ export default function App() {
         )}
 
         {activeTab === 'katalog' && (
-          <CataloguePage
-            artworks={artworks}
-            onSelectArtwork={handleOpenArtworkModal}
-            onLikeArtwork={handleLikeArtwork}
-            likedIds={likedIds}
-          />
+          isVerified ? (
+            <CataloguePage
+              artworks={artworks}
+              onSelectArtwork={handleOpenArtworkModal}
+              onLikeArtwork={handleLikeArtwork}
+              likedIds={likedIds}
+            />
+          ) : (
+            <LockedAccessGate
+              pageTitle="Katalog Karya Seni"
+              myTicket={myTicket}
+              onOpenTicket={() => setIsTicketOpen(true)}
+              onNavigatePresensi={() => handleSetActiveTab('presensi')}
+              onNavigateDenah={() => handleSetActiveTab('denah')}
+              onNavigateHome={() => handleSetActiveTab('home')}
+              onRefreshStatus={loadAllData}
+            />
+          )
         )}
 
         {activeTab === 'denah' && (
@@ -267,19 +328,43 @@ export default function App() {
         )}
 
         {activeTab === 'rundown' && (
-          <RundownPage
-            rundowns={rundowns}
-            onNavigateBooth={handleGoToBooth}
-          />
+          isVerified ? (
+            <RundownPage
+              rundowns={rundowns}
+              onNavigateBooth={handleGoToBooth}
+            />
+          ) : (
+            <LockedAccessGate
+              pageTitle="Rundown & Jadwal Acara"
+              myTicket={myTicket}
+              onOpenTicket={() => setIsTicketOpen(true)}
+              onNavigatePresensi={() => handleSetActiveTab('presensi')}
+              onNavigateDenah={() => handleSetActiveTab('denah')}
+              onNavigateHome={() => handleSetActiveTab('home')}
+              onRefreshStatus={loadAllData}
+            />
+          )
         )}
 
         {activeTab === 'pesan-kesan' && (
-          <GuestbookPage
-            messages={guestbookMessages}
-            onAddMessage={(newMsg) => {
-              setGuestbookMessages([newMsg, ...guestbookMessages]);
-            }}
-          />
+          isVerified ? (
+            <GuestbookPage
+              messages={guestbookMessages}
+              onAddMessage={(newMsg) => {
+                setGuestbookMessages([newMsg, ...guestbookMessages]);
+              }}
+            />
+          ) : (
+            <LockedAccessGate
+              pageTitle="Pojok Ekspresi & Buku Tamu"
+              myTicket={myTicket}
+              onOpenTicket={() => setIsTicketOpen(true)}
+              onNavigatePresensi={() => handleSetActiveTab('presensi')}
+              onNavigateDenah={() => handleSetActiveTab('denah')}
+              onNavigateHome={() => handleSetActiveTab('home')}
+              onRefreshStatus={loadAllData}
+            />
+          )
         )}
 
         {activeTab === 'login' && (
@@ -366,5 +451,3 @@ export default function App() {
     </div>
   );
 }
-
-

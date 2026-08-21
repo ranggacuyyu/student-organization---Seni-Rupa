@@ -2,11 +2,13 @@
  * 🖼️ Artwork Catalog & Likes Database Service
  * Sesuai Spesifikasi: BLUEPRINT_ART_SHOWCASE.md (Tabel: artworks, artwork_likes)
  */
+import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { INITIAL_ARTWORKS } from '../../data/mockData';
 
 const LOCAL_STORAGE_KEY = 'senrup_artworks_v1';
 const LIKED_KEY = 'senrup_liked_artworks_v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const getLocalArtworks = () => {
   try {
@@ -30,6 +32,18 @@ export const ArtworkDb = {
    * Ambil seluruh karya seni
    */
   async getAllArtworks() {
+    // 1. Coba dari Laravel REST API
+    try {
+      const res = await axios.get(`${API_BASE_URL}/artworks`, { timeout: 4000 });
+      if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        saveLocalArtworks(res.data.data);
+        return res.data.data;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API fetch artworks failed, fallback to Supabase/Local:', apiErr.message);
+    }
+
+    // 2. Coba dari Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -38,7 +52,6 @@ export const ArtworkDb = {
           .order('likes_count', { ascending: false });
 
         if (!error && data && data.length > 0) {
-          // Transform column names if necessary
           const formatted = data.map((art) => ({
             id: art.id,
             slug: art.slug,
@@ -76,12 +89,25 @@ export const ArtworkDb = {
     const list = getLocalArtworks();
     const created = {
       id: 'art-' + Date.now(),
-      slug: newArt.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      slug: (newArt.title || 'karya').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       likesCount: 0,
       tags: ['Retro Pop', 'History'],
       ...newArt,
     };
 
+    // 1. Coba kirim ke Laravel REST API
+    try {
+      const res = await axios.post(`${API_BASE_URL}/artworks`, newArt, { timeout: 5000 });
+      if (res.data && res.data.success && res.data.data) {
+        list.unshift(res.data.data);
+        saveLocalArtworks(list);
+        return res.data.data;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API add artwork failed, fallback to Supabase/Local:', apiErr.message);
+    }
+
+    // 2. Coba kirim ke Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -123,6 +149,14 @@ export const ArtworkDb = {
    * Hapus karya dari katalog
    */
   async deleteArtwork(id) {
+    // 1. Coba hapus via Laravel REST API
+    try {
+      await axios.delete(`${API_BASE_URL}/artworks/${id}`, { timeout: 4000 });
+    } catch (apiErr) {
+      console.warn('Laravel API delete artwork failed:', apiErr.message);
+    }
+
+    // 2. Coba hapus di Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         await supabase.from('artworks').delete().eq('id', id);
@@ -138,7 +172,7 @@ export const ArtworkDb = {
   },
 
   /**
-   * Toggle like karya seni
+   * Toggle like karya seni (Optimistic UI: langsung return & simpan lokal, sinkronisasi backend di background)
    */
   async toggleLike(artworkId) {
     let liked = JSON.parse(localStorage.getItem(LIKED_KEY) || '[]');
@@ -170,7 +204,32 @@ export const ArtworkDb = {
 
     saveLocalArtworks(updatedList);
 
-    // Update to Supabase if connected
+    // Kirim sinkronisasi ke backend secara asynchronous di background (tanpa menunggu/await)
+    this._syncLikeToBackend(artworkId, updatedList, !isAlreadyLiked).catch((err) => {
+      console.warn('Background like sync error:', err);
+    });
+
+    return {
+      updatedList,
+      isLiked: !isAlreadyLiked,
+    };
+  },
+
+  /**
+   * Helper background sync ke Laravel REST API & Supabase
+   */
+  async _syncLikeToBackend(artworkId, updatedList, isLiked) {
+    // 1. Coba via Laravel REST API
+    try {
+      const res = await axios.post(`${API_BASE_URL}/artworks/${artworkId}/like`, {}, { timeout: 3000 });
+      if (res.data && res.data.success) {
+        return res.data;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API toggle like background sync fallback:', apiErr.message);
+    }
+
+    // 2. Update to Supabase if connected
     if (isSupabaseConfigured() && supabase) {
       try {
         const target = updatedList.find((a) => a.id === artworkId);
@@ -184,11 +243,6 @@ export const ArtworkDb = {
         console.warn('Supabase update like failed:', err);
       }
     }
-
-    return {
-      updatedList,
-      isLiked: !isAlreadyLiked,
-    };
   },
 
   getLikedIds() {

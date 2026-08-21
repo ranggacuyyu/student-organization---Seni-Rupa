@@ -31,6 +31,21 @@ export const apiClient = axios.create({
  * Sesuai Aturan: BLUEPRINT_ART_SHOWCASE.md (Attendance & IP Logging)
  */
 export const detectClientInfo = async () => {
+  // 1. Coba deteksi via Backend Laravel API
+  try {
+    const res = await apiClient.get('/client-info');
+    if (res.data && res.data.ipAddress) {
+      return {
+        ipAddress: res.data.ipAddress,
+        userAgent: res.data.userAgent || navigator.userAgent,
+        deviceType: res.data.deviceType || 'Desktop',
+      };
+    }
+  } catch {
+    // Lanjut ke fallback
+  }
+
+  // 2. Fallback via ipify & browser navigator
   let ipAddress = '180.254.88.99'; // Default Batam fallback IP
   try {
     const res = await axios.get('https://api64.ipify.org?format=json', { timeout: 2500 });

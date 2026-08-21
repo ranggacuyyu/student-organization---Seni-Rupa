@@ -1,0 +1,133 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Artwork;
+use Illuminate\Database\Seeder;
+
+class ArtworkSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $artworks = [
+            [
+                'id' => 'art-1',
+                'slug' => 'kronik-nostalgia-kanvas',
+                'judul' => 'Kronik Nostalgia: Rekam Jejak 2020',
+                'seniman_nama' => 'Muhammad Rangga',
+                'seniman_nim' => '3312101012',
+                'seniman_angkatan' => '2021',
+                'kategori' => 'Lukis',
+                'medium_bahan' => 'Acrylic & Oil Pastel on Canvas',
+                'dimensi' => '120 x 90 cm',
+                'tahun_pembuatan' => '2024',
+                'foto_utama_url' => 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80',
+                'deskripsi_filosofi' => 'Karya ini menggambarkan metamorfosis ruang dan waktu perjalanan awal berdirinya Divisi Seni Rupa. Perpaduan warna kontras melambangkan keberagaman latar belakang anggota yang bersatu membentuk ekosistem seni rupa di lingkungan kampus vokasi.',
+                'booth_id' => 'booth-a',
+                'booth_name' => 'Zona A - Galeri Lukis Sejarah',
+                'likes_count' => 142,
+                'is_highlighted' => true,
+                'tags' => ['Retro Pop', 'Acrylic', 'History', 'Featured'],
+            ],
+            [
+                'id' => 'art-2',
+                'slug' => 'harmoni-geometris-batam',
+                'judul' => 'Harmoni Geometris Pesisir Batam',
+                'seniman_nama' => 'Siti Nurhaliza & Tim Divisi',
+                'seniman_nim' => '3312201088',
+                'seniman_angkatan' => '2022',
+                'kategori' => 'Lukis',
+                'medium_bahan' => 'Mixed Media & Collage on Canvas',
+                'dimensi' => '100 x 100 cm',
+                'tahun_pembuatan' => '2024',
+                'foto_utama_url' => 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1000&q=80',
+                'deskripsi_filosofi' => 'Eksplorasi garis-garis tegas Memphis dipadukan dengan siluet pesisir pulau Batam. Simbol industri dan seni berpadu secara dinamis dalam sapuan kuas bergradasi neon.',
+                'booth_id' => 'booth-a',
+                'booth_name' => 'Zona A - Galeri Lukis Sejarah',
+                'likes_count' => 98,
+                'is_highlighted' => true,
+                'tags' => ['Memphis', 'Landscape', 'Neo-Retro'],
+            ],
+            [
+                'id' => 'art-3',
+                'slug' => 'kriya-resin-daur-ulang-arsip',
+                'judul' => 'Kriya Totem Arsip: Resin & Kayu Daur Ulang',
+                'seniman_nama' => 'Rian Aditya',
+                'seniman_nim' => '3312301044',
+                'seniman_angkatan' => '2023',
+                'kategori' => 'Kerajinan',
+                'medium_bahan' => 'Bio-Resin, Reclaimed Teak Wood & Akrilik',
+                'dimensi' => '40 x 30 x 60 cm',
+                'tahun_pembuatan' => '2024',
+                'foto_utama_url' => 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80',
+                'deskripsi_filosofi' => 'Karya kerajinan tiga dimensi yang mengabadikan serpihan sketsa arsip lama anggota ke dalam lapisan resin bening yang disangga kayu jati bekas palet kampus.',
+                'booth_id' => 'booth-b',
+                'booth_name' => 'Zona B - Galeri Kerajinan & Kriya Tangan',
+                'likes_count' => 115,
+                'is_highlighted' => true,
+                'tags' => ['3D Craft', 'Resin', 'Eco-Art', 'Sculpture'],
+            ],
+            [
+                'id' => 'art-4',
+                'slug' => 'kerajinan-terracotta-pop',
+                'judul' => 'Terracotta Retro: Varian Wadah Ekspresi',
+                'seniman_nama' => 'Dina Amanda',
+                'seniman_nim' => '3312201015',
+                'seniman_angkatan' => '2022',
+                'kategori' => 'Kerajinan',
+                'medium_bahan' => 'Tanah Liat Terracotta, Glaze Enamel & Stiker Sablon',
+                'dimensi' => 'Set of 4 (Diameter 18 cm)',
+                'tahun_pembuatan' => '2024',
+                'foto_utama_url' => 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1000&q=80',
+                'deskripsi_filosofi' => 'Koleksi keramik fungsional bertekstur tanah bakar dengan sentuhan aksen warna kuning lemon dan magenta. Merefleksikan eksplorasi bentuk kriya modern di tangan mahasiswa.',
+                'booth_id' => 'booth-b',
+                'booth_name' => 'Zona B - Galeri Kerajinan & Kriya Tangan',
+                'likes_count' => 87,
+                'is_highlighted' => false,
+                'tags' => ['Ceramic', 'Handmade', 'Retro Colors'],
+            ],
+            [
+                'id' => 'art-5',
+                'slug' => 'sketsa-buku-bersama-vol-1',
+                'judul' => 'Buku Sketsa Kolektif: Jejak Garis Anggota',
+                'seniman_nama' => 'Kolektif Anggota Seni Rupa',
+                'seniman_nim' => 'Kolektif Divisi',
+                'seniman_angkatan' => '2021-2024',
+                'kategori' => 'Sketsa & Ilustrasi',
+                'medium_bahan' => 'Ink, Marker & Charcoal on Canson Paper',
+                'dimensi' => 'A3 Hardcover Journal',
+                'tahun_pembuatan' => '2024',
+                'foto_utama_url' => 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+                'deskripsi_filosofi' => 'Kompilasi sketsa spontan, doodle, dan catatan visual yang dibuat secara bergiliran oleh seluruh anggota divisi selama 3 tahun terakhir. Menjadi pondasi dari tema History.',
+                'booth_id' => 'booth-c',
+                'booth_name' => 'Zona C - Pojok Gambar & Live Painting',
+                'likes_count' => 160,
+                'is_highlighted' => true,
+                'tags' => ['Sketchbook', 'Doodle', 'History', 'Interactive'],
+            ],
+            [
+                'id' => 'art-6',
+                'slug' => 'abstraksi-spektrum-kehidupan',
+                'judul' => 'Spektrum Jiwa: Dinamika Mahasiswa Baru',
+                'seniman_nama' => 'Kevin Pratama',
+                'seniman_nim' => '3312401002',
+                'seniman_angkatan' => '2024 (Maba)',
+                'kategori' => 'Lukis',
+                'medium_bahan' => 'Spray Paint & Acrylic on Board',
+                'dimensi' => '90 x 120 cm',
+                'tahun_pembuatan' => '2024',
+                'foto_utama_url' => 'https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=1000&q=80',
+                'deskripsi_filosofi' => 'Karya sambutan dari mahasiswa baru yang merefleksikan rasa ingin tahu, semangat eksplorasi seni, dan warna-warni kehidupan perkuliahan di Politeknik Negeri Batam.',
+                'booth_id' => 'booth-a',
+                'booth_name' => 'Zona A - Galeri Lukis Sejarah',
+                'likes_count' => 79,
+                'is_highlighted' => false,
+                'tags' => ['Spray Paint', 'Abstract', 'Maba'],
+            ],
+        ];
+
+        foreach ($artworks as $art) {
+            Artwork::updateOrCreate(['slug' => $art['slug']], $art);
+        }
+    }
+}

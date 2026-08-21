@@ -45,6 +45,7 @@ export const INITIAL_ARTWORKS = [
     isHighlighted: true,
     tags: ["Retro Pop", "Acrylic", "History", "Featured"]
   },
+  
   {
     id: "art-2",
     slug: "harmoni-geometris-batam",

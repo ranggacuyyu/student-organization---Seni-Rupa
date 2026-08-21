@@ -65,7 +65,7 @@ export default function Home({
           title="Klik untuk melihat Proker Mendatang"
         >
           <img src={senrupLogo} alt="Logo Seni Rupa" className="w-10 h-10 object-contain inline-block group-hover:rotate-12 transition-transform" />
-          <span>PROKER DIVISI SENI RUPA 🚀</span>
+          <span>PROKER DIVISI SENI RUPA</span>
         </button>
         <div className="hero-float-badge hero-float-right absolute top-12 right-10 hidden sm:flex items-center gap-2 bg-[#FFE600] border-2 border-black rounded-xl px-3 py-1 text-xs font-black shadow-retro rotate-[8deg]">
           <span>KUMPULAN ANAK SENI</span>
@@ -305,7 +305,7 @@ export default function Home({
           {featuredArtworks.map((art) => (
             <div
               key={art.id}
-              onClick={() => onSelectArtwork(art)}
+              onClick={() => onNavigate('katalog')}
               className="artwork-featured-card card-retro-hover overflow-hidden cursor-pointer group bg-white flex flex-col justify-between"
             >
               <div>
@@ -338,7 +338,7 @@ export default function Home({
 
               <div className="px-5 pb-5 pt-2 border-t border-neutral-100 flex items-center justify-between text-xs font-bold text-[#7B2CBF]">
                 <span>{art.boothName}</span>
-                <span className="text-black group-hover:translate-x-1 transition-transform">Detail →</span>
+                <span className="text-black group-hover:translate-x-1 transition-transform font-bold">Lihat di Katalog →</span>
               </div>
             </div>
           ))}
@@ -347,7 +347,7 @@ export default function Home({
 
       {/* ================= ZONA DENAH SPOTLIGHT ================= */}
       <section id="section-denah-spotlight" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#FAF7EE] border-3 border-black rounded-3xl p-8 shadow-retro-xl bg-retro-dots">
+        <div className="bg-[#FAF7EE] border-3 border-black rounded-3xl p-8 shadow-retro-xl bg-retro-dots-white">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
             <div className="spotlight-left-col lg:col-span-6 space-y-4">
@@ -424,13 +424,13 @@ export default function Home({
               onClick={() => onNavigate('presensi')}
               className="btn-retro-yellow text-sm sm:text-base px-8 py-3.5 active:scale-95"
             >
-              Presensi Sekarang ✍️
+              Presensi Sekarang
             </button>
             <button
               onClick={() => onNavigate('pesan-kesan')}
               className="btn-retro-white text-sm sm:text-base px-8 py-3.5 active:scale-95"
             >
-              Tulis Kesan di Buku Tamu 💬
+              Tulis Kesan di Buku Tamu 
             </button>
           </div>
         </div>

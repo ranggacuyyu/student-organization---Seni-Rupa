@@ -33,6 +33,10 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-# PHP / Backend specific (jika nanti menggunakan Composer / vendor)
+# PHP / Backend specific (Laravel / Composer)
 vendor/
 **/vendor/
+database/*.sqlite
+*.sqlite
+backend/.env
+backend/.env.backup

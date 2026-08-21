@@ -2,11 +2,14 @@
  * 🔐 Authentication & Session Database Service
  * Sesuai Spesifikasi: BLUEPRINT_ART_SHOWCASE.md (Tabel: users)
  */
+import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { INITIAL_PANITIA_ACCOUNTS } from '../../data/mockData';
 
 const AUTH_USER_KEY = 'senrup_auth_user_v1';
+const AUTH_TOKEN_KEY = 'senrup_auth_token_v1';
 const ACCOUNTS_KEY = 'senrup_panitia_accounts_v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const getLocalAccounts = () => {
   try {
@@ -26,7 +29,31 @@ export const AuthDb = {
   async login(username, password) {
     const cleanUser = username.trim().toLowerCase();
 
-    // 1. Coba verifikasi dengan Supabase jika terhubung
+    // 1. Coba verifikasi dengan Laravel REST API
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/auth/login`,
+        { username: cleanUser, password },
+        { timeout: 4000 }
+      );
+      if (res.data && res.data.success && res.data.user) {
+        if (res.data.token) {
+          localStorage.setItem(AUTH_TOKEN_KEY, res.data.token);
+        }
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.data.user));
+        return { success: true, user: res.data.user };
+      }
+    } catch (apiErr) {
+      if (apiErr.response && apiErr.response.data && apiErr.response.data.message) {
+        // Jika server aktif tapi menolak karena password salah atau nonaktif
+        if (apiErr.response.status === 401 || apiErr.response.status === 403) {
+          return { success: false, message: apiErr.response.data.message };
+        }
+      }
+      console.warn('Laravel API auth failed, trying Supabase/local fallback:', apiErr.message);
+    }
+
+    // 2. Coba verifikasi dengan Supabase jika terhubung
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -34,9 +61,8 @@ export const AuthDb = {
           .select('*')
           .ilike('username', cleanUser)
           .eq('password', password)
-          .maybeSingle(); // pakai maybeSingle agar tidak error saat 0 baris
+          .maybeSingle();
 
-        // Hanya return jika user benar-benar ditemukan di Cloud
         if (!error && data) {
           if (data.status !== 'active') {
             return { success: false, message: 'Akun ini dinonaktifkan oleh Koordinator.' };
@@ -57,13 +83,12 @@ export const AuthDb = {
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userSession));
           return { success: true, user: userSession };
         }
-        // Jika data null (tidak ditemukan di Cloud), lanjut ke fallback lokal
       } catch (err) {
         console.warn('Supabase auth failed, fallback to local accounts:', err);
       }
     }
 
-    // 2. Fallback ke Local Accounts Engine
+    // 3. Fallback ke Local Accounts Engine
     const accounts = getLocalAccounts();
     const user = accounts.find(
       (acc) => acc.username.trim().toLowerCase() === cleanUser && acc.password === password
@@ -84,8 +109,25 @@ export const AuthDb = {
   /**
    * Logout user aktif
    */
-  logout() {
+  async logout() {
+    try {
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      if (token) {
+        await axios.post(
+          `${API_BASE_URL}/auth/logout`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            timeout: 2000,
+          }
+        );
+      }
+    } catch {
+      // Ignore network error on logout
+    }
+
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
   },
 
   /**

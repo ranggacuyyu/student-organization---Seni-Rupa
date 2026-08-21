@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { 
-  ShieldCheck, 
   KeyRound, 
   User, 
   Eye, 
   EyeOff, 
   ArrowRight, 
-  Sparkles, 
-  Palette, 
   Lock, 
-  HelpCircle,
-  CheckCircle2,
   AlertTriangle,
   ArrowLeft
 } from 'lucide-react';
@@ -51,24 +46,6 @@ export default function LoginPage({ onLoginSuccess, onNavigateHome }) {
         setErrorMessage(result.message || 'Username atau password salah.');
       }
     }, 400);
-  };
-
-  // Quick Demo Login Helper
-  const handleQuickLogin = (demoUsername, demoPassword) => {
-    setUsername(demoUsername);
-    setPassword(demoPassword);
-    setErrorMessage('');
-    setIsLoading(true);
-
-    setTimeout(async () => {
-      const result = await AuthService.login(demoUsername, demoPassword);
-      setIsLoading(false);
-      if (result.success) {
-        onLoginSuccess(result.user);
-      } else {
-        setErrorMessage(result.message || 'Username atau password salah.');
-      }
-    }, 300);
   };
 
   return (
@@ -163,64 +140,6 @@ export default function LoginPage({ onLoginSuccess, onNavigateHome }) {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Login Preset Buttons */}
-          <div className="pt-4 border-t-2 border-dashed border-neutral-300 space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-black text-neutral-600 uppercase">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF3388]" />
-              <span>Login Cepat untuk Pengujian (1-Klik):</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin_senrup', 'admin123')}
-                className="p-2.5 bg-[#FF3388]/10 hover:bg-[#FF3388]/20 border-2 border-black rounded-xl text-left transition-all active:scale-95 group shadow-retro-sm"
-              >
-                <div className="flex items-center justify-between text-xs font-black text-black">
-                  <span>👑 Super Admin</span>
-                  <span className="text-[10px] bg-black text-[#FFE600] px-1.5 rounded">Rangga</span>
-                </div>
-                <span className="text-[10px] text-neutral-600 block mt-0.5">Kelola Akun & Master Data</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('panitia_registrasi', 'panitia123')}
-                className="p-2.5 bg-[#FFE600]/20 hover:bg-[#FFE600]/30 border-2 border-black rounded-xl text-left transition-all active:scale-95 group shadow-retro-sm"
-              >
-                <div className="flex items-center justify-between text-xs font-black text-black">
-                  <span>📷 Panitia QR</span>
-                  <span className="text-[10px] bg-black text-[#FFE600] px-1.5 rounded">Samuel</span>
-                </div>
-                <span className="text-[10px] text-neutral-600 block mt-0.5">Scan QR & Kebutuhan Peserta</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('panitia_acara', 'panitia123')}
-                className="p-2.5 bg-[#00F0FF]/20 hover:bg-[#00F0FF]/30 border-2 border-black rounded-xl text-left transition-all active:scale-95 group shadow-retro-sm"
-              >
-                <div className="flex items-center justify-between text-xs font-black text-black">
-                  <span>🎭 Panitia Acara</span>
-                  <span className="text-[10px] bg-black text-[#00F0FF] px-1.5 rounded">Aiko</span>
-                </div>
-                <span className="text-[10px] text-neutral-600 block mt-0.5">Rundown & Monitoring</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('panitia_souvenir', 'panitia123')}
-                className="p-2.5 bg-[#22C55E]/20 hover:bg-[#22C55E]/30 border-2 border-black rounded-xl text-left transition-all active:scale-95 group shadow-retro-sm"
-              >
-                <div className="flex items-center justify-between text-xs font-black text-black">
-                  <span>🎁 Panitia Suvenir</span>
-                  <span className="text-[10px] bg-black text-[#22C55E] px-1.5 rounded">Yurila</span>
-                </div>
-                <span className="text-[10px] text-neutral-600 block mt-0.5">Klaim Suvenir Photobooth</span>
-              </button>
-            </div>
-          </div>
 
           {/* Back to Home */}
           <div className="text-center pt-2">

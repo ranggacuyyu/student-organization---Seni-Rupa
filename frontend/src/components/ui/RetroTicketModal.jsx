@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { X, QrCode, CheckCircle2, MapPin, Calendar, User, ShieldCheck, Printer, Share2 } from 'lucide-react';
+import { X, QrCode, CheckCircle2, MapPin, Calendar, User, ShieldCheck, Printer, Share2, Sparkles, Clock } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { EVENT_INFO } from '../../data/mockData';
 
@@ -18,6 +18,14 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const checkedInList = JSON.parse(localStorage.getItem('senrup_checked_in_tickets_v1') || '[]');
+  const isCheckedIn = ticket && (
+    checkedInList.includes(ticket.id) || 
+    ticket.isCheckedIn || 
+    ticket.is_checked_in || 
+    ticket.status === 'checked_in'
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -71,6 +79,29 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
 
               {/* Ticket Body */}
               <div className="p-5 space-y-4 bg-retro-dots/20">
+                
+                {/* Verification Status Banner */}
+                <div className={`p-2.5 rounded-xl border-2 border-black flex items-center justify-between text-xs font-bold ${
+                  isCheckedIn ? 'bg-[#CCFF00] text-black shadow-retro-sm' : 'bg-[#FFE600] text-black shadow-retro-sm'
+                }`}>
+                  <div className="flex items-center gap-1.5">
+                    {isCheckedIn ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-black" />
+                        <span>TERVERIFIKASI PANITIA ✅</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-4 h-4 text-black" />
+                        <span>STATUS: MENUNGGU SCAN QR ⏳</span>
+                      </>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-mono uppercase bg-black text-white px-2 py-0.5 rounded">
+                    {isCheckedIn ? 'AKSES TERBUKA' : 'BELUM SCAN'}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="text-neutral-500 font-semibold block uppercase text-[10px]">Nama Peserta</span>
@@ -97,7 +128,7 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                     <MapPin className="w-3.5 h-3.5 text-[#FF3388]" /> Student Centre Lt. 3
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#7B2CBF]" /> 28 Okt 2024
+                    <Calendar className="w-3.5 h-3.5 text-[#7B2CBF]" /> 12 Sep 2026
                   </div>
                 </div>
 
@@ -119,7 +150,9 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                       ID: <span className="bg-[#FFE600] px-1.5 py-0.5 rounded border border-black">{ticket.id || 'PASS-POLIBATAM'}</span>
                     </p>
                     <p className="text-[10px] text-neutral-600">
-                      Arahkan QR ini ke kamera scanner panitia di meja registrasi & photobooth!
+                      {isCheckedIn 
+                        ? 'Tiket telah diverifikasi! Semua halaman dan katalog terbuka untuk Anda.'
+                        : 'Arahkan QR ini ke kamera scanner panitia di meja registrasi & photobooth untuk verifikasi!'}
                     </p>
                   </div>
                 </div>
@@ -174,4 +207,3 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
     </div>
   );
 }
-

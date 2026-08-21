@@ -2,6 +2,7 @@
  * 📋 Panitia Portal & Admin Operations Database Service
  * Sesuai Spesifikasi: BLUEPRINT_ART_SHOWCASE.md (Tabel: users, panitia_tasks, panitia_announcements)
  */
+import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { 
   INITIAL_PANITIA_ACCOUNTS, 
@@ -16,6 +17,7 @@ const ANNOUNCEMENTS_KEY = 'senrup_panitia_announcements_v1';
 const ATTENDANCES_KEY = 'senrup_attendances_v1';
 const CHECKED_IN_KEY = 'senrup_checked_in_tickets_v1';
 const SOUVENIR_KEY = 'senrup_souvenir_claims_v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export const PanitiaDb = {
   // === 1. TIKET & SCAN QR CODE ===
@@ -62,6 +64,18 @@ export const PanitiaDb = {
     };
   },
 
+  async verifyTicketRemote(query) {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/attendance/verify?q=${encodeURIComponent(query)}`, { timeout: 3000 });
+      if (res.data && res.data.success && res.data.ticket) {
+        return res.data.ticket;
+      }
+    } catch {
+      // fallback
+    }
+    return this.verifyTicket(query);
+  },
+
   toggleCheckIn(ticketId) {
     const list = JSON.parse(localStorage.getItem(CHECKED_IN_KEY) || '[]');
     let updated;
@@ -71,6 +85,10 @@ export const PanitiaDb = {
       updated = [...list, ticketId];
     }
     localStorage.setItem(CHECKED_IN_KEY, JSON.stringify(updated));
+
+    // Background sync to Laravel API
+    axios.patch(`${API_BASE_URL}/attendance/${ticketId}/check-in`).catch(() => {});
+
     return updated.includes(ticketId);
   },
 
@@ -83,6 +101,10 @@ export const PanitiaDb = {
       updated = [...list, ticketId];
     }
     localStorage.setItem(SOUVENIR_KEY, JSON.stringify(updated));
+
+    // Background sync to Laravel API
+    axios.patch(`${API_BASE_URL}/attendance/${ticketId}/souvenir`).catch(() => {});
+
     return updated.includes(ticketId);
   },
 
@@ -121,6 +143,9 @@ export const PanitiaDb = {
       ...newAcc,
     };
 
+    // Background sync ke Laravel API
+    axios.post(`${API_BASE_URL}/panitia/accounts`, newAcc).catch(() => {});
+
     if (isSupabaseConfigured() && supabase) {
       try {
         supabase.from('users').insert([
@@ -151,6 +176,9 @@ export const PanitiaDb = {
     const updated = list.map((acc) => (acc.id === id ? { ...acc, ...updatedData } : acc));
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(updated));
 
+    // Background sync ke Laravel API
+    axios.put(`${API_BASE_URL}/panitia/accounts/${id}`, updatedData).catch(() => {});
+
     if (isSupabaseConfigured() && supabase) {
       try {
         supabase.from('users').update(updatedData).eq('id', id);
@@ -166,6 +194,9 @@ export const PanitiaDb = {
     const list = this.getPanitiaAccounts();
     const filtered = list.filter((acc) => acc.id !== id);
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(filtered));
+
+    // Background sync ke Laravel API
+    axios.delete(`${API_BASE_URL}/panitia/accounts/${id}`).catch(() => {});
 
     if (isSupabaseConfigured() && supabase) {
       try {
@@ -192,6 +223,10 @@ export const PanitiaDb = {
     const list = this.getPanitiaTasks();
     const updated = list.map((task) => (task.id === id ? { ...task, isCompleted: !task.isCompleted } : task));
     localStorage.setItem(TASKS_KEY, JSON.stringify(updated));
+
+    // Background sync ke Laravel API
+    axios.patch(`${API_BASE_URL}/panitia/tasks/${id}/toggle`).catch(() => {});
+
     return updated;
   },
 
@@ -203,6 +238,10 @@ export const PanitiaDb = {
       priority: newTask.priority || 'Sedang',
       ...newTask,
     };
+
+    // Background sync ke Laravel API
+    axios.post(`${API_BASE_URL}/panitia/tasks`, newTask).catch(() => {});
+
     list.unshift(created);
     localStorage.setItem(TASKS_KEY, JSON.stringify(list));
     return list;
@@ -212,6 +251,10 @@ export const PanitiaDb = {
     const list = this.getPanitiaTasks();
     const filtered = list.filter((t) => t.id !== id);
     localStorage.setItem(TASKS_KEY, JSON.stringify(filtered));
+
+    // Background sync ke Laravel API
+    axios.delete(`${API_BASE_URL}/panitia/tasks/${id}`).catch(() => {});
+
     return filtered;
   },
 
@@ -233,6 +276,10 @@ export const PanitiaDb = {
       isPinned: false,
       ...newAnn,
     };
+
+    // Background sync ke Laravel API
+    axios.post(`${API_BASE_URL}/panitia/announcements`, newAnn).catch(() => {});
+
     list.unshift(created);
     localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(list));
     return list;

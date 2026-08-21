@@ -2,11 +2,13 @@
  * 📝 Attendance & Client IP Tracking Database Service
  * Sesuai Spesifikasi: BLUEPRINT_ART_SHOWCASE.md (Tabel: attendances)
  */
+import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { INITIAL_ATTENDANCES } from '../../data/mockData';
 
 const LOCAL_STORAGE_KEY = 'senrup_attendances_v1';
 const MY_TICKET_KEY = 'senrup_my_attendance_ticket_v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Helper: Ambil data lokal
 const getLocalAttendances = () => {
@@ -29,11 +31,31 @@ const saveLocalAttendances = (list) => {
 
 export const AttendanceDb = {
   /**
-   * Catat presensi baru (Cloud Supabase + Local Cache)
+   * Catat presensi baru (Laravel REST API + Cloud Supabase + Local Cache)
    * Alias: submitAttendance (kompatibel dengan AttendancePage.jsx)
    * @param {Object} data - { nama_lengkap, identifier, kategori, jurusan_prodi, ip_address, user_agent, device_type, catatan }
    */
   async recordAttendance(data) {
+    // 1. Simpan ke Laravel REST API jika server berjalan
+    try {
+      const res = await axios.post(`${API_BASE_URL}/attendance`, data, { timeout: 4000 });
+      if (res.data && res.data.success && res.data.ticket) {
+        const ticket = res.data.ticket;
+        const currentList = getLocalAttendances();
+        const updatedList = [ticket, ...currentList.filter(item => item.id !== ticket.id)];
+        saveLocalAttendances(updatedList);
+        localStorage.setItem(MY_TICKET_KEY, JSON.stringify(ticket));
+        return {
+          success: true,
+          ticket: ticket,
+          data: ticket,
+          totalCount: res.data.totalCount || updatedList.length,
+        };
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API attendance failed, checking cloud/local fallback:', apiErr.message);
+    }
+
     const newEntry = {
       id: 'att-' + Date.now(),
       nama_lengkap: data.nama_lengkap.trim(),
@@ -47,7 +69,7 @@ export const AttendanceDb = {
       catatan: data.catatan || '',
     };
 
-    // 1. Simpan ke Supabase jika terhubung
+    // 2. Simpan ke Supabase jika terhubung
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data: inserted, error } = await supabase
@@ -71,11 +93,11 @@ export const AttendanceDb = {
           newEntry.id = inserted.id;
         }
       } catch (err) {
-        console.warn('Supabase insert failed, using fallback engine:', err);
+        console.warn('Supabase insert failed, using local cache:', err);
       }
     }
 
-    // 2. Simpan ke Local Storage Cache & Ticket Saya
+    // 3. Simpan ke Local Storage Cache & Ticket Saya
     const currentList = getLocalAttendances();
     const updatedList = [newEntry, ...currentList];
     saveLocalAttendances(updatedList);
@@ -84,6 +106,7 @@ export const AttendanceDb = {
     return {
       success: true,
       ticket: newEntry,
+      data: newEntry,
       totalCount: updatedList.length,
     };
   },
@@ -92,6 +115,18 @@ export const AttendanceDb = {
    * Ambil seluruh data presensi
    */
   async getAllAttendances() {
+    // 1. Coba dari Laravel REST API
+    try {
+      const res = await axios.get(`${API_BASE_URL}/attendance`, { timeout: 4000 });
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        saveLocalAttendances(res.data.data);
+        return res.data.data;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API fetch attendances failed, fallback to Supabase/Local:', apiErr.message);
+    }
+
+    // 2. Coba dari Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -131,7 +166,7 @@ export const AttendanceDb = {
     const result = await this.recordAttendance(data);
     return {
       ...result,
-      data: result.ticket, // AttendancePage mengakses result.data
+      data: result.ticket,
     };
   },
 };

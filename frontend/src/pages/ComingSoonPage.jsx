@@ -93,17 +93,6 @@ export default function ComingSoonPage({ onNavigateHome }) {
       <div className="absolute top-1/3 right-8 w-12 h-12 bg-[#00F0FF] rounded-lg border-2 border-black rotate-45 opacity-40 -z-10"></div>
 
       <div className="max-w-4xl w-full mx-auto space-y-10 text-center relative z-10">
-        
-        {/* Top Navigation Back */}
-        <div className="flex justify-center">
-          <button
-            onClick={onNavigateHome}
-            className="btn-retro-white text-xs sm:text-sm px-5 py-2.5 flex items-center gap-2 active:scale-95 shadow-retro-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Beranda Pameran</span>
-          </button>
-        </div>
 
         {/* Big Header Banner */}
         <div className="space-y-4">
@@ -130,7 +119,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
             </h1>
 
             <p className="text-sm sm:text-lg font-medium text-neutral-700 max-w-2xl mx-auto leading-relaxed">
-              Kami sedang menyiapkan serangkaian <strong>Program Kerja & Agenda Seni Spektakuler</strong> berikutnya untuk seluruh mahasiswa dan civitas akademika Politeknik Negeri Batam! ✨
+              Kami sedang menyiapkan serangkaian <strong>Program Kerja & Agenda Seni Spektakuler</strong> berikutnya untuk seluruh mahasiswa dan civitas akademika Politeknik Negeri Batam!
             </p>
           </div>
 
@@ -172,7 +161,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
 
                 <div className="pt-3 border-t-2 border-dashed border-neutral-200 flex items-center justify-between text-xs font-bold text-neutral-500">
                   <span>Status: Dalam Tahap Kurasi</span>
-                  <span className="text-[#FF3388] font-black">Nantikan Segera 🚀</span>
+                  <span className="text-[#FF3388] font-black">Nantikan Segera</span>
                 </div>
               </div>
             );
@@ -195,7 +184,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
               onClick={onNavigateHome}
               className="btn-retro-pink text-xs sm:text-sm px-6 py-3 shadow-retro"
             >
-              Jelajahi Pameran Sekarang 🎨
+              Jelajahi Pameran Sekarang
             </button>
           </div>
         </div>
