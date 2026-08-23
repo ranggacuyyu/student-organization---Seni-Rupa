@@ -25,123 +25,429 @@ export const EVENT_INFO = {
   }
 };
 
-export const INITIAL_ARTWORKS = [
+// ================= MASTER GENERATOR & DUMMY DATA KARYA SENI =================
+// Setiap pencipta memiliki 10 hingga 20 karya unik berkualitas tinggi
+const CREATORS_BLUEPRINT = [
   {
-    id: "art-1",
-    slug: "kronik-nostalgia-kanvas",
+    name: "Muhammad Rangga",
+    nim: "3312101012",
+    batch: "2021",
+    isAnonymous: false,
+    specialty: "Lukis & Kriya Sejarah",
+    targetCount: 15,
+    counts: { Lukis: 7, Kerajinan: 4, "Sketsa & Ilustrasi": 4 }
+  },
+  {
+    name: "Siti Nurhaliza",
+    nim: "3312201088",
+    batch: "2022",
+    isAnonymous: false,
+    specialty: "Lukis & Kolase Geometris",
+    targetCount: 14,
+    counts: { Lukis: 6, Kerajinan: 4, "Sketsa & Ilustrasi": 4 }
+  },
+  {
+    name: "Rian Aditya",
+    nim: "3312301044",
+    batch: "2023",
+    isAnonymous: false,
+    specialty: "Kriya Resin & 3D Craft",
+    targetCount: 15,
+    counts: { Lukis: 4, Kerajinan: 7, "Sketsa & Ilustrasi": 4 }
+  },
+  {
+    name: "Dina Amanda",
+    nim: "3312201015",
+    batch: "2022",
+    isAnonymous: false,
+    specialty: "Terracotta & Keramik Retro",
+    targetCount: 13,
+    counts: { Lukis: 3, Kerajinan: 6, "Sketsa & Ilustrasi": 4 }
+  },
+  {
+    name: "Kevin Pratama",
+    nim: "3312401002",
+    batch: "2024 (Maba)",
+    isAnonymous: false,
+    specialty: "Spray Paint & Street Art",
+    targetCount: 12,
+    counts: { Lukis: 5, Kerajinan: 3, "Sketsa & Ilustrasi": 4 }
+  },
+  {
+    name: "Samuel Christian",
+    nim: "3312201067",
+    batch: "2022",
+    isAnonymous: false,
+    specialty: "Lukis Mixed Media & Kriya Metal",
+    targetCount: 14,
+    counts: { Lukis: 5, Kerajinan: 4, "Sketsa & Ilustrasi": 5 }
+  },
+  {
+    name: "Aiko Senja",
+    nim: "3312301091",
+    batch: "2023",
+    isAnonymous: false,
+    specialty: "Ilustrasi Karakter & Doodle",
+    targetCount: 15,
+    counts: { Lukis: 4, Kerajinan: 4, "Sketsa & Ilustrasi": 7 }
+  },
+  {
+    name: "Naris Wibowo",
+    nim: "3312201033",
+    batch: "2022",
+    isAnonymous: false,
+    specialty: "Dokumentasi Visual & Sketsa Arsitektur",
+    targetCount: 12,
+    counts: { Lukis: 3, Kerajinan: 3, "Sketsa & Ilustrasi": 6 }
+  },
+  {
+    name: "Ibra Maulana",
+    nim: "3312101050",
+    batch: "2021",
+    isAnonymous: false,
+    specialty: "Instalasi Kayu & Kriya Daur Ulang",
+    targetCount: 13,
+    counts: { Lukis: 3, Kerajinan: 7, "Sketsa & Ilustrasi": 3 }
+  },
+  {
+    name: "Yurila Kartika",
+    nim: "3312201009",
+    batch: "2022",
+    isAnonymous: false,
+    specialty: "Cat Air & Kriya Kertas Lipat",
+    targetCount: 14,
+    counts: { Lukis: 6, Kerajinan: 4, "Sketsa & Ilustrasi": 4 }
+  },
+  {
+    name: "Kolektif Anggota Seni Rupa",
+    nim: "Kolektif Divisi",
+    batch: "2021-2024",
+    isAnonymous: false,
+    specialty: "Karya Kolaborasi & Mural Bersama",
+    targetCount: 16,
+    counts: { Lukis: 5, Kerajinan: 4, "Sketsa & Ilustrasi": 7 }
+  },
+  {
+    name: "Pencipta Dirahasiakan",
+    nim: "Identitas Dirahasiakan",
+    batch: "Rahasia",
+    isAnonymous: true,
+    specialty: "Eksplorasi Misterius Tanpa Batas",
+    targetCount: 18,
+    counts: { Lukis: 7, Kerajinan: 5, "Sketsa & Ilustrasi": 6 }
+  }
+];
+
+const LUKIS_POOL = [
+  {
     title: "Kronik Nostalgia: Rekam Jejak 2020",
-    artist: "Muhammad Rangga",
-    artistNim: "3312101012",
-    artistBatch: "2021",
-    category: "Lukis",
     medium: "Acrylic & Oil Pastel on Canvas",
     dimensions: "120 x 90 cm",
-    year: "2024",
-    imageUrl: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80",
-    description: "Karya ini menggambarkan metamorfosis ruang dan waktu perjalanan awal berdirinya Divisi Seni Rupa. Perpaduan warna kontras melambangkan keberagaman latar belakang anggota yang bersatu membentuk ekosistem seni rupa di lingkungan kampus vokasi.",
-    boothId: "booth-a",
-    boothName: "Zona A - Galeri Lukis Sejarah",
-    likesCount: 142,
-    isHighlighted: true,
+    img: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80",
+    desc: "Karya kanvas menggambarkan metamorfosis ruang dan waktu perjalanan awal berdirinya Divisi Seni Rupa di lingkungan kampus vokasi.",
     tags: ["Retro Pop", "Acrylic", "History", "Featured"]
   },
-  
   {
-    id: "art-2",
-    slug: "harmoni-geometris-batam",
     title: "Harmoni Geometris Pesisir Batam",
-    artist: "Siti Nurhaliza & Tim Divisi",
-    artistNim: "3312201088",
-    artistBatch: "2022",
-    category: "Lukis",
     medium: "Mixed Media & Collage on Canvas",
     dimensions: "100 x 100 cm",
-    year: "2024",
-    imageUrl: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1000&q=80",
-    description: "Eksplorasi garis-garis tegas Memphis dipadukan dengan siluet pesisir pulau Batam. Simbol industri dan seni berpadu secara dinamis dalam sapuan kuas bergradasi neon.",
-    boothId: "booth-a",
-    boothName: "Zona A - Galeri Lukis Sejarah",
-    likesCount: 98,
-    isHighlighted: true,
+    img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1000&q=80",
+    desc: "Eksplorasi garis tegas Memphis dipadukan dengan siluet pesisir pulau Batam dan gradasi warna cerah.",
     tags: ["Memphis", "Landscape", "Neo-Retro"]
   },
   {
-    id: "art-3",
-    slug: "kriya-resin-daur-ulang-arsip",
+    title: "Spektrum Jiwa: Dinamika Mahasiswa Baru",
+    medium: "Spray Paint & Acrylic on Board",
+    dimensions: "90 x 120 cm",
+    img: "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=1000&q=80",
+    desc: "Refleksi rasa ingin tahu, semangat eksplorasi seni, dan warna-warni kehidupan perkuliahan di Politeknik Negeri Batam.",
+    tags: ["Spray Paint", "Abstract", "Maba"]
+  },
+  {
+    title: "Siluet Senja Kampus Hang Nadim",
+    medium: "Oil on Linen Canvas & Gold Leaf",
+    dimensions: "110 x 85 cm",
+    img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80",
+    desc: "Sapuan cat minyak bertekstur tebal dengan aksen daun emas yang menangkap cahaya senja di atas gedung rektorat.",
+    tags: ["Sunset", "Oil Painting", "Gold Leaf"]
+  },
+  {
+    title: "Garis Memori: Lorong Studio Seni",
+    medium: "Acrylic & Charcoal on Raw Canvas",
+    dimensions: "130 x 95 cm",
+    img: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&w=1000&q=80",
+    desc: "Komposisi monokromatik dengan sentuhan cipratan kuning lemon yang menggambarkan ingatan hangat saat berkumpul di studio.",
+    tags: ["Expressive", "Charcoal", "Studio"]
+  },
+  {
+    title: "Simfoni Kanvas: Nafas Sejarah Vokasi",
+    medium: "Oil on Stretched Canvas",
+    dimensions: "140 x 100 cm",
+    img: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1000&q=80",
+    desc: "Lukisan figuratif abstrak yang merangkum dinamika berkarya mahasiswa teknik dalam melestarikan nilai estetika seni.",
+    tags: ["History", "Canvas", "Dynamic"]
+  },
+  {
+    title: "Retrospeksi Gelombang Biru Selat",
+    medium: "Acrylic, Sand Texture & Resin Glaze",
+    dimensions: "80 x 120 cm",
+    img: "https://images.unsplash.com/photo-1582561424760-0321d75e81fa?auto=format&fit=crop&w=1000&q=80",
+    desc: "Tekstur pasir pantai yang dipadatkan dengan cat akrilik biru kobalt dan hijau toska, merefleksikan arus laut Kepulauan Riau.",
+    tags: ["Texture", "Ocean", "Marine Art"]
+  },
+  {
+    title: "Evolusi Kuas: Dialog Ruang & Warna",
+    medium: "Mixed Media on Wooden Panel",
+    dimensions: "95 x 95 cm",
+    img: "https://images.unsplash.com/photo-1576769267415-9642010aa962?auto=format&fit=crop&w=1000&q=80",
+    desc: "Eksperimen warna kontras dengan blok geometris berirama yang memikat pandangan pengunjung.",
+    tags: ["Geometric", "Palette", "Contemporary"]
+  },
+  {
+    title: "Pendar Neon di Malam Sejarah",
+    medium: "Fluorescent Acrylic & UV Varnish",
+    dimensions: "100 x 80 cm",
+    img: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1000&q=80",
+    desc: "Lukisan bercahaya di bawah lampu temaram yang menyimbolkan ide kreatif yang terus menyala di malam hari.",
+    tags: ["Neon", "Glow", "Night Art"]
+  },
+  {
+    title: "Cakrawala Abstrak: Fajar Kreativitas",
+    medium: "Oil on Belgian Linen",
+    dimensions: "115 x 85 cm",
+    img: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80",
+    desc: "Gradasi fajar dari ungu tua menuju kuning cerah melambangkan kebangkitan semangat seni rupa kampus.",
+    tags: ["Horizon", "Dawn", "Modern Art"]
+  }
+];
+
+const KERAJINAN_POOL = [
+  {
     title: "Kriya Totem Arsip: Resin & Kayu Daur Ulang",
-    artist: "Rian Aditya",
-    artistNim: "3312301044",
-    artistBatch: "2023",
-    category: "Kerajinan",
     medium: "Bio-Resin, Reclaimed Teak Wood & Akrilik",
     dimensions: "40 x 30 x 60 cm",
-    year: "2024",
-    imageUrl: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80",
-    description: "Karya kerajinan tiga dimensi yang mengabadikan serpihan sketsa arsip lama anggota ke dalam lapisan resin bening yang disangga kayu jati bekas palet kampus.",
-    boothId: "booth-b",
-    boothName: "Zona B - Galeri Kerajinan & Kriya Tangan",
-    likesCount: 115,
-    isHighlighted: true,
+    img: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80",
+    desc: "Karya kerajinan tiga dimensi yang mengabadikan serpihan sketsa arsip lama anggota ke dalam lapisan resin bening yang disangga kayu jati bekas palet kampus.",
     tags: ["3D Craft", "Resin", "Eco-Art", "Sculpture"]
   },
   {
-    id: "art-4",
-    slug: "kerajinan-terracotta-pop",
     title: "Terracotta Retro: Varian Wadah Ekspresi",
-    artist: "Dina Amanda",
-    artistNim: "3312201015",
-    artistBatch: "2022",
-    category: "Kerajinan",
     medium: "Tanah Liat Terracotta, Glaze Enamel & Stiker Sablon",
     dimensions: "Set of 4 (Diameter 18 cm)",
-    year: "2024",
-    imageUrl: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1000&q=80",
-    description: "Koleksi keramik fungsional bertekstur tanah bakar dengan sentuhan aksen warna kuning lemon dan magenta. Merefleksikan eksplorasi bentuk kriya modern di tangan mahasiswa.",
-    boothId: "booth-b",
-    boothName: "Zona B - Galeri Kerajinan & Kriya Tangan",
-    likesCount: 87,
-    isHighlighted: false,
+    img: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1000&q=80",
+    desc: "Koleksi keramik fungsional bertekstur tanah bakar dengan sentuhan aksen warna kuning lemon dan magenta.",
     tags: ["Ceramic", "Handmade", "Retro Colors"]
   },
   {
-    id: "art-5",
-    slug: "sketsa-buku-bersama-vol-1",
+    title: "Enigma Kristal: Kotak Pandora Waktu",
+    medium: "Cast Resin, Iron Wire & Copper Dust",
+    dimensions: "35 x 35 x 45 cm",
+    img: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?auto=format&fit=crop&w=1000&q=80",
+    desc: "Kriya tiga dimensi unik yang menggabungkan resin tembus pandang dengan kawat tembaga berpilin secara mandiri.",
+    tags: ["Sculpture", "Anonymous", "Resin", "Copper"]
+  },
+  {
+    title: "Relik Geometris: Logam & Akrilik Neon",
+    medium: "Aluminium Sheet, Neon Acrylic & Rivet",
+    dimensions: "50 x 25 x 70 cm",
+    img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1000&q=80",
+    desc: "Konstruksi logam ringan berpola kisi retro dengan sisipan lembaran akrilik transparan berdaya pantul tinggi.",
+    tags: ["Metal Craft", "Industrial", "Futuristic"]
+  },
+  {
+    title: "Vessel Tanah Liat: Jejak Tangan Seniman",
+    medium: "Stoneware Clay, Ash Glaze & Oxide Pigment",
+    dimensions: "30 x 30 x 40 cm",
+    img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80",
+    desc: "Guci keramik berpola spiral asimetris hasil putaran tangan spontan dalam sesi workshop kriya keramik.",
+    tags: ["Pottery", "Stoneware", "Handcrafted"]
+  },
+  {
+    title: "Instalasi Palet Kayu: Rumah Sejarah",
+    medium: "Recycled Pine Wood, Rope & LED Filament",
+    dimensions: "60 x 60 x 85 cm",
+    img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1000&q=80",
+    desc: "Miniatur panggung arsitektural yang dibuat dari potongan kayu palet dengan pencahayaan hangat lampu filamen.",
+    tags: ["Woodwork", "Installation", "Eco Craft"]
+  },
+  {
+    title: "Skulptur Kawat Tembaga: Siluet Penari",
+    medium: "Twisted Copper Wire & Marble Base",
+    dimensions: "25 x 25 x 55 cm",
+    img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80",
+    desc: "Pilinan kawat tembaga fleksibel yang membentuk figur manusia sedang melukis di udara.",
+    tags: ["Wire Art", "Sculpture", "Marble Base"]
+  },
+  {
+    title: "Makrame Tekstil: Anyaman Tali Retro",
+    medium: "Cotton Cord, Wooden Dowel & Indigo Dye",
+    dimensions: "75 x 110 cm",
+    img: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80",
+    desc: "Kriya tekstil bermotif simpul simetris dengan celupan warna nila alami bernuansa etnik kontemporer.",
+    tags: ["Macrame", "Textile", "Handmade"]
+  }
+];
+
+const SKETSA_POOL = [
+  {
     title: "Buku Sketsa Kolektif: Jejak Garis Anggota",
-    artist: "Kolektif Anggota Seni Rupa",
-    artistNim: "Kolektif Divisi",
-    artistBatch: "2021-2024",
-    category: "Sketsa & Ilustrasi",
     medium: "Ink, Marker & Charcoal on Canson Paper",
     dimensions: "A3 Hardcover Journal",
-    year: "2024",
-    imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80",
-    description: "Kompilasi sketsa spontan, doodle, dan catatan visual yang dibuat secara bergiliran oleh seluruh anggota divisi selama 3 tahun terakhir. Menjadi pondasi dari tema 'History'.",
-    boothId: "booth-c",
-    boothName: "Zona C - Pojok Gambar & Live Painting",
-    likesCount: 160,
-    isHighlighted: true,
+    img: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80",
+    desc: "Kompilasi sketsa spontan, doodle, dan catatan visual yang dibuat secara bergiliran oleh seluruh anggota divisi selama 3 tahun terakhir.",
     tags: ["Sketchbook", "Doodle", "History", "Interactive"]
   },
   {
-    id: "art-6",
-    slug: "abstraksi-spektrum-kehidupan",
-    title: "Spektrum Jiwa: Dinamika Mahasiswa Baru",
-    artist: "Kevin Pratama",
-    artistNim: "3312401002",
-    artistBatch: "2024 (Maba)",
-    category: "Lukis",
-    medium: "Spray Paint & Acrylic on Board",
-    dimensions: "90 x 120 cm",
-    year: "2024",
-    imageUrl: "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=1000&q=80",
-    description: "Karya sambutan dari mahasiswa baru yang merefleksikan rasa ingin tahu, semangat eksplorasi seni, dan warna-warni kehidupan perkuliahan di Politeknik Negeri Batam.",
-    boothId: "booth-a",
-    boothName: "Zona A - Galeri Lukis Sejarah",
-    likesCount: 79,
-    isHighlighted: false,
-    tags: ["Spray Paint", "Abstract", "Maba"]
+    title: "Jejak Pena Tengah Malam: Manifesto Visual",
+    medium: "Pigment Ink on Acid-Free Paper",
+    dimensions: "50 x 70 cm",
+    img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80",
+    desc: "Ilustrasi hitam-putih ultra detail yang memuat ratusan mikro-simbol dan teka-teki visual mengenai perjalanan seni rupa di Polibatam.",
+    tags: ["Line Art", "Anonymous", "Illustration", "Midnight Sketch"]
+  },
+  {
+    title: "Doodle Spontan: Atmosfer Student Centre",
+    medium: "Technical Pen & Waterbrush on Kraft",
+    dimensions: "40 x 60 cm",
+    img: "https://images.unsplash.com/photo-1580136579312-94651dfd596d?auto=format&fit=crop&w=1000&q=80",
+    desc: "Sketsa cepat live-sketching yang merekam hiruk-pikuk persiapan pameran seni di lantai 3 gedung kampus.",
+    tags: ["Live Sketch", "Urban Sketching", "Campus Life"]
+  },
+  {
+    title: "Studi Anatomi & Gestur Gerak Spontan",
+    medium: "Charcoal Stick & Sepia Conte on Textured Paper",
+    dimensions: "65 x 50 cm",
+    img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80",
+    desc: "Kajian garis ekspresif yang menangkap gerakan tangan seniman ketika memegang kuas dan alat pahat.",
+    tags: ["Anatomy", "Charcoal", "Gesture"]
+  },
+  {
+    title: "Perspektif Garis: Lorong Arsitektur Kampus",
+    medium: "Fineliner 0.1 & Grey Copic Marker",
+    dimensions: "42 x 29.7 cm (A3)",
+    img: "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?auto=format&fit=crop&w=1000&q=80",
+    desc: "Gambar perspektif dua titik hilang dengan presisi garis arsitektural yang menampilkan fasad modern Polibatam.",
+    tags: ["Architecture", "Perspective", "Fineliner"]
+  },
+  {
+    title: "Ilustrasi Karakter Maskot: Senrup Retro",
+    medium: "Digital Line Art Printed on Art Paper 310gsm",
+    dimensions: "45 x 60 cm",
+    img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80",
+    desc: "Desain maskot retro 90an dengan palet warna cerah yang merepresentasikan keceriaan dan energi anggota muda divisi seni.",
+    tags: ["Mascot", "Character Design", "Pop Art"]
+  },
+  {
+    title: "Storyboard Animasi: Perjalanan Sang Kuas",
+    medium: "Graphite & Tinta Cina on Bristol Board",
+    dimensions: "60 x 40 cm",
+    img: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80",
+    desc: "Rangkaian 9 panel sketsa yang menceritakan perjalanan sebatang kuas dari tangan pendiri hingga generasi penerus.",
+    tags: ["Storyboard", "Narrative", "Comic Strip"]
+  },
+  {
+    title: "Eksplorasi Tipografi Retro: Sejarah Seni",
+    medium: "Calligraphy Ink, Gouache & Stencil",
+    dimensions: "50 x 70 cm",
+    img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80",
+    desc: "Karya lettering buatan tangan memadukan gaya font Grotesk retro dengan ornamen geometris dinamis.",
+    tags: ["Typography", "Lettering", "Handmade"]
   }
 ];
+
+/**
+ * Helper Generator untuk Memproduksi Koleksi Dummy Artworks Berkualitas Tinggi
+ * @param {Object} options Konfigurasi kustom jika ingin menambah jumlah karya
+ * @returns {Array} Daftar lengkap karya seni (10-20 karya per pencipta)
+ */
+export function generateMockArtworks(options = {}) {
+  const artworksList = [];
+  let globalIdCounter = 1;
+
+  CREATORS_BLUEPRINT.forEach((creator, cIndex) => {
+    const creatorCounts = creator.counts || { Lukis: 5, Kerajinan: 4, "Sketsa & Ilustrasi": 4 };
+    
+    // 1. Generate Lukis
+    for (let i = 0; i < creatorCounts.Lukis; i++) {
+      const template = LUKIS_POOL[(cIndex + i) % LUKIS_POOL.length];
+      artworksList.push({
+        id: `art-${globalIdCounter++}`,
+        slug: `${creator.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-lukis-${i + 1}`,
+        title: `${template.title} #${i + 1}`,
+        artist: creator.name,
+        artistNim: creator.nim,
+        artistBatch: creator.batch,
+        isAnonymous: creator.isAnonymous,
+        category: "Lukis",
+        medium: template.medium,
+        dimensions: template.dimensions,
+        year: `${2021 + ((cIndex + i) % 4)}`,
+        imageUrl: template.img,
+        description: `${template.desc} Diciptakan oleh ${creator.name} (${creator.specialty}) untuk memperkaya pameran Art Showcase bertema History.`,
+        boothId: "booth-a",
+        boothName: "Zona A - Galeri Lukis Sejarah",
+        likesCount: 65 + ((cIndex * 13 + i * 19) % 150),
+        isHighlighted: i === 0,
+        tags: template.tags
+      });
+    }
+
+    // 2. Generate Kerajinan
+    for (let i = 0; i < creatorCounts.Kerajinan; i++) {
+      const template = KERAJINAN_POOL[(cIndex + i) % KERAJINAN_POOL.length];
+      artworksList.push({
+        id: `art-${globalIdCounter++}`,
+        slug: `${creator.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-kerajinan-${i + 1}`,
+        title: `${template.title} #${i + 1}`,
+        artist: creator.name,
+        artistNim: creator.nim,
+        artistBatch: creator.batch,
+        isAnonymous: creator.isAnonymous,
+        category: "Kerajinan",
+        medium: template.medium,
+        dimensions: template.dimensions,
+        year: `${2022 + ((cIndex + i) % 3)}`,
+        imageUrl: template.img,
+        description: `${template.desc} Karya kriya orisinal persembahan ${creator.name} dalam eksplorasi material 3 dimensi.`,
+        boothId: "booth-b",
+        boothName: "Zona B - Galeri Kerajinan & Kriya Tangan",
+        likesCount: 50 + ((cIndex * 17 + i * 23) % 140),
+        isHighlighted: i === 0,
+        tags: template.tags
+      });
+    }
+
+    // 3. Generate Sketsa & Ilustrasi
+    for (let i = 0; i < creatorCounts["Sketsa & Ilustrasi"]; i++) {
+      const template = SKETSA_POOL[(cIndex + i) % SKETSA_POOL.length];
+      artworksList.push({
+        id: `art-${globalIdCounter++}`,
+        slug: `${creator.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sketsa-${i + 1}`,
+        title: `${template.title} #${i + 1}`,
+        artist: creator.name,
+        artistNim: creator.nim,
+        artistBatch: creator.batch,
+        isAnonymous: creator.isAnonymous,
+        category: "Sketsa & Ilustrasi",
+        medium: template.medium,
+        dimensions: template.dimensions,
+        year: "2024",
+        imageUrl: template.img,
+        description: `${template.desc} Rekaman visual karya ${creator.name} yang merefleksikan tema History dalam goresan tinta spontan.`,
+        boothId: "booth-c",
+        boothName: "Zona C - Pojok Gambar & Live Painting",
+        likesCount: 75 + ((cIndex * 11 + i * 29) % 160),
+        isHighlighted: i === 0,
+        tags: template.tags
+      });
+    }
+  });
+
+  return artworksList;
+}
+
+// Inisialisasi Master Data Karya Pameran (+160 Karya Terstruktur)
+export const INITIAL_ARTWORKS = generateMockArtworks();
 
 export const BOOTH_ZONES = [
   {

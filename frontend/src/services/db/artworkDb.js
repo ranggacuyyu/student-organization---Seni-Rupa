@@ -13,7 +13,30 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 const getLocalArtworks = () => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : INITIAL_ARTWORKS;
+    if (!raw) {
+      saveLocalArtworks(INITIAL_ARTWORKS);
+      return INITIAL_ARTWORKS;
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // Merge in any new default artworks from INITIAL_ARTWORKS (e.g. anonymous & generated works)
+      const existingIds = new Set(parsed.map(a => a.id));
+      const newDefaults = INITIAL_ARTWORKS.filter(a => !existingIds.has(a.id));
+      const combined = [...parsed, ...newDefaults].map(art => ({
+        ...art,
+        isAnonymous: Boolean(
+          art.isAnonymous || 
+          art.is_anonymous || 
+          (typeof art.artist === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(art.artist))
+        )
+      }));
+      if (newDefaults.length > 0) {
+        saveLocalArtworks(combined);
+      }
+      return combined;
+    }
+    saveLocalArtworks(INITIAL_ARTWORKS);
+    return INITIAL_ARTWORKS;
   } catch {
     return INITIAL_ARTWORKS;
   }
@@ -36,8 +59,16 @@ export const ArtworkDb = {
     try {
       const res = await axios.get(`${API_BASE_URL}/artworks`, { timeout: 4000 });
       if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-        saveLocalArtworks(res.data.data);
-        return res.data.data;
+        const formatted = res.data.data.map(art => ({
+          ...art,
+          isAnonymous: Boolean(
+            art.isAnonymous || 
+            art.is_anonymous || 
+            (typeof art.artist === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(art.artist))
+          )
+        }));
+        saveLocalArtworks(formatted);
+        return formatted;
       }
     } catch (apiErr) {
       console.warn('Laravel API fetch artworks failed, fallback to Supabase/Local:', apiErr.message);
@@ -59,6 +90,11 @@ export const ArtworkDb = {
             artist: art.seniman_nama || art.artist,
             artistNim: art.seniman_nim || art.artistNim,
             artistBatch: art.seniman_angkatan || art.artistBatch,
+            isAnonymous: Boolean(
+              art.is_anonymous || 
+              art.isAnonymous || 
+              (typeof (art.seniman_nama || art.artist) === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(art.seniman_nama || art.artist))
+            ),
             category: art.kategori || art.category,
             medium: art.medium_bahan || art.medium,
             dimensions: art.dimensi || art.dimensions,
@@ -92,6 +128,7 @@ export const ArtworkDb = {
       slug: (newArt.title || 'karya').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       likesCount: 0,
       tags: ['Retro Pop', 'History'],
+      isAnonymous: Boolean(newArt.isAnonymous),
       ...newArt,
     };
 

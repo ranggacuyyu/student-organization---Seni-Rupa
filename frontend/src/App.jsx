@@ -271,6 +271,13 @@ export default function App() {
             <AttendancePage
               onOpenTicket={() => setIsTicketOpen(true)}
               onAttendanceSuccess={handleAttendanceSuccess}
+              onAttendanceUpdate={handleAttendanceSuccess}
+              onNavigateTab={(tab) => {
+                handleSetActiveTab(tab);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              myTicket={myTicket}
+              isVerified={isVerified}
             />
           ) : (
             currentUser.role === 'admin' ? (

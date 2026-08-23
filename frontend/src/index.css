@@ -76,6 +76,10 @@
   @apply btn-retro bg-[#7B2CBF] text-white shadow-retro hover:bg-[#8D3DD1] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
 }
 
+.btn-retro-lime {
+  @apply btn-retro bg-[#CCFF00] text-black shadow-retro hover:bg-[#D9FF33] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
+}
+
 .btn-retro-white {
   @apply btn-retro bg-white text-black shadow-retro hover:bg-gray-50 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-retro-lg;
 }

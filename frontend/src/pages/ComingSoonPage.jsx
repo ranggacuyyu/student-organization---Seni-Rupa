@@ -85,40 +85,40 @@ export default function ComingSoonPage({ onNavigateHome }) {
   ];
 
   return (
-    <div ref={containerRef} className="min-h-[85vh] py-12 px-4 sm:px-6 lg:px-8 bg-retro-dots flex flex-col items-center justify-center relative overflow-hidden">
+    <div ref={containerRef} className="min-h-[80vh] py-8 sm:py-12 px-3.5 sm:px-6 lg:px-8 bg-retro-dots flex flex-col items-center justify-center relative overflow-hidden">
       
       {/* Background Floating Memphis Accents */}
       <div className="absolute top-10 left-10 w-16 h-16 bg-[#FFE600] rounded-full border-3 border-black opacity-40 blur-[1px] -z-10 animate-bounce"></div>
       <div className="absolute bottom-12 right-12 w-24 h-24 bg-[#FF3388] rounded-3xl border-3 border-black rotate-12 opacity-30 -z-10"></div>
       <div className="absolute top-1/3 right-8 w-12 h-12 bg-[#00F0FF] rounded-lg border-2 border-black rotate-45 opacity-40 -z-10"></div>
 
-      <div className="max-w-4xl w-full mx-auto space-y-10 text-center relative z-10">
+      <div className="max-w-4xl w-full mx-auto space-y-8 sm:space-y-10 text-center relative z-10">
 
         {/* Big Header Banner */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           
           {/* Animated Badge & Logo */}
-          <div className="coming-soon-badge inline-flex items-center gap-3 bg-[#FFE600] border-3 border-black px-5 py-2.5 rounded-2xl shadow-retro">
-            <img src={senrupLogo} alt="Logo Seni Rupa" className="w-10 h-10 object-contain drop-shadow" />
-            <div className="text-left">
-              <span className="text-[10px] font-black tracking-wider text-black/70 block uppercase">
+          <div className="coming-soon-badge inline-flex items-center gap-2.5 sm:gap-3 bg-[#FFE600] border-2 sm:border-3 border-black px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-retro-sm sm:shadow-retro">
+            <img src={senrupLogo} alt="Logo Seni Rupa" className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow shrink-0" />
+            <div className="text-left min-w-0">
+              <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-black/70 block uppercase truncate">
                 DIVISI SENI RUPA POLIBATAM
               </span>
-              <span className="font-display font-black text-sm text-black">
+              <span className="font-display font-black text-xs sm:text-sm text-black truncate block">
                 AGENDA PROGRAM KERJA RESMI
               </span>
             </div>
           </div>
 
-          <div className="coming-soon-title space-y-3">
-            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl text-black tracking-tight leading-tight">
+          <div className="coming-soon-title space-y-2 sm:space-y-3">
+            <h1 className="font-display font-black text-3xl sm:text-6xl lg:text-7xl text-black tracking-tight leading-tight">
               COMING{' '}
-              <span className="bg-[#FF3388] text-white px-4 py-1 border-3 border-black rounded-2xl shadow-retro inline-block rotate-[-2deg]">
+              <span className="bg-[#FF3388] text-white px-3 sm:px-4 py-0.5 sm:py-1 border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl shadow-retro inline-block rotate-[-2deg]">
                 SOON!
               </span>
             </h1>
 
-            <p className="text-sm sm:text-lg font-medium text-neutral-700 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-lg font-medium text-neutral-700 max-w-2xl mx-auto leading-relaxed">
               Kami sedang menyiapkan serangkaian <strong>Program Kerja & Agenda Seni Spektakuler</strong> berikutnya untuk seluruh mahasiswa dan civitas akademika Politeknik Negeri Batam!
             </p>
           </div>
@@ -126,18 +126,18 @@ export default function ComingSoonPage({ onNavigateHome }) {
         </div>
 
         {/* Upcoming Proker Grid Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 text-left">
           {upcomingProkerList.map((proker) => {
             const Icon = proker.icon;
             return (
               <div
                 key={proker.id}
-                className="coming-soon-card card-retro-hover p-6 bg-white flex flex-col justify-between space-y-4 group"
+                className="coming-soon-card card-retro-hover p-4 sm:p-6 bg-white flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className={`w-12 h-12 rounded-2xl border-3 border-black flex items-center justify-center shadow-retro-sm ${proker.color} ${proker.textColor || 'text-black'} group-hover:rotate-6 transition-transform`}>
-                      <Icon className="w-6 h-6" />
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 sm:border-3 border-black flex items-center justify-center shadow-retro-sm ${proker.color} ${proker.textColor || 'text-black'} group-hover:rotate-6 transition-transform shrink-0`}>
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] bg-black text-[#FFE600] font-black px-2 py-0.5 rounded border border-black uppercase block">

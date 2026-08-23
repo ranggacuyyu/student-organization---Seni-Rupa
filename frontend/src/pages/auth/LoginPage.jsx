@@ -49,29 +49,29 @@ export default function LoginPage({ onLoginSuccess, onNavigateHome }) {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center p-4 sm:p-6 bg-retro-dots">
+    <div className="min-h-[80vh] flex items-center justify-center p-3.5 sm:p-6 bg-retro-dots">
       <div 
         ref={cardRef}
-        className="w-full max-w-md bg-white border-3 border-black rounded-3xl shadow-retro-xl overflow-hidden"
+        className="w-full max-w-md bg-white border-3 border-black rounded-2xl sm:rounded-3xl shadow-retro-lg sm:shadow-retro-xl overflow-hidden"
       >
         {/* Header Ribbon */}
-        <div className="bg-[#FFE600] border-b-3 border-black p-6 text-center relative">
-          <div className="inline-flex items-center gap-2 bg-[#FF3388] text-white border-2 border-black text-xs font-black px-3 py-0.5 rounded-lg mb-2 shadow-retro-sm">
+        <div className="bg-[#FFE600] border-b-3 border-black p-5 sm:p-6 text-center relative">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-[#FF3388] text-white border-2 border-black text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 rounded-lg mb-2 shadow-retro-sm">
             <Lock className="w-3.5 h-3.5" /> PORTAL PETUGAS
           </div>
-          <div className="flex items-center justify-center gap-3">
-            <img src={senrupLogo} alt="Logo" className="w-10 h-10 object-contain drop-shadow" />
-            <h1 className="font-display font-black text-2xl text-black">
+          <div className="flex items-center justify-center gap-2.5 sm:gap-3">
+            <img src={senrupLogo} alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow shrink-0" />
+            <h1 className="font-display font-black text-xl sm:text-2xl text-black">
               ART SHOWCASE
             </h1>
           </div>
-          <p className="text-xs font-semibold text-neutral-800 mt-1">
+          <p className="text-[11px] sm:text-xs font-semibold text-neutral-800 mt-1">
             Portal Akses Khusus Panitia & Super Admin
           </p>
         </div>
 
         {/* Form Body */}
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-4 sm:p-8 space-y-5 sm:space-y-6">
 
           {errorMessage && (
             <div className="bg-[#FF3388]/10 border-2 border-[#FF3388] text-[#FF3388] p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2 animate-shake">

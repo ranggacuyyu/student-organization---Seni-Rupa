@@ -159,6 +159,95 @@ export const AttendanceDb = {
   },
 
   /**
+   * Ajukan ulang / update data presensi yang belum di-scan
+   * @param {string} ticketId
+   * @param {Object} updatedData - { nama_lengkap, identifier, kategori, jurusan_prodi, catatan }
+   */
+  async updateAttendance(ticketId, updatedData) {
+    if (!ticketId) return { success: false, message: 'Ticket ID tidak valid' };
+
+    // 1. Coba update via Laravel REST API
+    try {
+      const res = await axios.put(`${API_BASE_URL}/attendance/${ticketId}`, updatedData, { timeout: 4000 });
+      if (res.data && res.data.success && res.data.ticket) {
+        const ticket = res.data.ticket;
+        const currentList = getLocalAttendances();
+        const updatedList = currentList.map(item => item.id === ticket.id ? { ...item, ...ticket } : item);
+        saveLocalAttendances(updatedList);
+        localStorage.setItem(MY_TICKET_KEY, JSON.stringify(ticket));
+        return {
+          success: true,
+          ticket: ticket,
+          data: ticket,
+          totalCount: updatedList.length,
+        };
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API update attendance failed, using cloud/local:', apiErr.message);
+    }
+
+    // 2. Update di Supabase jika terhubung
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase
+          .from('attendances')
+          .update({
+            nama_lengkap: updatedData.nama_lengkap?.trim(),
+            identifier: updatedData.identifier ? updatedData.identifier.trim() : '-',
+            kategori: updatedData.kategori,
+            jurusan_prodi: updatedData.jurusan_prodi,
+            catatan: updatedData.catatan || '',
+          })
+          .eq('id', ticketId);
+      } catch (err) {
+        console.warn('Supabase update failed, using local cache:', err);
+      }
+    }
+
+    // 3. Update di LocalStorage
+    const currentList = getLocalAttendances();
+    let updatedEntry = null;
+    const updatedList = currentList.map((item) => {
+      if (item.id === ticketId) {
+        updatedEntry = {
+          ...item,
+          nama_lengkap: updatedData.nama_lengkap ? updatedData.nama_lengkap.trim() : item.nama_lengkap,
+          identifier: updatedData.identifier !== undefined ? updatedData.identifier.trim() : item.identifier,
+          kategori: updatedData.kategori || item.kategori,
+          jurusan_prodi: updatedData.jurusan_prodi || item.jurusan_prodi,
+          catatan: updatedData.catatan !== undefined ? updatedData.catatan : item.catatan,
+          waktu_diperbarui: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        };
+        return updatedEntry;
+      }
+      return item;
+    });
+
+    if (!updatedEntry) {
+      const myTicket = this.getMyTicket();
+      if (myTicket && myTicket.id === ticketId) {
+        updatedEntry = {
+          ...myTicket,
+          ...updatedData,
+          waktu_diperbarui: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        };
+      }
+    }
+
+    saveLocalAttendances(updatedList);
+    if (updatedEntry) {
+      localStorage.setItem(MY_TICKET_KEY, JSON.stringify(updatedEntry));
+    }
+
+    return {
+      success: true,
+      ticket: updatedEntry,
+      data: updatedEntry,
+      totalCount: updatedList.length,
+    };
+  },
+
+  /**
    * Alias untuk recordAttendance — kompatibel dengan AttendancePage.jsx
    * Mengembalikan { data: ticket, success, totalCount }
    */

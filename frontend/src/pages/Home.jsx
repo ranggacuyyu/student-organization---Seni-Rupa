@@ -76,85 +76,85 @@ export default function Home({
 
             {/* Main Headline */}
             <div className="space-y-2">
-              <h1 className="hero-title-main font-display font-black text-4xl sm:text-6xl lg:text-7xl text-black tracking-tight leading-[1.08]">
+              <h1 className="hero-title-main font-display font-black text-3xl sm:text-6xl lg:text-7xl text-black tracking-tight leading-[1.15] sm:leading-[1.08]">
                 JELAJAHI JEJAK KARYA & SEJARAH{' '}
-                <span className="hero-tag-box relative inline-block text-white bg-[#FF3388] px-4 py-1 border-3 border-black rounded-2xl shadow-retro rotate-[-2deg] my-2">
+                <span className="hero-tag-box relative inline-block text-white bg-[#FF3388] px-3 sm:px-4 py-0.5 sm:py-1 border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl shadow-retro rotate-[-2deg] my-1 sm:my-2">
                   SENI RUPA
                 </span>
               </h1>
-              <p className="hero-desc text-neutral-700 text-sm sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed pt-2">
+              <p className="hero-desc text-neutral-700 text-xs sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed pt-1 sm:pt-2">
                 Pameran karya lukis, kriya kerajinan tangan, live painting, dan sarana apresiasi seni terbuka untuk seluruh <strong>Mahasiswa Baru & Civitas Politeknik Negeri Batam</strong>.
               </p>
             </div>
 
             {/* Venue & Time Badge Bar */}
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <div className="hero-meta-badge flex items-center gap-2 bg-[#FAF7EE] border-2 border-black px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-retro-sm hover:-translate-y-1 transition-transform">
-                <MapPin className="w-4 h-4 text-[#FF3388]" />
-                <span>Student Centre Lantai 3 Polibatam</span>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 pt-2 max-w-md sm:max-w-none mx-auto">
+              <div className="hero-meta-badge flex items-center justify-center gap-2 bg-[#FAF7EE] border-2 border-black px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-retro-sm hover:-translate-y-1 transition-transform">
+                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF3388] shrink-0" />
+                <span className="truncate">Student Centre Lantai 3 Polibatam</span>
               </div>
-              <div className="hero-meta-badge flex items-center gap-2 bg-[#FAF7EE] border-2 border-black px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-retro-sm hover:-translate-y-1 transition-transform">
-                <Calendar className="w-4 h-4 text-[#00F0FF]" />
-                <span>Sabtu, 12 September 2026 (10:00 - 17:00 WIB)</span>
+              <div className="hero-meta-badge flex items-center justify-center gap-2 bg-[#FAF7EE] border-2 border-black px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-retro-sm hover:-translate-y-1 transition-transform">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00F0FF] shrink-0" />
+                <span className="truncate">Sabtu, 12 September 2026 (10:00 - 17:00 WIB)</span>
               </div>
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 pt-2 sm:pt-4 max-w-sm sm:max-w-none mx-auto">
               {currentUser ? (
                 <button
                   onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin' : 'panitia')}
-                  className="hero-cta-btn btn-retro-yellow text-base sm:text-lg px-8 py-3.5 flex items-center gap-2 active:scale-95"
+                  className="hero-cta-btn btn-retro-yellow text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 flex items-center justify-center gap-2 active:scale-95 w-full sm:w-auto"
                 >
-                  <QrCode className="w-5 h-5 text-black" />
+                  <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-black shrink-0" />
                   <span>{currentUser.role === 'admin' ? 'Buka Super Admin' : 'Buka Portal Panitia'}</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                 </button>
               ) : (
                 <button
                   onClick={() => onNavigate('presensi')}
-                  className="hero-cta-btn btn-retro-yellow text-base sm:text-lg px-8 py-3.5 flex items-center gap-2 active:scale-95"
+                  className="hero-cta-btn btn-retro-yellow text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 flex items-center justify-center gap-2 active:scale-95 w-full sm:w-auto"
                 >
-                  <UserCheck className="w-5 h-5 text-black" />
+                  <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-black shrink-0" />
                   <span>Presensi Kehadiran (Scan / Isi)</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                 </button>
               )}
 
               <button
                 onClick={() => onNavigate('katalog')}
-                className="hero-cta-btn btn-retro-cyan text-base sm:text-lg px-8 py-3.5 flex items-center gap-2 active:scale-95"
+                className="hero-cta-btn btn-retro-cyan text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 flex items-center justify-center gap-2 active:scale-95 w-full sm:w-auto"
               >
-                <Palette className="w-5 h-5 text-black" />
+                <Palette className="w-4 h-4 sm:w-5 sm:h-5 text-black shrink-0" />
                 <span>Lihat Katalog Karya</span>
               </button>
             </div>
           </div>
 
           {/* Quick Metrics Bar (Scroll-Triggered Count) */}
-          <div className="metrics-bar-container grid grid-cols-2 sm:grid-cols-3 gap-4 mt-12 pt-8 border-t-3 border-black">
-            <div className="metric-card bg-white border-3 border-black rounded-2xl p-4 shadow-retro text-center hover:-translate-y-1 transition-transform">
-              <div className="font-display font-black text-2xl sm:text-4xl text-[#FF3388]">
+          <div className="metrics-bar-container grid grid-cols-3 gap-2 sm:gap-4 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-2 sm:border-t-3 border-black">
+            <div className="metric-card bg-white border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-retro-sm sm:shadow-retro text-center hover:-translate-y-1 transition-transform">
+              <div className="font-display font-black text-xl sm:text-4xl text-[#FF3388]">
                 <span ref={visitorCountRef}>{attendancesCount}</span>+
               </div>
-              <div className="text-xs sm:text-sm font-bold text-neutral-700 mt-1">
-                Pengunjung Terdaftar
+              <div className="text-[10px] sm:text-sm font-bold text-neutral-700 mt-0.5 sm:mt-1 line-clamp-1">
+                Pengunjung
               </div>
             </div>
-            <div className="metric-card bg-white border-3 border-black rounded-2xl p-4 shadow-retro text-center hover:-translate-y-1 transition-transform">
-              <div className="font-display font-black text-2xl sm:text-4xl text-[#00F0FF]">
+            <div className="metric-card bg-white border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-retro-sm sm:shadow-retro text-center hover:-translate-y-1 transition-transform">
+              <div className="font-display font-black text-xl sm:text-4xl text-[#00F0FF]">
                 <span ref={artworkCountRef}>{artworks.length}</span>
               </div>
-              <div className="text-xs sm:text-sm font-bold text-neutral-700 mt-1">
-                Karya Masterpiece
+              <div className="text-[10px] sm:text-sm font-bold text-neutral-700 mt-0.5 sm:mt-1 line-clamp-1">
+                Karya Seni
               </div>
             </div>
-            <div className="metric-card bg-white border-3 border-black rounded-2xl p-4 shadow-retro text-center hover:-translate-y-1 transition-transform">
-              <div className="font-display font-black text-2xl sm:text-4xl text-[#7B2CBF]">
+            <div className="metric-card bg-white border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-retro-sm sm:shadow-retro text-center hover:-translate-y-1 transition-transform">
+              <div className="font-display font-black text-xl sm:text-4xl text-[#7B2CBF]">
                 <span ref={freeCountRef}>100</span>%
               </div>
-              <div className="text-xs sm:text-sm font-bold text-neutral-700 mt-1">
-                Gratis & Terbuka
+              <div className="text-[10px] sm:text-sm font-bold text-neutral-700 mt-0.5 sm:mt-1 line-clamp-1">
+                Gratis
               </div>
             </div>
           </div>
@@ -165,31 +165,31 @@ export default function Home({
       {/* ================= LIVE SESSION ALERT BANNER ================= */}
       {currentLiveSession && (
         <section className="live-banner-alert max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-[#FFE600] border-3 border-black rounded-3xl p-6 shadow-retro-lg flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="bg-[#FFE600] border-3 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-retro-lg flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden">
 
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-black text-[#FFE600] border-2 border-black rounded-2xl flex items-center justify-center shrink-0 font-bold">
-                <Clock className="w-7 h-7 animate-spin" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 bg-black text-[#FFE600] border-2 border-black rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 font-bold">
+                <Clock className="w-5 h-5 sm:w-7 sm:h-7 animate-spin" />
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="bg-[#FF3388] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full border border-black uppercase animate-pulse">
+              <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span className="bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 rounded-full border border-black uppercase animate-pulse">
                     🔴 SEDANG BERLANGSUNG (LIVE)
                   </span>
-                  <span className="font-mono text-xs font-bold text-black">{currentLiveSession.time} WIB</span>
+                  <span className="font-mono text-[11px] sm:text-xs font-bold text-black">{currentLiveSession.time} WIB</span>
                 </div>
-                <h3 className="font-display font-black text-xl sm:text-2xl text-black">
+                <h3 className="font-display font-black text-lg sm:text-2xl text-black truncate">
                   {currentLiveSession.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-neutral-800 font-medium">
-                  Lokasi: student centre Lantai 3
+                <p className="text-[11px] sm:text-sm text-neutral-800 font-medium">
+                  Lokasi: Student Centre Lantai 3
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => onNavigate('rundown')}
-              className="btn-retro-white whitespace-nowrap text-sm px-6 py-3 shrink-0 active:scale-95"
+              className="btn-retro-white whitespace-nowrap text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3 shrink-0 active:scale-95 text-center w-full md:w-auto"
             >
               Lihat Seluruh Rundown 📅
             </button>
@@ -410,27 +410,27 @@ export default function Home({
 
       {/* ================= CALL TO ACTION ================= */}
       <section id="section-cta" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="cta-banner-box bg-[#121212] text-white border-3 border-black rounded-3xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden shadow-retro-xl">
-          <div className="max-w-2xl mx-auto space-y-3 relative z-10">
-            <h2 className="font-display font-black text-3xl sm:text-5xl text-white">
+        <div className="cta-banner-box bg-[#121212] text-white border-3 border-black rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center space-y-5 sm:space-y-6 relative overflow-hidden shadow-retro-xl">
+          <div className="max-w-2xl mx-auto space-y-2 sm:space-y-3 relative z-10">
+            <h2 className="font-display font-black text-2xl sm:text-5xl text-white leading-tight">
               Siap Mengapresiasi Karya Seni Rupa Polibatam?
             </h2>
             <p className="text-neutral-300 text-xs sm:text-base leading-relaxed">
               Lakukan presensi sekarang dan dapatkan kartu tiket digital resmimu untuk menikmati seluruh rangkaian Art Showcase 'History'!
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 relative z-10">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 relative z-10 max-w-sm sm:max-w-none mx-auto">
             <button
               onClick={() => onNavigate('presensi')}
-              className="btn-retro-yellow text-sm sm:text-base px-8 py-3.5 active:scale-95"
+              className="btn-retro-yellow text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 active:scale-95 w-full sm:w-auto"
             >
-              Presensi Sekarang
+              Presensi Sekarang ✍️
             </button>
             <button
               onClick={() => onNavigate('pesan-kesan')}
-              className="btn-retro-white text-sm sm:text-base px-8 py-3.5 active:scale-95"
+              className="btn-retro-white text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 active:scale-95 w-full sm:w-auto"
             >
-              Tulis Kesan di Buku Tamu 
+              Tulis Kesan di Buku Tamu 💬
             </button>
           </div>
         </div>

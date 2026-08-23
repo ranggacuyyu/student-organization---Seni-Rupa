@@ -106,39 +106,39 @@ export default function GuestbookPage({ messages, onAddMessage }) {
   };
 
   return (
-    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-8 sm:space-y-12">
       
       {/* Header Banner */}
-      <div className="guestbook-header-banner bg-[#CCFF00] text-black border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
-        <div className="max-w-3xl space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-2 bg-black text-[#CCFF00] px-3 py-1 rounded-lg text-xs font-black uppercase">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF3388]" /> POJOK EKSPRESI & KESAN PESAN
+      <div className="guestbook-header-banner bg-[#CCFF00] text-black border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+        <div className="max-w-3xl space-y-2 sm:space-y-3 relative z-10">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-black text-[#CCFF00] px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FF3388]" /> POJOK EKSPRESI & KESAN PESAN
           </div>
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-black">
+          <h1 className="font-display font-black text-2xl sm:text-5xl text-black leading-tight">
             Buku Tamu Digital Art Showcase
           </h1>
-          <p className="text-neutral-900 text-xs sm:text-base font-medium">
+          <p className="text-neutral-900 text-xs sm:text-base font-medium leading-relaxed">
             Tinggalkan pesan, saran, atau kesanmu setelah berkeliling melihat pameran karya lukis & kriya di Student Centre Lantai 3 Polibatam!
           </p>
         </div>
       </div>
 
       {/* Grid: Form Input (Left) + Sticky Notes Wall (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         
         {/* Left: Input Form */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="guestbook-form-card card-retro p-6 bg-white space-y-5 sticky top-28">
+          <div className="guestbook-form-card card-retro p-4 sm:p-6 bg-white space-y-4 sm:space-y-5 lg:sticky lg:top-28">
             <div className="border-b-2 border-neutral-200 pb-3 flex items-center justify-between">
               <div>
-                <h3 className="font-display font-black text-xl text-black">
+                <h3 className="font-display font-black text-lg sm:text-xl text-black">
                   Tulis Pesan Kesan
                 </h3>
-                <p className="text-xs text-neutral-500">
+                <p className="text-[11px] sm:text-xs text-neutral-500">
                   Tempelkan catatanmu di dinding pameran digital.
                 </p>
               </div>
-              <span className="text-2xl">📝</span>
+              <span className="text-xl sm:text-2xl">📝</span>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">

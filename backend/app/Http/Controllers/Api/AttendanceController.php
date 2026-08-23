@@ -79,6 +79,41 @@ class AttendanceController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, $id)
+    {
+        $attendance = Attendance::find($id);
+        if (!$attendance) {
+            return response()->json(['success' => false, 'message' => 'Data presensi tidak ditemukan.'], 404);
+        }
+
+        if ($attendance->is_checked_in) {
+            return response()->json(['success' => false, 'message' => 'Data presensi yang telah diverifikasi panitia tidak dapat diubah lagi.'], 400);
+        }
+
+        $request->validate([
+            'nama_lengkap' => 'sometimes|required|string|max:150',
+            'kategori' => 'nullable|string|max:50',
+            'identifier' => 'nullable|string|max:50',
+            'jurusan_prodi' => 'nullable|string|max:100',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if ($request->has('nama_lengkap')) $attendance->nama_lengkap = trim($request->nama_lengkap);
+        if ($request->has('identifier')) $attendance->identifier = trim($request->identifier);
+        if ($request->has('kategori')) $attendance->kategori = $request->kategori;
+        if ($request->has('jurusan_prodi')) $attendance->jurusan_prodi = $request->jurusan_prodi;
+        if ($request->has('catatan')) $attendance->catatan = $request->catatan;
+
+        $attendance->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data presensi berhasil diperbarui!',
+            'ticket' => $attendance,
+            'data' => $attendance,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $query = Attendance::query()->orderBy('waktu_kehadiran', 'desc');

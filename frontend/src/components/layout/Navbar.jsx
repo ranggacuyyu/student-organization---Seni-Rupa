@@ -264,13 +264,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
             {!currentUser && (
               <button
                 onClick={onOpenTicket}
-                className="flex items-center gap-1.5 sm:gap-2 bg-[#00F0FF] text-black font-display font-bold text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 sm:py-2 border-2 sm:border-3 border-black rounded-xl shadow-retro-sm sm:shadow-retro hover:bg-[#33F3FF] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all active:scale-95"
+                className="flex items-center gap-1 sm:gap-2 bg-[#00F0FF] text-black font-display font-bold text-[11px] sm:text-sm px-2 sm:px-3.5 py-1.5 sm:py-2 border-2 sm:border-3 border-black rounded-xl shadow-retro-sm sm:shadow-retro hover:bg-[#33F3FF] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all active:scale-95"
                 title="Lihat Bukti Tiket Presensi Digital"
               >
-                <Ticket className="w-4 h-4 text-black shrink-0" />
-                <span className="hidden sm:inline">Tiket Saya</span>
+                <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                <span className="inline sm:inline">Tiket</span>
                 {ticketCount > 0 && (
-                  <span className="w-4 h-4 sm:w-5 sm:h-5 bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black rounded-full border border-black flex items-center justify-center animate-bounce">
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black rounded-full border border-black flex items-center justify-center animate-bounce shrink-0">
                     1
                   </span>
                 )}

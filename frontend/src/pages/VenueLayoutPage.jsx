@@ -66,50 +66,50 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
   }, [activeZoneId]);
 
   return (
-    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-6 sm:space-y-10">
       
       {/* Header Banner */}
-      <div className="denah-header-banner bg-[#00F0FF] text-black border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
-        <div className="max-w-3xl space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-2 bg-black text-[#00F0FF] px-3 py-1 rounded-lg text-xs font-black uppercase">
-            <Compass className="w-3.5 h-3.5 text-[#FFE600]" /> DENAH & PETA INTERAKTIF
+      <div className="denah-header-banner bg-[#00F0FF] text-black border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+        <div className="max-w-3xl space-y-2 sm:space-y-3 relative z-10">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-black text-[#00F0FF] px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase">
+            <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFE600]" /> DENAH & PETA INTERAKTIF
           </div>
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-black">
+          <h1 className="font-display font-black text-2xl sm:text-5xl text-black leading-tight">
             Layout Student Centre Lantai 3
           </h1>
-          <p className="text-neutral-900 text-xs sm:text-base font-medium">
+          <p className="text-neutral-900 text-xs sm:text-base font-medium leading-relaxed">
             Pemilihan venue lantai 3 dirancang agar sirkulasi udara tetap sejuk, pencahayaan alami optimal untuk karya, serta kapasitas luas yang nyaman bagi pengunjung.
           </p>
         </div>
       </div>
 
       {/* Main Grid: Interactive Map (Left) + Zone Details & Artworks (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         
         {/* Left Column: Interactive Visual Floor Plan Map */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="denah-map-card card-retro p-6 bg-white space-y-4">
+          <div className="denah-map-card card-retro p-4 sm:p-6 bg-white space-y-4">
             
             <div className="flex items-center justify-between border-b-2 border-neutral-200 pb-3">
               <div>
-                <h3 className="font-display font-black text-xl text-black">
+                <h3 className="font-display font-black text-lg sm:text-xl text-black">
                   Peta Denah Lantai 3 (Klik Zona)
                 </h3>
-                <p className="text-xs text-neutral-500">
+                <p className="text-[11px] sm:text-xs text-neutral-500">
                   Klik salah satu kotak zona di bawah untuk melihat detail display & karya.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-neutral-600">
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-neutral-600 shrink-0">
                 <span className="w-2.5 h-2.5 bg-[#22C55E] rounded-full animate-ping"></span>
                 <span>Interaktif</span>
               </div>
             </div>
 
             {/* Simulated Interactive SVG Floor Plan */}
-            <div className="relative bg-[#FAF7EE] border-3 border-black rounded-2xl p-6 overflow-hidden min-h-[380px] flex flex-col justify-between bg-retro-grid">
+            <div className="relative bg-[#FAF7EE] border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl p-3.5 sm:p-6 overflow-hidden min-h-[320px] sm:min-h-[380px] flex flex-col justify-between bg-retro-grid">
               
               {/* North Indicator */}
-              <div className="absolute top-2 right-3 font-mono text-[10px] font-black bg-white px-2 py-0.5 rounded border border-black flex items-center gap-1 shadow-retro-sm">
+              <div className="absolute top-2 right-3 font-mono text-[9px] sm:text-[10px] font-black bg-white px-2 py-0.5 rounded border border-black flex items-center gap-1 shadow-retro-sm">
                 <span>⬆ UTARA</span>
               </div>
 
@@ -117,29 +117,29 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
               <div className="w-full">
                 <button
                   onClick={() => setActiveZoneId('booth-a')}
-                  className={`denah-booth-node w-full p-4 rounded-xl border-3 border-black text-left transition-all duration-150 active:scale-95 ${
+                  className={`denah-booth-node w-full p-3 sm:p-4 rounded-xl border-2 sm:border-3 border-black text-left transition-all duration-150 active:scale-95 ${
                     activeZoneId === 'booth-a'
-                      ? 'bg-[#FFE600] shadow-retro scale-[1.02]'
+                      ? 'bg-[#FFE600] shadow-retro scale-[1.01] sm:scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-sm text-black">🎨 ZONA A: GALERI LUKISAN SEJARAH</span>
-                    <span className="text-[10px] bg-black text-white font-black px-2 py-0.5 rounded">12 Karya</span>
+                    <span className="font-display font-black text-xs sm:text-sm text-black truncate pr-2">🎨 ZONA A: GALERI LUKISAN</span>
+                    <span className="text-[9px] sm:text-[10px] bg-black text-white font-black px-2 py-0.5 rounded shrink-0">12 Karya</span>
                   </div>
-                  <p className="text-[11px] text-neutral-700 mt-1">Sisi Utara (Pencahayaan Kaca Terbuka)</p>
+                  <p className="text-[10px] sm:text-[11px] text-neutral-700 mt-0.5 sm:mt-1">Sisi Utara (Pencahayaan Kaca Terbuka)</p>
                 </button>
               </div>
 
               {/* Middle Row: Zona D (Stage), Zona C (Pojok Live Painting), Zona B (Kerajinan) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 my-2.5 sm:my-4">
                 
                 {/* Zona D: Panggung Barat */}
                 <button
                   onClick={() => setActiveZoneId('booth-d')}
-                  className={`denah-booth-node p-3 rounded-xl border-3 border-black text-left transition-all active:scale-95 ${
+                  className={`denah-booth-node p-2.5 sm:p-3 rounded-xl border-2 sm:border-3 border-black text-left transition-all active:scale-95 ${
                     activeZoneId === 'booth-d'
-                      ? 'bg-[#7B2CBF] text-white shadow-retro scale-[1.02]'
+                      ? 'bg-[#7B2CBF] text-white shadow-retro scale-[1.01] sm:scale-[1.02]'
                       : 'bg-white hover:bg-neutral-50 text-black'
                   }`}
                 >
@@ -286,7 +286,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                             {art.title}
                           </h5>
                           <span className="text-[10px] text-neutral-500 font-medium">
-                            Oleh {art.artist}
+                            Oleh {art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '') ? '🎭 Pencipta Dirahasiakan' : art.artist}
                           </span>
                         </div>
                       </div>

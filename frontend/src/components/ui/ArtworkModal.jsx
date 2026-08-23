@@ -18,19 +18,19 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
   if (!isOpen || !artwork) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
       <div 
         ref={modalBoxRef}
-        className="relative w-full max-w-4xl my-auto bg-[#FAF7EE] border-3 border-black rounded-3xl shadow-retro-xl overflow-hidden"
+        className="relative w-full max-w-4xl my-auto bg-[#FAF7EE] border-3 border-black rounded-2xl sm:rounded-3xl shadow-retro-xl overflow-hidden max-h-[92dvh] flex flex-col"
       >
         
         {/* Top Bar Ribbon */}
-        <div className="bg-[#FFE600] border-b-3 border-black px-6 py-3.5 flex items-center justify-between">
+        <div className="bg-[#FFE600] border-b-3 border-black px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <span className="bg-[#FF3388] text-white text-xs font-black px-2.5 py-0.5 rounded-lg border-2 border-black uppercase">
+            <span className="bg-[#FF3388] text-white text-[11px] sm:text-xs font-black px-2.5 py-0.5 rounded-lg border-2 border-black uppercase">
               {artwork.category}
             </span>
-            <span className="font-display font-bold text-sm text-black hidden sm:inline">
+            <span className="font-display font-bold text-xs sm:text-sm text-black hidden sm:inline">
               Katalog Karya Seni Rupa Polibatam
             </span>
           </div>
@@ -38,51 +38,59 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
             onClick={onClose}
             className="p-1.5 bg-white border-2 border-black rounded-xl hover:bg-neutral-100 active:translate-x-0.5 active:translate-y-0.5 shadow-retro-sm"
           >
-            <X className="w-5 h-5 text-black" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
           </button>
         </div>
 
         {/* Modal Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 max-h-[82vh] overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 overflow-y-auto">
           
           {/* Left Column: Image Artwork HD Display */}
-          <div className="lg:col-span-6 bg-neutral-900 border-b-3 lg:border-b-0 lg:border-r-3 border-black p-6 flex flex-col justify-center items-center relative min-h-[320px]">
+          <div className="lg:col-span-6 bg-neutral-900 border-b-3 lg:border-b-0 lg:border-r-3 border-black p-4 sm:p-6 flex flex-col justify-center items-center relative min-h-[260px] sm:min-h-[320px]">
             <div className="relative group max-w-full">
               <img
                 src={artwork.imageUrl}
                 alt={artwork.title}
-                className="w-full max-h-[460px] object-contain rounded-2xl border-3 border-black shadow-retro-lg bg-black"
+                className="w-full max-h-[460px] object-contain rounded-xl sm:rounded-2xl border-2 sm:border-3 border-black shadow-retro-sm sm:shadow-retro-lg bg-black"
               />
-              <div className="absolute bottom-3 right-3 bg-black/80 text-white text-xs px-2.5 py-1 rounded-lg border border-white/40 flex items-center gap-1.5">
-                <Maximize2 className="w-3.5 h-3.5 text-[#00F0FF]" /> {artwork.dimensions || 'HD Artwork'}
+              <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 bg-black/80 text-white text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border border-white/40 flex items-center gap-1.5">
+                <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#00F0FF]" /> {artwork.dimensions || 'HD Artwork'}
               </div>
             </div>
           </div>
 
           {/* Right Column: Detailed Narrative & Metadatas */}
-          <div className="lg:col-span-6 p-6 sm:p-8 space-y-6 bg-white">
+          <div className="lg:col-span-6 p-4 sm:p-8 space-y-4 sm:space-y-6 bg-white">
             
-            {/* Title & Artist */}
-            <div className="space-y-2">
-              <h2 className="font-display font-black text-2xl sm:text-3xl text-black leading-tight">
-                {artwork.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-                <div className="flex items-center gap-1.5 text-neutral-800 font-bold bg-[#00F0FF]/20 px-2.5 py-1 rounded-lg border border-black">
-                  <User className="w-4 h-4 text-black" /> {artwork.artist}
+              {/* Title & Artist */}
+              <div className="space-y-2">
+                <h2 className="font-display font-black text-2xl sm:text-3xl text-black leading-tight">
+                  {artwork.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                  {artwork.isAnonymous || (typeof artwork.artist === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(artwork.artist)) ? (
+                    <div className="flex items-center gap-1.5 text-purple-950 font-black bg-purple-100 px-3 py-1 rounded-xl border-2 border-purple-800 shadow-retro-sm">
+                      <Sparkles className="w-4 h-4 text-purple-600 animate-pulse" />
+                      <span>🎭 Pencipta Dirahasiakan (Anonim)</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-neutral-800 font-bold bg-[#00F0FF]/20 px-2.5 py-1 rounded-lg border border-black">
+                      <User className="w-4 h-4 text-black" /> {artwork.artist}
+                    </div>
+                  )}
+
+                  {!artwork.isAnonymous && artwork.artistBatch && (
+                    <span className="text-neutral-500 font-semibold">
+                      Angkatan {artwork.artistBatch}
+                    </span>
+                  )}
+                  {artwork.year && (
+                    <span className="flex items-center gap-1 text-neutral-500 font-semibold">
+                      <Calendar className="w-3.5 h-3.5" /> Tahun {artwork.year}
+                    </span>
+                  )}
                 </div>
-                {artwork.artistBatch && (
-                  <span className="text-neutral-500 font-semibold">
-                    Angkatan {artwork.artistBatch}
-                  </span>
-                )}
-                {artwork.year && (
-                  <span className="flex items-center gap-1 text-neutral-500 font-semibold">
-                    <Calendar className="w-3.5 h-3.5" /> Tahun {artwork.year}
-                  </span>
-                )}
               </div>
-            </div>
 
             {/* Specifications Card */}
             <div className="bg-[#FAF7EE] border-2 border-black rounded-2xl p-4 space-y-2.5 text-xs sm:text-sm">

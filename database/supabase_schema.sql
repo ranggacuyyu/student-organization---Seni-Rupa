@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS artworks (
     slug VARCHAR(250) UNIQUE NOT NULL,
     seniman_nama VARCHAR(150) NOT NULL,
     seniman_nim VARCHAR(50),
-    seniman_angkatan VARCHAR(10),
+    seniman_angkatan VARCHAR(30),
     kategori VARCHAR(50) NOT NULL CHECK (kategori IN ('Lukis', 'Kerajinan', 'Sketsa & Ilustrasi', 'Seni Media Baru', 'Lainnya')),
     deskripsi_filosofi TEXT NOT NULL,
     medium_bahan VARCHAR(150),

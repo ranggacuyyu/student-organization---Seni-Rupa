@@ -11,23 +11,23 @@ export default function LockedAccessGate({
   onRefreshStatus
 }) {
   return (
-    <div className="min-h-[75vh] py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center bg-retro-dots">
-      <div className="max-w-xl w-full bg-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro-xl space-y-6 relative overflow-hidden">
+    <div className="min-h-[75vh] py-6 sm:py-10 px-3.5 sm:px-6 lg:px-8 flex items-center justify-center bg-retro-dots">
+      <div className="max-w-xl w-full bg-white border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro-lg sm:shadow-retro-xl space-y-5 sm:space-y-6 relative overflow-hidden">
         
         {/* Top Decorative Accent */}
         <div className="absolute top-0 left-0 right-0 h-2.5 bg-retro-stripes" />
 
         {/* Lock Icon & Header */}
-        <div className="text-center space-y-3 pt-2">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#FF3388] text-white border-3 border-black rounded-3xl shadow-retro mx-auto flex items-center justify-center rotate-[-3deg] hover:rotate-0 transition-transform">
-            <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white animate-pulse" />
+        <div className="text-center space-y-2.5 sm:space-y-3 pt-2">
+          <div className="w-14 h-14 sm:w-20 sm:h-20 bg-[#FF3388] text-white border-2 sm:border-3 border-black rounded-2xl sm:rounded-3xl shadow-retro-sm sm:shadow-retro mx-auto flex items-center justify-center rotate-[-3deg] hover:rotate-0 transition-transform">
+            <Lock className="w-7 h-7 sm:w-10 sm:h-10 text-white animate-pulse" />
           </div>
 
-          <div className="inline-flex items-center gap-1.5 bg-[#FFE600] text-black border-2 border-black px-3 py-1 rounded-full text-xs font-black uppercase shadow-retro-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF3388]" /> Akses Khusus Pengunjung Terverifikasi
+          <div className="inline-flex items-center gap-1.5 bg-[#FFE600] text-black border-2 border-black px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase shadow-retro-sm">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FF3388]" /> Akses Khusus Pengunjung Terverifikasi
           </div>
 
-          <h2 className="font-display font-black text-2xl sm:text-3xl text-black">
+          <h2 className="font-display font-black text-xl sm:text-3xl text-black leading-tight">
             {pageTitle} Sedang Terkunci
           </h2>
 

@@ -30,6 +30,7 @@ class ArtworkController extends Controller
             'boothName' => $art->booth_name,
             'likesCount' => $art->likes_count,
             'isHighlighted' => (bool)$art->is_highlighted,
+            'isAnonymous' => (bool)($art->is_anonymous ?? false) || (stripos($art->seniman_nama ?? '', 'rahasia') !== false) || (stripos($art->seniman_nama ?? '', 'dirahasiakan') !== false) || (stripos($art->seniman_nama ?? '', 'anonim') !== false),
             'tags' => $art->tags ?? ['Retro Pop', 'History'],
         ];
     }

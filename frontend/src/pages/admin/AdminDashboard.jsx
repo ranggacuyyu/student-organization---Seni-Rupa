@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { BOOTH_ZONES, INITIAL_PANITIA_SHIFTS } from '../../data/mockData';
 import { ArtworkService, PanitiaService, testDatabaseConnection, isSupabaseConfigured } from '../../services/api';
+import { seedArtworksToSupabase, countSupabaseArtworks, clearAllSupabaseArtworks } from '../../utils/seedArtworksToSupabase';
 
 export default function AdminDashboard({ 
   currentUser,
@@ -100,6 +101,7 @@ export default function AdminDashboard({
     artist: '',
     artistNim: '',
     artistBatch: '2024',
+    isAnonymous: false,
     category: 'Lukis',
     medium: 'Acrylic on Canvas',
     dimensions: '100 x 80 cm',
@@ -111,6 +113,10 @@ export default function AdminDashboard({
     tags: 'Retro Pop, History'
   });
   const [isAddingArt, setIsAddingArt] = useState(false);
+
+  // Supabase Seeder State
+  const [seedStatus, setSeedStatus] = useState({ isSeeding: false, progress: '', result: null });
+  const [supabaseArtCount, setSupabaseArtCount] = useState(null);
 
   // Filtered Attendances
   const filteredAttendances = useMemo(() => {
@@ -248,6 +254,51 @@ export default function AdminDashboard({
     onRefreshData && onRefreshData();
   };
 
+  // === SUPABASE SEEDER ACTIONS ===
+  const handleSeedToSupabase = async (clearFirst = false) => {
+    if (seedStatus.isSeeding) return;
+    const confirmMsg = clearFirst
+      ? '⚠️ Ini akan MENGHAPUS semua karya lama di Supabase dan mengisinya dengan 160+ data dummy baru. Lanjutkan?'
+      : '🌱 Ini akan menambahkan 160+ karya dummy ke Supabase (data lama tetap ada). Lanjutkan?';
+    if (!confirm(confirmMsg)) return;
+
+    setSeedStatus({ isSeeding: true, progress: 'Memulai proses seed...', result: null });
+
+    try {
+      const result = await seedArtworksToSupabase({
+        clearExisting: clearFirst,
+        onProgress: (current, total, message) => {
+          setSeedStatus(prev => ({ ...prev, progress: message }));
+        },
+      });
+      setSeedStatus({ isSeeding: false, progress: '', result });
+      // Refresh data setelah seed
+      if (result.success && onRefreshData) {
+        onRefreshData();
+      }
+      // Update count
+      const counts = await countSupabaseArtworks();
+      setSupabaseArtCount(counts);
+    } catch (err) {
+      setSeedStatus({ isSeeding: false, progress: '', result: { success: false, message: `Error: ${err.message}` } });
+    }
+  };
+
+  const handleCheckSupabaseCount = async () => {
+    const counts = await countSupabaseArtworks();
+    setSupabaseArtCount(counts);
+  };
+
+  const handleClearSupabaseArtworks = async () => {
+    if (!confirm('⚠️ PERINGATAN: Ini akan menghapus SEMUA karya seni dari database Supabase. Tindakan ini tidak dapat dibatalkan. Yakin?')) return;
+    setSeedStatus({ isSeeding: true, progress: 'Menghapus semua karya...', result: null });
+    const result = await clearAllSupabaseArtworks();
+    setSeedStatus({ isSeeding: false, progress: '', result: { success: result.success, message: result.message, inserted: 0, errors: result.success ? 0 : 1 } });
+    if (result.success && onRefreshData) onRefreshData();
+    const counts = await countSupabaseArtworks();
+    setSupabaseArtCount(counts);
+  };
+
   // Export to CSV
   const handleExportCSV = () => {
     if (attendances.length === 0) {
@@ -278,20 +329,20 @@ export default function AdminDashboard({
   };
 
   return (
-    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
       
       {/* ================= HEADER BANNER ================= */}
-      <div className="admin-header-banner bg-[#121212] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden bg-retro-dots">
-        <div className="space-y-1.5 relative z-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-[#FF3388] text-white text-xs font-black px-3 py-0.5 rounded-lg border border-black uppercase shadow-retro-sm">
+      <div className="admin-header-banner bg-[#121212] text-white border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden bg-retro-dots">
+        <div className="space-y-1.5 relative z-10 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <span className="bg-[#FF3388] text-white text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 rounded-lg border border-black uppercase shadow-retro-sm">
               👑 SUPER ADMIN CONTROL PANEL
             </span>
-            <span className="bg-[#FFE600] text-black font-mono text-xs font-black px-2.5 py-0.5 rounded border border-black">
+            <span className="bg-[#FFE600] text-black font-mono text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded border border-black truncate">
               Koordinator Utama
             </span>
           </div>
-          <h1 className="font-display font-black text-2xl sm:text-4xl text-white">
+          <h1 className="font-display font-black text-xl sm:text-4xl text-white leading-tight">
             Pusat Kontrol & Manajemen Panitia
           </h1>
           <p className="text-xs sm:text-sm text-neutral-300 font-medium">
@@ -299,9 +350,9 @@ export default function AdminDashboard({
           </p>
         </div>
 
-        <div className="flex flex-col items-start md:items-end gap-3 relative z-10 w-full md:w-auto">
+        <div className="flex flex-col items-start md:items-end gap-2.5 sm:gap-3 relative z-10 w-full md:w-auto">
           {/* Database Connection Status Badge */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold w-full md:w-auto justify-center ${
             dbStatus.isConnected === null
               ? 'bg-neutral-700 border-neutral-500 text-neutral-300'
               : dbStatus.isConnected
@@ -318,9 +369,9 @@ export default function AdminDashboard({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto"
+              className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto active:scale-95"
             >
-              <LogOut className="w-4 h-4 text-red-500" />
+              <LogOut className="w-4 h-4 text-red-500 shrink-0" />
               <span>Keluar (Logout)</span>
             </button>
           )}
@@ -328,34 +379,34 @@ export default function AdminDashboard({
       </div>
 
       {/* ================= SUMMARY STATS CARDS ================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
-          <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#FF3388]" /> Total Akun Panitia
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="admin-metric-card card-retro p-3.5 sm:p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
+          <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5 truncate">
+            <Shield className="w-3.5 h-3.5 text-[#FF3388] shrink-0" /> Total Akun Panitia
           </span>
-          <div className="font-display font-black text-3xl text-black">{panitiaAccounts.length} Akun</div>
-          <span className="text-[10px] text-green-600 font-bold">{metrics.activePanitia} Aktif bertugas</span>
+          <div className="font-display font-black text-2xl sm:text-3xl text-black">{panitiaAccounts.length} Akun</div>
+          <span className="text-[9px] sm:text-[10px] text-green-600 font-bold block truncate">{metrics.activePanitia} Aktif bertugas</span>
         </div>
 
-        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
-          <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-[#FFE600]" /> Pengunjung Terdaftar
+        <div className="admin-metric-card card-retro p-3.5 sm:p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
+          <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5 truncate">
+            <Users className="w-3.5 h-3.5 text-[#FFE600] shrink-0" /> Pengunjung
           </span>
-          <div className="font-display font-black text-3xl text-[#FF3388]">{metrics.total} Orang</div>
-          <span className="text-[10px] text-neutral-400 font-semibold">{metrics.maba} Mahasiswa Baru</span>
+          <div className="font-display font-black text-2xl sm:text-3xl text-[#FF3388]">{metrics.total} Orang</div>
+          <span className="text-[9px] sm:text-[10px] text-neutral-400 font-semibold block truncate">{metrics.maba} Maba</span>
         </div>
 
-        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
-          <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Wifi className="w-3.5 h-3.5 text-[#00F0FF]" /> IP Address Unik
+        <div className="admin-metric-card card-retro p-3.5 sm:p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
+          <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5 truncate">
+            <Wifi className="w-3.5 h-3.5 text-[#00F0FF] shrink-0" /> IP Address
           </span>
-          <div className="font-display font-black text-3xl text-[#00F0FF]">{metrics.uniqueIps}</div>
-          <span className="text-[10px] text-neutral-400 font-semibold">Validitas jaringan</span>
+          <div className="font-display font-black text-2xl sm:text-3xl text-[#00F0FF]">{metrics.uniqueIps}</div>
+          <span className="text-[9px] sm:text-[10px] text-neutral-400 font-semibold block truncate">Validitas jaringan</span>
         </div>
 
-        <div className="admin-metric-card card-retro p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
-          <span className="text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5">
-            <Palette className="w-3.5 h-3.5 text-[#7B2CBF]" /> Total Karya Seni
+        <div className="admin-metric-card card-retro p-3.5 sm:p-5 bg-white space-y-1 hover:-translate-y-1 transition-transform">
+          <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase flex items-center gap-1.5 truncate">
+            <Palette className="w-3.5 h-3.5 text-[#7B2CBF] shrink-0" /> Total Karya
           </span>
           <div className="font-display font-black text-3xl text-[#7B2CBF]">{artworks.length}</div>
           <span className="text-[10px] text-neutral-400 font-semibold">Di Student Centre Lt. 3</span>
@@ -885,7 +936,7 @@ export default function AdminDashboard({
         {/* ================= TAB 4: KATALOG KARYA SENI ================= */}
         {activeTab === 'artworks' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <h3 className="font-display font-black text-2xl text-black">Daftar Karya Seni Pameran</h3>
               <button
                 onClick={() => setIsAddingArt(!isAddingArt)}
@@ -894,6 +945,107 @@ export default function AdminDashboard({
                 <Plus className="w-4 h-4" />
                 <span>{isAddingArt ? 'Tutup Form' : 'Tambah Karya Baru'}</span>
               </button>
+            </div>
+
+            {/* ===== SUPABASE SEEDER PANEL ===== */}
+            <div className="card-retro p-5 bg-gradient-to-br from-purple-50 to-blue-50 space-y-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#7B2CBF]" />
+                <h4 className="font-display font-black text-base text-black">🌱 Seed Data Dummy ke Supabase</h4>
+              </div>
+              <p className="text-xs text-neutral-600">
+                Generate dan upload 160+ karya seni dummy (12 pencipta × 10-20 karya per pencipta) langsung ke database Supabase.
+                Setiap pencipta memiliki karya di 3 kategori: Lukis, Kerajinan, Sketsa & Ilustrasi.
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleSeedToSupabase(false)}
+                  disabled={seedStatus.isSeeding || !isSupabaseConfigured()}
+                  className={`px-4 py-2.5 rounded-xl font-display font-bold text-xs border-2 border-black flex items-center gap-2 transition-all active:scale-95 ${
+                    seedStatus.isSeeding ? 'bg-neutral-300 text-neutral-500 cursor-wait' : 'bg-[#22C55E] text-white hover:bg-green-600 shadow-retro-sm'
+                  }`}
+                >
+                  {seedStatus.isSeeding ? '⏳ Sedang Proses...' : '🌱 Seed Karya (Tambah)'}
+                </button>
+                <button
+                  onClick={() => handleSeedToSupabase(true)}
+                  disabled={seedStatus.isSeeding || !isSupabaseConfigured()}
+                  className={`px-4 py-2.5 rounded-xl font-display font-bold text-xs border-2 border-black flex items-center gap-2 transition-all active:scale-95 ${
+                    seedStatus.isSeeding ? 'bg-neutral-300 text-neutral-500 cursor-wait' : 'bg-[#FF6B35] text-white hover:bg-orange-600 shadow-retro-sm'
+                  }`}
+                >
+                  🔄 Reset & Seed Ulang
+                </button>
+                <button
+                  onClick={handleCheckSupabaseCount}
+                  disabled={!isSupabaseConfigured()}
+                  className="px-4 py-2.5 rounded-xl font-display font-bold text-xs border-2 border-black bg-[#00F0FF] text-black hover:bg-cyan-400 shadow-retro-sm flex items-center gap-2 transition-all active:scale-95"
+                >
+                  📊 Cek Jumlah di Supabase
+                </button>
+                <button
+                  onClick={handleClearSupabaseArtworks}
+                  disabled={seedStatus.isSeeding || !isSupabaseConfigured()}
+                  className="px-4 py-2.5 rounded-xl font-display font-bold text-xs border-2 border-black bg-red-500 text-white hover:bg-red-600 shadow-retro-sm flex items-center gap-2 transition-all active:scale-95"
+                >
+                  🗑️ Hapus Semua dari Supabase
+                </button>
+              </div>
+
+              {!isSupabaseConfigured() && (
+                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-xl p-3 text-xs text-yellow-800 font-bold">
+                  ⚠️ Supabase belum dikonfigurasi. Isi <code className="bg-yellow-200 px-1 rounded">VITE_SUPABASE_URL</code> dan <code className="bg-yellow-200 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> di file <code className="bg-yellow-200 px-1 rounded">.env</code>
+                </div>
+              )}
+
+              {/* Seed Progress */}
+              {seedStatus.isSeeding && (
+                <div className="bg-blue-100 border-2 border-blue-300 rounded-xl p-3 text-xs text-blue-800 font-bold flex items-center gap-2">
+                  <span className="animate-spin">⏳</span> {seedStatus.progress}
+                </div>
+              )}
+
+              {/* Seed Result */}
+              {seedStatus.result && (
+                <div className={`border-2 rounded-xl p-3 text-xs font-bold ${
+                  seedStatus.result.success
+                    ? 'bg-green-100 border-green-400 text-green-800'
+                    : 'bg-red-100 border-red-400 text-red-800'
+                }`}>
+                  {seedStatus.result.message}
+                </div>
+              )}
+
+              {/* Supabase Count Display */}
+              {supabaseArtCount && (
+                <div className="bg-white border-2 border-black/20 rounded-xl p-4 space-y-2">
+                  <div className="font-display font-black text-sm text-black">
+                    📦 Total Karya di Supabase: <span className="text-[#7B2CBF]">{supabaseArtCount.total}</span>
+                  </div>
+                  {supabaseArtCount.byCategory && Object.keys(supabaseArtCount.byCategory).length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(supabaseArtCount.byCategory).map(([cat, count]) => (
+                        <span key={cat} className="bg-[#FAF7EE] border border-black/20 px-2.5 py-1 rounded-lg text-[11px] font-bold text-neutral-700">
+                          {cat}: <span className="text-[#FF3388]">{count}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {supabaseArtCount.byCreator && Object.keys(supabaseArtCount.byCreator).length > 0 && (
+                    <details className="text-xs">
+                      <summary className="cursor-pointer font-bold text-neutral-600 hover:text-black">👤 Detail per Pencipta ({Object.keys(supabaseArtCount.byCreator).length} seniman)</summary>
+                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {Object.entries(supabaseArtCount.byCreator).sort((a, b) => b[1] - a[1]).map(([name, count]) => (
+                          <span key={name} className="bg-neutral-50 border border-neutral-200 px-2 py-1 rounded text-[10px] truncate">
+                            {name}: <strong>{count}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* New Artwork Form */}
@@ -915,15 +1067,48 @@ export default function AdminDashboard({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-xs font-bold text-black">Nama Seniman *</label>
+                    <label className="block text-xs font-bold text-black">Nama Seniman / Pembuat *</label>
                     <input
                       type="text"
                       value={newArtwork.artist}
                       onChange={(e) => setNewArtwork({ ...newArtwork, artist: e.target.value })}
-                      placeholder="Contoh: Rangga & Tim Seni Rupa"
+                      placeholder={newArtwork.isAnonymous ? "Pencipta Dirahasiakan" : "Contoh: Rangga & Tim Seni Rupa"}
                       required
                       className="input-retro text-xs sm:text-sm"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-black">Kategori Karya *</label>
+                    <select
+                      value={newArtwork.category}
+                      onChange={(e) => setNewArtwork({ ...newArtwork, category: e.target.value })}
+                      className="input-retro text-xs sm:text-sm"
+                    >
+                      <option value="Lukis">Lukis</option>
+                      <option value="Kerajinan">Kerajinan</option>
+                      <option value="Sketsa & Ilustrasi">Sketsa & Ilustrasi</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer bg-[#FAF7EE] border-2 border-black p-2.5 rounded-xl text-xs font-bold w-full hover:bg-neutral-100">
+                      <input
+                        type="checkbox"
+                        checked={newArtwork.isAnonymous}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setNewArtwork({
+                            ...newArtwork,
+                            isAnonymous: checked,
+                            artist: checked && (!newArtwork.artist || newArtwork.artist === '') ? 'Pencipta Dirahasiakan' : newArtwork.artist
+                          });
+                        }}
+                        className="w-4 h-4 text-[#7B2CBF] rounded border-black focus:ring-black"
+                      />
+                      <span>🎭 Rahasiakan Nama Pencipta (Karya Anonim)</span>
+                    </label>
                   </div>
                 </div>
 
@@ -968,9 +1153,16 @@ export default function AdminDashboard({
                       <span className="absolute top-2 left-2 bg-[#FFE600] text-black text-[10px] font-black px-2 py-0.5 rounded border border-black">
                         {art.category}
                       </span>
+                      {(art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '')) && (
+                        <span className="absolute top-2 right-2 bg-[#7B2CBF] text-[#FFE600] text-[10px] font-black px-2 py-0.5 rounded border border-black flex items-center gap-1">
+                          🎭 Dirahasiakan
+                        </span>
+                      )}
                     </div>
                     <h4 className="font-display font-bold text-base text-black line-clamp-1">{art.title}</h4>
-                    <p className="text-xs text-neutral-500 font-semibold">Oleh: {art.artist}</p>
+                    <p className="text-xs text-neutral-500 font-semibold">
+                      Oleh: {(art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '')) ? '🎭 Pencipta Dirahasiakan' : art.artist}
+                    </p>
                   </div>
 
                   <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs">

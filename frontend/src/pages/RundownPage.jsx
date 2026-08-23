@@ -87,18 +87,18 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
   };
 
   return (
-    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-6 sm:space-y-10">
       
       {/* Header Banner */}
-      <div className="rundown-header-banner bg-[#7B2CBF] text-white border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
-        <div className="max-w-3xl space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-2 bg-[#FFE600] text-black px-3 py-1 rounded-lg text-xs font-black uppercase">
-            <Clock className="w-3.5 h-3.5 text-black" /> TIMELINE & SUSUNAN ACARA
+      <div className="rundown-header-banner bg-[#7B2CBF] text-white border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
+        <div className="max-w-3xl space-y-2 sm:space-y-3 relative z-10">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-[#FFE600] text-black px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-black" /> TIMELINE & SUSUNAN ACARA
           </div>
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white">
+          <h1 className="font-display font-black text-2xl sm:text-5xl text-white leading-tight">
             Rundown Pameran & Kegiatan
           </h1>
-          <p className="text-white/90 text-xs sm:text-base font-medium">
+          <p className="text-white/90 text-xs sm:text-base font-medium leading-relaxed">
             Jadwal komprehensif seluruh rangkaian acara Art Showcase 'History', mulai dari tur galeri lukis & kerajinan, live painting, talkshow, hingga games tebak gambar.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
         <button
           onClick={() => setFilterStatus('all')}
-          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'all'
               ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
@@ -118,7 +118,7 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('ongoing')}
-          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'ongoing'
               ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
@@ -128,7 +128,7 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('upcoming')}
-          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'upcoming'
               ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
@@ -138,7 +138,7 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('completed')}
-          className={`rundown-filter-btn px-4 py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
             filterStatus === 'completed'
               ? 'bg-neutral-800 text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
@@ -149,13 +149,13 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
       </div>
 
       {/* Vertical Timeline List */}
-      <div ref={timelineListRef} className="space-y-6">
+      <div ref={timelineListRef} className="space-y-4 sm:space-y-6">
         {filteredRundowns.map((item, index) => {
           const isOngoing = item.status === 'ongoing';
           return (
             <div
               key={item.id}
-              className={`rundown-timeline-card card-retro p-6 sm:p-8 transition-all hover:-translate-y-1 ${
+              className={`rundown-timeline-card card-retro p-4 sm:p-8 transition-all hover:-translate-y-1 ${
                 isOngoing
                   ? 'bg-[#FAF7EE] border-3 border-[#FF3388] shadow-retro-lg ring-4 ring-[#FF3388]/20'
                   : 'bg-white'

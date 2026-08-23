@@ -28,6 +28,7 @@ Route::prefix('auth')->group(function () {
 // === 3. Presensi & Kehadiran Pengunjung ===
 Route::prefix('attendance')->group(function () {
     Route::post('/', [AttendanceController::class, 'store']);
+    Route::put('/{id}', [AttendanceController::class, 'update']);
     Route::get('/', [AttendanceController::class, 'index']);
     Route::get('/stats', [AttendanceController::class, 'stats']);
     Route::get('/export', [AttendanceController::class, 'export']);

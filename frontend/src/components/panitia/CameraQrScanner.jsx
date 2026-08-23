@@ -176,7 +176,40 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
     }
   };
 
-  // Handle File / Image Upload Scan
+  // Helper to process uploaded image for multi-pass QR scanning
+  const processImageToBlob = (file, { scale = 1, cropCenter = false } = {}) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (cropCenter) {
+          sx = img.width * 0.12;
+          sy = img.height * 0.12;
+          sw = img.width * 0.76;
+          sh = img.height * 0.76;
+        }
+        let targetW = Math.min(900, Math.round(sw * scale));
+        let targetH = Math.round((sh / sw) * targetW);
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, targetW, targetH);
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(new File([blob], 'processed.png', { type: 'image/png' }));
+          else reject(new Error('Canvas blob conversion failed'));
+        }, 'image/png');
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  };
+
+  // Handle File / Image Upload Scan (Multi-Pass Robust Decoding)
   const handleFileUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -196,13 +229,45 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
         await stopCamera();
       }
 
-      const decodedText = await qrCodeInstance.scanFile(file, true);
-      playSuccessBeep();
-      setLastScannedCode(decodedText);
-      onScanSuccess && onScanSuccess(decodedText);
+      let decodedText = null;
+
+      // Pass 1: Direct in-memory scan (showImage = false)
+      try {
+        decodedText = await qrCodeInstance.scanFile(file, false);
+      } catch (err1) {
+        console.warn('Scan pass 1 failed, trying optimized pass 2...');
+      }
+
+      // Pass 2: Rescaled standard resolution (for high-DPI phone camera photos)
+      if (!decodedText) {
+        try {
+          const processedFile = await processImageToBlob(file, { scale: 1, cropCenter: false });
+          decodedText = await qrCodeInstance.scanFile(processedFile, false);
+        } catch (err2) {
+          console.warn('Scan pass 2 failed, trying center crop pass 3...');
+        }
+      }
+
+      // Pass 3: Center crop (for photo taken of another phone screen / paper)
+      if (!decodedText) {
+        try {
+          const croppedFile = await processImageToBlob(file, { scale: 1, cropCenter: true });
+          decodedText = await qrCodeInstance.scanFile(croppedFile, false);
+        } catch (err3) {
+          console.warn('Scan pass 3 failed:', err3);
+        }
+      }
+
+      if (decodedText) {
+        playSuccessBeep();
+        setLastScannedCode(decodedText);
+        onScanSuccess && onScanSuccess(decodedText);
+      } else {
+        setErrorMessage('QR Code tidak terdeteksi pada gambar yang diunggah. Pastikan foto QR jelas & tajam.');
+      }
     } catch (err) {
       console.error('File scan error:', err);
-      setErrorMessage('QR Code tidak terdeteksi pada gambar yang diunggah. Pastikan foto QR jelas & tajam.');
+      setErrorMessage('Gagal membaca file gambar. Pastikan format file PNG atau JPG yang valid.');
     } finally {
       setIsProcessingFile(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -251,7 +316,7 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
         {isCameraRunning && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             {/* Viewfinder Target Box */}
-            <div className="relative w-56 h-56 border-2 border-dashed border-[#00F0FF] rounded-2xl shadow-[0_0_20px_rgba(0,240,255,0.4)]">
+            <div className="relative w-44 h-44 sm:w-56 sm:h-56 border-2 border-dashed border-[#00F0FF] rounded-2xl shadow-[0_0_20px_rgba(0,240,255,0.4)]">
               {/* Laser Animation */}
               <div className="absolute left-0 right-0 h-1 bg-[#FF3388] shadow-[0_0_15px_#FF3388] animate-bounce" />
               {/* Retro Viewfinder Corners */}
@@ -265,23 +330,23 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
 
         {/* Top Control Bar Overlay when Camera is ON */}
         {isCameraRunning && (
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-auto">
-            <span className="bg-black/80 text-[#22C55E] border border-black text-[10px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-ping" />
+          <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3 sm:left-3 sm:right-3 flex items-center justify-between z-20 pointer-events-auto">
+            <span className="bg-black/80 text-[#22C55E] border border-black text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-1 rounded-lg flex items-center gap-1.5 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#22C55E] animate-ping" />
               KAMERA AKTIF
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {hasTorch && (
                 <button
                   type="button"
                   onClick={toggleTorch}
-                  className={`p-2 rounded-xl border-2 border-black font-bold text-xs shadow-retro-sm transition-all ${
+                  className={`p-1.5 sm:p-2 rounded-xl border-2 border-black font-bold text-xs shadow-retro-sm transition-all ${
                     isTorchOn ? 'bg-[#FFE600] text-black' : 'bg-black/80 text-white'
                   }`}
                   title={isTorchOn ? 'Matikan Lampu Flash' : 'Nyalakan Lampu Flash'}
                 >
-                  {isTorchOn ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
+                  {isTorchOn ? <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ZapOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 </button>
               )}
 
@@ -289,19 +354,19 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
                 <button
                   type="button"
                   onClick={handleSwitchCamera}
-                  className="p-2 bg-black/80 hover:bg-neutral-800 text-white border-2 border-black rounded-xl font-bold text-xs shadow-retro-sm"
+                  className="p-1.5 sm:p-2 bg-black/80 hover:bg-neutral-800 text-white border-2 border-black rounded-xl font-bold text-xs shadow-retro-sm"
                   title="Ganti Kamera (Depan / Belakang)"
                 >
-                  <SwitchCamera className="w-4 h-4" />
+                  <SwitchCamera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               )}
 
               <button
                 type="button"
                 onClick={stopCamera}
-                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white border-2 border-black rounded-xl font-bold text-xs shadow-retro-sm flex items-center gap-1"
+                className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-red-600 hover:bg-red-700 text-white border-2 border-black rounded-xl font-bold text-xs shadow-retro-sm flex items-center gap-1"
               >
-                <CameraOff className="w-3.5 h-3.5" />
+                <CameraOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Tutup</span>
               </button>
             </div>
@@ -318,12 +383,12 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
       )}
 
       {/* Camera & File Action Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         {!isCameraRunning ? (
           <button
             type="button"
             onClick={() => startCamera()}
-            className="flex-1 btn-retro-yellow text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2"
+            className="flex-1 btn-retro-yellow text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2 active:scale-95"
           >
             <Camera className="w-4 h-4" />
             <span>Aktifkan Scanner Kamera HP</span>
@@ -332,7 +397,7 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
           <button
             type="button"
             onClick={stopCamera}
-            className="flex-1 btn-retro-white text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2 text-red-600"
+            className="flex-1 btn-retro-white text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2 text-red-600 active:scale-95"
           >
             <CameraOff className="w-4 h-4" />
             <span>Matikan Kamera</span>
@@ -351,7 +416,7 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
           type="button"
           onClick={() => fileInputRef.current && fileInputRef.current.click()}
           disabled={isProcessingFile}
-          className="btn-retro-cyan text-xs sm:text-sm px-4 py-2.5 flex items-center gap-2"
+          className="btn-retro-cyan text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 active:scale-95"
           title="Scan dari foto QR di galeri / WhatsApp"
         >
           {isProcessingFile ? (

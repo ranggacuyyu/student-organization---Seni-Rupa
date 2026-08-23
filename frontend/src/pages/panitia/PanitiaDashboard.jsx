@@ -156,41 +156,41 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
   }, [participants]);
 
   return (
-    <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+    <div ref={containerRef} className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
       
       {/* ================= HEADER BAR ================= */}
-      <div className="panitia-header-card bg-[#FFE600] border-3 border-black rounded-3xl p-6 sm:p-8 shadow-retro flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden bg-retro-dots">
-        <div className="space-y-1.5 relative z-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-[#FF3388] text-white text-xs font-black px-3 py-0.5 rounded-lg border-2 border-black uppercase shadow-retro-sm">
+      <div className="panitia-header-card bg-[#FFE600] border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden bg-retro-dots">
+        <div className="space-y-1.5 relative z-10 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <span className="bg-[#FF3388] text-white text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 rounded-lg border-2 border-black uppercase shadow-retro-sm">
               PORTAL PANITIA LAPANGAN
             </span>
-            <span className="bg-black text-[#00F0FF] font-mono text-xs font-black px-2.5 py-0.5 rounded border border-black">
+            <span className="bg-black text-[#00F0FF] font-mono text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded border border-black truncate">
               {currentUser?.divisi || 'Divisi Pelaksana'}
             </span>
           </div>
-          <h1 className="font-display font-black text-2xl sm:text-4xl text-black">
+          <h1 className="font-display font-black text-xl sm:text-4xl text-black leading-tight">
             Halo, {currentUser?.nama || 'Petugas Panitia'}! 👋
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-800 font-semibold flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#FF3388]" />
-            Penugasan Stand: <strong>{currentUser?.assignedBooth || 'Student Centre Lt. 3'}</strong>
+          <p className="text-xs sm:text-sm text-neutral-800 font-semibold flex items-center gap-1.5 sm:gap-2">
+            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF3388] shrink-0" />
+            <span className="truncate">Penugasan: <strong>{currentUser?.assignedBooth || 'Student Centre Lt. 3'}</strong></span>
           </p>
         </div>
 
         <div className="flex items-center gap-3 relative z-10 w-full md:w-auto">
           <button
             onClick={onLogout}
-            className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto"
+            className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto active:scale-95"
           >
-            <LogOut className="w-4 h-4 text-red-500" />
+            <LogOut className="w-4 h-4 text-red-500 shrink-0" />
             <span>Keluar (Logout)</span>
           </button>
         </div>
       </div>
 
       {/* ================= QUICK STATS BAR ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between">
           <div className="space-y-0.5">
             <span className="text-xs font-bold text-neutral-500 uppercase">Total Peserta Terdaftar</span>
