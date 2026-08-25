@@ -15,6 +15,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import senrupLogo from '../assets/SENRUP.png';
+import EventRecapVideo from '../components/ui/EventRecapVideo';
 
 export default function ComingSoonPage({ onNavigateHome }) {
   const containerRef = useRef(null);
@@ -119,7 +120,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
             </h1>
 
             <p className="text-xs sm:text-lg font-medium text-neutral-700 max-w-2xl mx-auto leading-relaxed">
-              Kami sedang menyiapkan serangkaian <strong>Program Kerja & Agenda Seni Spektakuler</strong> berikutnya untuk seluruh mahasiswa dan civitas akademika Politeknik Negeri Batam!
+              Kami sedang menyiapkan serangkaian <strong className='text-[#FF3388]'>Program Kerja & Agenda Seni Spektakuler</strong> berikutnya untuk seluruh mahasiswa dan civitas akademika Politeknik Negeri Batam!
             </p>
           </div>
 
@@ -167,6 +168,9 @@ export default function ComingSoonPage({ onNavigateHome }) {
             );
           })}
         </div>
+
+        {/* Event Documentation / Video Recap Section */}
+        <EventRecapVideo />
 
         {/* Bottom CTA Box */}
         <div className="card-retro p-8 bg-[#00F0FF] border-3 border-black text-black text-center space-y-4">
