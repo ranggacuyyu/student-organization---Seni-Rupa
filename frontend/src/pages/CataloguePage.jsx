@@ -227,7 +227,7 @@ function ArtworkCategoryRail({
             onMouseUp={handleMouseUpOrLeave}
             onMouseLeave={handleMouseUpOrLeave}
             onWheel={handleWheel}
-            className={`flex gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin select-none touch-pan-x ${
+            className={`flex gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin select-none touch-pan-y overscroll-x-contain ${
               isDraggingState ? 'cursor-grabbing' : 'cursor-grab scroll-smooth'
             } focus:outline-none`}
             tabIndex={0}
@@ -496,7 +496,7 @@ export default function CataloguePage({
 
     return map;
   }, [globallyFilteredArtworks]);
-
+  
   // Initial Entrance Animation
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -545,45 +545,6 @@ export default function CataloguePage({
         
         {/* Top: Category Quick Jump & Secret Filter Toggle */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-neutral-100">
-          
-          {/* Quick Jump Anchors */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            <span className="text-xs font-black text-neutral-600 uppercase flex items-center gap-1 shrink-0">
-              <Compass className="w-3.5 h-3.5 text-[#FF3388]" /> Lompat ke:
-            </span>
-            {CATEGORY_SECTIONS.map((sec) => (
-              <a
-                key={sec.id}
-                href={`#cat-rail-${sec.id}`}
-                className="px-3 py-1.5 rounded-xl font-display font-bold text-xs border-2 border-black bg-[#FAF7EE] hover:bg-[#FFE600] active:scale-95 transition-all shadow-retro-xs whitespace-nowrap"
-              >
-                {sec.title}
-              </a>
-            ))}
-          </div>
-
-          {/* Quick Filter: Pencipta Dirahasiakan Toggle */}
-          <button
-            onClick={handleToggleSecretFilter}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-display font-black text-xs sm:text-sm border-2 transition-all shrink-0 active:scale-95 ${
-              onlySecret || selectedArtist === '__anonymous__'
-                ? 'bg-[#7B2CBF] text-[#FFE600] border-black shadow-retro -translate-y-0.5 scale-105 ring-2 ring-[#FFE600]'
-                : 'bg-purple-50 text-purple-900 border-purple-300 hover:bg-purple-100 hover:border-purple-600'
-            }`}
-            title="Saring karya dari seniman/pencipta yang identitasnya dirahasiakan"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>🎭 Pencipta Dirahasiakan</span>
-            {secretCount > 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                onlySecret || selectedArtist === '__anonymous__'
-                  ? 'bg-black text-[#FFE600]'
-                  : 'bg-purple-200 text-purple-900'
-              }`}>
-                {secretCount}
-              </span>
-            )}
-          </button>
 
         </div>
 

@@ -170,22 +170,12 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
             </span>
           </div>
           <h1 className="font-display font-black text-xl sm:text-4xl text-black leading-tight">
-            Halo, {currentUser?.nama || 'Petugas Panitia'}! 👋
+            Halo, {currentUser?.nama || 'Petugas Panitia'}! 
           </h1>
           <p className="text-xs sm:text-sm text-neutral-800 font-semibold flex items-center gap-1.5 sm:gap-2">
             <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF3388] shrink-0" />
-            <span className="truncate">Penugasan: <strong>{currentUser?.assignedBooth || 'Student Centre Lt. 3'}</strong></span>
+            <span className="truncate text-white/85">Penugasan: <strong>{currentUser?.assignedBooth || 'Student Centre Lt. 3'}</strong></span>
           </p>
-        </div>
-
-        <div className="flex items-center gap-3 relative z-10 w-full md:w-auto">
-          <button
-            onClick={onLogout}
-            className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto active:scale-95"
-          >
-            <LogOut className="w-4 h-4 text-red-500 shrink-0" />
-            <span>Keluar (Logout)</span>
-          </button>
         </div>
       </div>
 
@@ -223,7 +213,7 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
       </div>
 
       {/* ================= PANITIA NAVIGATION TABS ================= */}
-      <div className="flex items-center gap-2 border-b-3 border-black pb-3 overflow-x-auto">
+      <div className="flex items-center gap-4 border-b-3 border-black p-3 overflow-x-auto">
         <button
           onClick={() => setActiveTab('scanner')}
           className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
@@ -304,30 +294,10 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                       className="input-retro text-xs sm:text-sm flex-1"
                     />
                     <button type="submit" className="btn-retro-yellow px-5 py-2 text-xs sm:text-sm shrink-0">
-                      Cek Tiket 🔍
+                      <i className='bx bx-check'></i> Cek Tiket
                     </button>
                   </div>
                 </form>
-
-                {/* Quick Sample Scan Presets for Testing */}
-                <div className="pt-2 border-t border-neutral-200 space-y-2">
-                  <span className="text-[11px] font-bold text-neutral-500 uppercase block">
-                    ⚡ Klik Sampel Tiket untuk Tes Cepat:
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {participants.slice(0, 4).map(p => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleSampleScan(p.id)}
-                        className="text-xs bg-[#FAF7EE] hover:bg-[#FFE600] border-2 border-black px-2.5 py-1 rounded-lg font-bold transition-colors active:scale-95 shadow-retro-sm"
-                      >
-                        {p.nama_lengkap.split(' ')[0]} ({p.id})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
               </div>
             </div>
 

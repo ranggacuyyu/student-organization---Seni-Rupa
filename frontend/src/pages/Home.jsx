@@ -77,7 +77,7 @@ export default function Home({
             {/* Main Headline */}
             <div className="space-y-2">
               <h1 className="hero-title-main font-display font-black text-3xl sm:text-6xl lg:text-7xl text-black tracking-tight leading-[1.15] sm:leading-[1.08]">
-                JELAJAHI JEJAK KARYA & SEJARAH{' '}
+                IMAGINATION PLAY GROUND{' '}
                 <span className="hero-tag-box relative inline-block text-white bg-[#FF3388] px-3 sm:px-4 py-0.5 sm:py-1 border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl shadow-retro rotate-[-2deg] my-1 sm:my-2">
                   SENI RUPA
                 </span>
