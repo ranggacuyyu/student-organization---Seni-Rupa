@@ -9,7 +9,9 @@ import {
   AlertCircle, 
   Calendar,
   Layers,
-  Flame
+  Flame,
+  Radio,
+  Hourglass
 } from 'lucide-react';
 import { RUNDOWN_SCHEDULE, EVENT_INFO } from '../data/mockData';
 
@@ -118,33 +120,36 @@ export default function RundownPage({ rundowns, onNavigateBooth }) {
         </button>
         <button
           onClick={() => setFilterStatus('ongoing')}
-          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
             filterStatus === 'ongoing'
               ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
-          🔴 Sesi Live Sekarang
+          <Radio className="w-3.5 h-3.5 animate-pulse" />
+          <span>Sesi Live Sekarang</span>
         </button>
         <button
           onClick={() => setFilterStatus('upcoming')}
-          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
             filterStatus === 'upcoming'
               ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
-          ⏳ Akan Datang
+          <Clock className="w-3.5 h-3.5" />
+          <span>Akan Datang</span>
         </button>
         <button
           onClick={() => setFilterStatus('completed')}
-          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 ${
+          className={`rundown-filter-btn px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-display font-bold text-xs sm:text-sm border-2 whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
             filterStatus === 'completed'
               ? 'bg-neutral-800 text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
-          ✅ Selesai
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Selesai</span>
         </button>
       </div>
 

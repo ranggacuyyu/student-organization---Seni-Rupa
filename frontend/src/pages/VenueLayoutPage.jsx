@@ -10,7 +10,12 @@ import {
   CheckCircle2, 
   Wind, 
   SunMedium, 
-  ArrowUpRight 
+  ArrowUpRight,
+  Mic,
+  Brush,
+  Shapes,
+  Camera,
+  EyeOff
 } from 'lucide-react';
 import { BOOTH_ZONES } from '../data/mockData';
 
@@ -124,7 +129,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-xs sm:text-sm text-black truncate pr-2">🎨 ZONA A: GALERI LUKISAN</span>
+                    <span className="font-display font-black text-xs sm:text-sm text-black truncate pr-2 flex items-center gap-1.5">
+                      <Palette className="w-4 h-4 text-black shrink-0" /> ZONA A: GALERI LUKISAN
+                    </span>
                     <span className="text-[9px] sm:text-[10px] bg-black text-white font-black px-2 py-0.5 rounded shrink-0">12 Karya</span>
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-neutral-700 mt-0.5 sm:mt-1">Sisi Utara (Pencahayaan Kaca Terbuka)</p>
@@ -143,7 +150,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                       : 'bg-white hover:bg-neutral-50 text-black'
                   }`}
                 >
-                  <span className="font-display font-black text-xs block">🎤 ZONA D: STAGE</span>
+                  <span className="font-display font-black text-xs flex items-center gap-1.5">
+                    <Mic className="w-3.5 h-3.5 shrink-0" /> ZONA D: STAGE
+                  </span>
                   <p className={`text-[10px] mt-1 ${activeZoneId === 'booth-d' ? 'text-white/80' : 'text-neutral-600'}`}>
                     Talkshow & Games
                   </p>
@@ -158,7 +167,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                       : 'bg-white hover:bg-neutral-50 text-black'
                   }`}
                 >
-                  <span className="font-display font-black text-xs block">🖌️ ZONA C: POJOK GAMBAR</span>
+                  <span className="font-display font-black text-xs flex items-center gap-1.5">
+                    <Brush className="w-3.5 h-3.5 shrink-0" /> ZONA C: POJOK GAMBAR
+                  </span>
                   <p className="text-[10px] text-neutral-700 mt-1">
                     Live Painting
                   </p>
@@ -173,7 +184,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                       : 'bg-white hover:bg-neutral-50 text-black'
                   }`}
                 >
-                  <span className="font-display font-black text-xs block">🏺 ZONA B: KERAJINAN</span>
+                  <span className="font-display font-black text-xs flex items-center gap-1.5">
+                    <Shapes className="w-3.5 h-3.5 shrink-0" /> ZONA B: KERAJINAN
+                  </span>
                   <p className={`text-[10px] mt-1 ${activeZoneId === 'booth-b' ? 'text-white/80' : 'text-neutral-600'}`}>
                     Display 3D Kriya
                   </p>
@@ -192,7 +205,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-xs sm:text-sm">📸 ZONA E: PHOTOBOOTH & INFO DESK (PINTU MASUK)</span>
+                    <span className="font-display font-black text-xs sm:text-sm flex items-center gap-1.5">
+                      <Camera className="w-4 h-4 shrink-0" /> ZONA E: PHOTOBOOTH & INFO DESK (PINTU MASUK)
+                    </span>
                     <span className="text-[10px] bg-black text-[#FFE600] font-black px-2 py-0.5 rounded">Check-in Point</span>
                   </div>
                 </button>
@@ -286,7 +301,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                             {art.title}
                           </h5>
                           <span className="text-[10px] text-neutral-500 font-medium">
-                            Oleh {art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '') ? '🎭 Pencipta Dirahasiakan' : art.artist}
+                            Oleh {art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '') ? 'Pencipta Dirahasiakan' : art.artist}
                           </span>
                         </div>
                       </div>

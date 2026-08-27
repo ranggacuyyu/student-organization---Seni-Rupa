@@ -29,7 +29,13 @@ import {
   CheckSquare,
   LogOut,
   MapPin,
-  Send
+  Send,
+  Save,
+  RotateCcw,
+  BarChart3,
+  EyeOff,
+  Database,
+  Circle
 } from 'lucide-react';
 import { BOOTH_ZONES, INITIAL_PANITIA_SHIFTS } from '../../data/mockData';
 import { ArtworkService, PanitiaService, testDatabaseConnection, isSupabaseConfigured } from '../../services/api';
@@ -255,11 +261,11 @@ export default function AdminDashboard({
   };
 
   // === SUPABASE SEEDER ACTIONS ===
-  const handleSeedToSupabase = async (clearFirst = false) => {
+  const handleSeedToSupabase = async (resetFirst = false) => {
     if (seedStatus.isSeeding) return;
-    const confirmMsg = clearFirst
-      ? '⚠️ Ini akan MENGHAPUS semua karya lama di Supabase dan mengisinya dengan 160+ data dummy baru. Lanjutkan?'
-      : '🌱 Ini akan menambahkan 160+ karya dummy ke Supabase (data lama tetap ada). Lanjutkan?';
+    const confirmMsg = resetFirst
+      ? 'Ini akan MENGHAPUS semua karya lama di Supabase dan mengisinya dengan 160+ data dummy baru. Lanjutkan?'
+      : 'Ini akan menambahkan 160+ karya dummy ke Supabase (data lama tetap ada). Lanjutkan?';
     if (!confirm(confirmMsg)) return;
 
     setSeedStatus({ isSeeding: true, progress: 'Memulai proses seed...', result: null });
@@ -290,7 +296,7 @@ export default function AdminDashboard({
   };
 
   const handleClearSupabaseArtworks = async () => {
-    if (!confirm('⚠️ PERINGATAN: Ini akan menghapus SEMUA karya seni dari database Supabase. Tindakan ini tidak dapat dibatalkan. Yakin?')) return;
+    if (!confirm('PERINGATAN: Ini akan menghapus SEMUA karya seni dari database Supabase. Tindakan ini tidak dapat dibatalkan. Yakin?')) return;
     setSeedStatus({ isSeeding: true, progress: 'Menghapus semua karya...', result: null });
     const result = await clearAllSupabaseArtworks();
     setSeedStatus({ isSeeding: false, progress: '', result: { success: result.success, message: result.message, inserted: 0, errors: result.success ? 0 : 1 } });
@@ -335,8 +341,8 @@ export default function AdminDashboard({
       <div className="admin-header-banner bg-[#121212] text-white border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden bg-retro-dots">
         <div className="space-y-1.5 relative z-10 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className="bg-[#FF3388] text-white text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 rounded-lg border border-black uppercase shadow-retro-sm">
-              👑 SUPER ADMIN CONTROL PANEL
+            <span className="bg-[#FF3388] text-white text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 rounded-lg border border-black uppercase shadow-retro-sm flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-white" /> SUPER ADMIN CONTROL PANEL
             </span>
             <span className="bg-[#FFE600] text-black font-mono text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded border border-black truncate">
               Koordinator Utama
@@ -363,8 +369,8 @@ export default function AdminDashboard({
               dbStatus.isConnected === null ? 'bg-neutral-400 animate-pulse' :
               dbStatus.isConnected ? 'bg-green-400 shadow-[0_0_6px_#4ade80]' : 'bg-yellow-400'
             }`} />
-            {dbStatus.isConnected === null ? '⏳ Memeriksa Database...' :
-             dbStatus.isConnected ? '☁️ Cloud Supabase (Online)' : '💾 Local Engine (Offline Mode)'}
+            {dbStatus.isConnected === null ? 'Memeriksa Database...' :
+             dbStatus.isConnected ? 'Cloud Supabase (Online)' : 'Local Engine (Offline Mode)'}
           </div>
           {onLogout && (
             <button
@@ -582,9 +588,10 @@ export default function AdminDashboard({
                   </button>
                   <button
                     type="submit"
-                    className="btn-retro-yellow text-xs px-6 py-2"
+                    className="btn-retro-yellow text-xs px-6 py-2 flex items-center gap-1.5"
                   >
-                    Simpan Akun Panitia 💾
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Simpan Akun Panitia</span>
                   </button>
                 </div>
               </form>
@@ -624,7 +631,7 @@ export default function AdminDashboard({
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded border border-black ${
                             acc.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
                           }`}>
-                            {acc.role === 'admin' ? '👑 SUPER ADMIN' : '📋 PANITIA'}
+                            {acc.role === 'admin' ? 'SUPER ADMIN' : 'PANITIA'}
                           </span>
                         </td>
 
@@ -646,13 +653,14 @@ export default function AdminDashboard({
                         <td className="py-3.5 px-4 text-center">
                           <button
                             onClick={() => handleTogglePanitiaStatus(acc.id, acc.status)}
-                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold ${
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 ${
                               acc.status === 'active'
                                 ? 'bg-[#22C55E]/20 text-[#22C55E] border-black'
                                 : 'bg-neutral-200 text-neutral-500 border-neutral-400'
                             }`}
                           >
-                            {acc.status === 'active' ? '🟢 Aktif' : '🔴 Non-Aktif'}
+                            <Circle className={`w-2 h-2 rounded-full ${acc.status === 'active' ? 'bg-[#22C55E] fill-[#22C55E]' : 'bg-neutral-500'}`} />
+                            <span>{acc.status === 'active' ? 'Aktif' : 'Non-Aktif'}</span>
                           </button>
                         </td>
 
@@ -950,8 +958,8 @@ export default function AdminDashboard({
             {/* ===== SUPABASE SEEDER PANEL ===== */}
             <div className="card-retro p-5 bg-gradient-to-br from-purple-50 to-blue-50 space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#7B2CBF]" />
-                <h4 className="font-display font-black text-base text-black">🌱 Seed Data Dummy ke Supabase</h4>
+                <Database className="w-5 h-5 text-[#7B2CBF]" />
+                <h4 className="font-display font-black text-base text-black">Seed Data Dummy ke Supabase</h4>
               </div>
               <p className="text-xs text-neutral-600">
                 Generate dan upload 160+ karya seni dummy (12 pencipta × 10-20 karya per pencipta) langsung ke database Supabase.
@@ -966,7 +974,8 @@ export default function AdminDashboard({
                     seedStatus.isSeeding ? 'bg-neutral-300 text-neutral-500 cursor-wait' : 'bg-[#22C55E] text-white hover:bg-green-600 shadow-retro-sm'
                   }`}
                 >
-                  {seedStatus.isSeeding ? '⏳ Sedang Proses...' : '🌱 Seed Karya (Tambah)'}
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{seedStatus.isSeeding ? 'Sedang Proses...' : 'Seed Karya (Tambah)'}</span>
                 </button>
                 <button
                   onClick={() => handleSeedToSupabase(true)}
@@ -975,27 +984,31 @@ export default function AdminDashboard({
                     seedStatus.isSeeding ? 'bg-neutral-300 text-neutral-500 cursor-wait' : 'bg-[#FF6B35] text-white hover:bg-orange-600 shadow-retro-sm'
                   }`}
                 >
-                  🔄 Reset & Seed Ulang
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset & Seed Ulang</span>
                 </button>
                 <button
                   onClick={handleCheckSupabaseCount}
                   disabled={!isSupabaseConfigured()}
                   className="px-4 py-2.5 rounded-xl font-display font-bold text-xs border-2 border-black bg-[#00F0FF] text-black hover:bg-cyan-400 shadow-retro-sm flex items-center gap-2 transition-all active:scale-95"
                 >
-                  📊 Cek Jumlah di Supabase
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  <span>Cek Jumlah di Supabase</span>
                 </button>
                 <button
                   onClick={handleClearSupabaseArtworks}
                   disabled={seedStatus.isSeeding || !isSupabaseConfigured()}
                   className="px-4 py-2.5 rounded-xl font-display font-bold text-xs border-2 border-black bg-red-500 text-white hover:bg-red-600 shadow-retro-sm flex items-center gap-2 transition-all active:scale-95"
                 >
-                  🗑️ Hapus Semua dari Supabase
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus Semua dari Supabase</span>
                 </button>
               </div>
 
               {!isSupabaseConfigured() && (
-                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-xl p-3 text-xs text-yellow-800 font-bold">
-                  ⚠️ Supabase belum dikonfigurasi. Isi <code className="bg-yellow-200 px-1 rounded">VITE_SUPABASE_URL</code> dan <code className="bg-yellow-200 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> di file <code className="bg-yellow-200 px-1 rounded">.env</code>
+                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-xl p-3 text-xs text-yellow-800 font-bold flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Supabase belum dikonfigurasi. Isi <code className="bg-yellow-200 px-1 rounded">VITE_SUPABASE_URL</code> dan <code className="bg-yellow-200 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> di file <code className="bg-yellow-200 px-1 rounded">.env</code></span>
                 </div>
               )}
 
@@ -1021,7 +1034,7 @@ export default function AdminDashboard({
               {supabaseArtCount && (
                 <div className="bg-white border-2 border-black/20 rounded-xl p-4 space-y-2">
                   <div className="font-display font-black text-sm text-black">
-                    📦 Total Karya di Supabase: <span className="text-[#7B2CBF]">{supabaseArtCount.total}</span>
+                    Total Karya di Supabase: <span className="text-[#7B2CBF]">{supabaseArtCount.total}</span>
                   </div>
                   {supabaseArtCount.byCategory && Object.keys(supabaseArtCount.byCategory).length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -1034,7 +1047,7 @@ export default function AdminDashboard({
                   )}
                   {supabaseArtCount.byCreator && Object.keys(supabaseArtCount.byCreator).length > 0 && (
                     <details className="text-xs">
-                      <summary className="cursor-pointer font-bold text-neutral-600 hover:text-black">👤 Detail per Pencipta ({Object.keys(supabaseArtCount.byCreator).length} seniman)</summary>
+                      <summary className="cursor-pointer font-bold text-neutral-600 hover:text-black">Detail per Pencipta ({Object.keys(supabaseArtCount.byCreator).length} seniman)</summary>
                       <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                         {Object.entries(supabaseArtCount.byCreator).sort((a, b) => b[1] - a[1]).map(([name, count]) => (
                           <span key={name} className="bg-neutral-50 border border-neutral-200 px-2 py-1 rounded text-[10px] truncate">
@@ -1107,7 +1120,9 @@ export default function AdminDashboard({
                         }}
                         className="w-4 h-4 text-[#7B2CBF] rounded border-black focus:ring-black"
                       />
-                      <span>🎭 Rahasiakan Nama Pencipta (Karya Anonim)</span>
+                      <span className="flex items-center gap-1">
+                        <EyeOff className="w-3.5 h-3.5 text-[#7B2CBF]" /> Rahasiakan Nama Pencipta (Karya Anonim)
+                      </span>
                     </label>
                   </div>
                 </div>
@@ -1155,13 +1170,13 @@ export default function AdminDashboard({
                       </span>
                       {(art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '')) && (
                         <span className="absolute top-2 right-2 bg-[#7B2CBF] text-[#FFE600] text-[10px] font-black px-2 py-0.5 rounded border border-black flex items-center gap-1">
-                          🎭 Dirahasiakan
+                          <EyeOff className="w-3 h-3 text-[#FFE600]" /> Dirahasiakan
                         </span>
                       )}
                     </div>
                     <h4 className="font-display font-bold text-base text-black line-clamp-1">{art.title}</h4>
                     <p className="text-xs text-neutral-500 font-semibold">
-                      Oleh: {(art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '')) ? '🎭 Pencipta Dirahasiakan' : art.artist}
+                      Oleh: {(art.isAnonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || '')) ? 'Pencipta Dirahasiakan' : art.artist}
                     </p>
                   </div>
 

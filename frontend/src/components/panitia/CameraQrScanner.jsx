@@ -588,7 +588,7 @@ export default function CameraQrScanner({ onScanSuccess, isScanningActive = true
           <div className="space-y-1">
             <p>{errorMessage}</p>
             <p className="text-[11px] text-red-700 font-normal">
-              💡 Tips: Anda juga dapat menggunakan tombol <strong>"Scan dari Foto / Galeri"</strong> di bawah untuk memindai tangkapan layar tiket secara instan.
+              Tips: Anda juga dapat menggunakan tombol <strong>"Scan dari Foto / Galeri"</strong> di bawah untuk memindai tangkapan layar tiket secara instan.
             </p>
           </div>
         </div>

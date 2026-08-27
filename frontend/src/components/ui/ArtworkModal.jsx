@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { X, Heart, Sparkles, MapPin, User, Layers, Maximize2, Tag, Calendar } from 'lucide-react';
+import { X, Heart, Sparkles, MapPin, User, Layers, Maximize2, Tag, Calendar, EyeOff } from 'lucide-react';
 
 export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked, onGoToBooth }) {
   const modalBoxRef = useRef(null);
@@ -70,8 +70,8 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
                   {artwork.isAnonymous || (typeof artwork.artist === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(artwork.artist)) ? (
                     <div className="flex items-center gap-1.5 text-purple-950 font-black bg-purple-100 px-3 py-1 rounded-xl border-2 border-purple-800 shadow-retro-sm">
-                      <Sparkles className="w-4 h-4 text-purple-600 animate-pulse" />
-                      <span>🎭 Pencipta Dirahasiakan (Anonim)</span>
+                      <EyeOff className="w-4 h-4 text-purple-800 shrink-0" />
+                      <span>Pencipta Dirahasiakan (Anonim)</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5 text-neutral-800 font-bold bg-[#00F0FF]/20 px-2.5 py-1 rounded-lg border border-black">

@@ -16,7 +16,9 @@ import {
   Brush,
   ChevronDown,
   ArrowUp,
-  QrCode
+  QrCode,
+  Radio,
+  MessageSquare
 } from 'lucide-react';
 import { EVENT_INFO, BOOTH_ZONES } from '../data/mockData';
 import senrupLogo from '../assets/SENRUP.png';
@@ -173,8 +175,8 @@ export default function Home({
               </div>
               <div className="space-y-0.5 sm:space-y-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                  <span className="bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 rounded-full border border-black uppercase animate-pulse">
-                    🔴 SEDANG BERLANGSUNG (LIVE)
+                  <span className="bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 rounded-full border border-black uppercase flex items-center gap-1.5 animate-pulse">
+                    <Radio className="w-3 h-3 text-white" /> SEDANG BERLANGSUNG (LIVE)
                   </span>
                   <span className="font-mono text-[11px] sm:text-xs font-bold text-black">{currentLiveSession.time} WIB</span>
                 </div>
@@ -191,7 +193,7 @@ export default function Home({
               onClick={() => onNavigate('rundown')}
               className="btn-retro-white whitespace-nowrap text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3 shrink-0 active:scale-95 text-center w-full md:w-auto"
             >
-              Lihat Seluruh Rundown 📅
+              Lihat Seluruh Rundown
             </button>
           </div>
         </section>
@@ -422,15 +424,17 @@ export default function Home({
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 relative z-10 max-w-sm sm:max-w-none mx-auto">
             <button
               onClick={() => onNavigate('presensi')}
-              className="btn-retro-yellow text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 active:scale-95 w-full sm:w-auto"
+              className="btn-retro-yellow text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 active:scale-95 w-full sm:w-auto flex items-center justify-center gap-2"
             >
-              Presensi Sekarang ✍️
+              <UserCheck className="w-4 h-4 text-black" />
+              <span>Presensi Sekarang</span>
             </button>
             <button
               onClick={() => onNavigate('pesan-kesan')}
-              className="btn-retro-white text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 active:scale-95 w-full sm:w-auto"
+              className="btn-retro-white text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 active:scale-95 w-full sm:w-auto flex items-center justify-center gap-2"
             >
-              Tulis Kesan di Buku Tamu 💬
+              <MessageSquare className="w-4 h-4 text-black" />
+              <span>Tulis Kesan di Buku Tamu</span>
             </button>
           </div>
         </div>

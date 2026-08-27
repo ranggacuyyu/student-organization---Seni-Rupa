@@ -180,19 +180,49 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
     <>
       <header ref={navRef} className="sticky top-0 z-40 w-full bg-[#FAF7EE]/95 backdrop-blur-md border-b-3 border-black">
         {/* Top Retro Marquee Ticker */}
-        <div className="bg-[#FFE600] border-b-2 border-black py-1 overflow-hidden font-display text-xs font-bold tracking-wider select-none">
-          <div className="flex whitespace-nowrap animate-marquee">
-            <span className="mx-4 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF3388] animate-spin" /> PROKER RESMI DIVISI SENI RUPA POLIBATAM
-            </span>
-            <span className="mx-4">★</span>
-            <span className="mx-4">TEMA: HISTORY (MENGGALI JEJAK KARYA & PERJALANAN)</span>
-            <span className="mx-4">★</span>
-            <span className="mx-4 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" /> ART SHOW CASE 2026  
-            </span>
-            <span className="mx-4">★</span>
-            <span className="mx-4">TEMA: HISTORY (MENGGALI JEJAK KARYA & PERJALANAN)</span>
+        <div className="bg-[#FFE600] border-b-2 border-black py-1.5 overflow-hidden font-display text-[11px] sm:text-xs font-black tracking-wider select-none relative flex">
+          <div className="animate-marquee-smooth flex items-center whitespace-nowrap">
+            {/* Track 1 */}
+            <div className="flex items-center gap-6 px-4 shrink-0">
+              <span className="flex items-center gap-1.5 bg-black text-white px-2 py-0.5 rounded-md text-[10px] uppercase font-bold border border-black">
+                <Sparkles className="w-3 h-3 text-[#FFE600] animate-spin" /> PROKER RESMI
+              </span>
+              <span className="text-black font-black">DIVISI SENI RUPA POLIBATAM</span>
+              <span className="text-black/40">★</span>
+              <span className="text-black font-black flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-[#FF3388]" /> TEMA: HISTORY (MENGGALI JEJAK KARYA & PERJALANAN)
+              </span>
+              <span className="text-black/40">★</span>
+              <span className="text-black font-black flex items-center gap-1.5">
+                <Rocket className="w-3.5 h-3.5 text-[#7B2CBF]" /> ART SHOWCASE 2026
+              </span>
+              <span className="text-black/40">★</span>
+              <span className="text-black font-black flex items-center gap-1.5">
+                <Ticket className="w-3.5 h-3.5 text-black" /> PRESENSI DIBUKA • DAPATKAN TIKET DIGITAL RESMI
+              </span>
+              <span className="text-black/40">★</span>
+            </div>
+
+            {/* Track 2 (Identical Duplicate for 100% Seamless Infinite Loop) */}
+            <div className="flex items-center gap-6 px-4 shrink-0" aria-hidden="true">
+              <span className="flex items-center gap-1.5 bg-black text-white px-2 py-0.5 rounded-md text-[10px] uppercase font-bold border border-black">
+                <Sparkles className="w-3 h-3 text-[#FFE600] animate-spin" /> PROKER RESMI
+              </span>
+              <span className="text-black font-black">DIVISI SENI RUPA POLIBATAM</span>
+              <span className="text-black/40">★</span>
+              <span className="text-black font-black flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-[#FF3388]" /> TEMA: HISTORY (MENGGALI JEJAK KARYA & PERJALANAN)
+              </span>
+              <span className="text-black/40">★</span>
+              <span className="text-black font-black flex items-center gap-1.5">
+                <Rocket className="w-3.5 h-3.5 text-[#7B2CBF]" /> ART SHOWCASE 2026
+              </span>
+              <span className="text-black/40">★</span>
+              <span className="text-black font-black flex items-center gap-1.5">
+                <Ticket className="w-3.5 h-3.5 text-black" /> PRESENSI DIBUKA • DAPATKAN TIKET DIGITAL RESMI
+              </span>
+              <span className="text-black/40">★</span>
+            </div>
           </div>
         </div>
 
@@ -288,7 +318,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                   <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg border border-black flex items-center justify-center font-black text-[9px] sm:text-[10px] ${
                     currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
                   }`}>
-                    {currentUser.role === 'admin' ? '👑' : '📋'}
+                    {currentUser.role === 'admin' ? <Shield className="w-3 h-3 text-white" /> : <User className="w-3 h-3 text-black" />}
                   </div>
                   <span className="text-xs font-black text-black max-w-[90px] xl:max-w-[120px] truncate">
                     {currentUser.nama.split(' ')[0]}
@@ -370,7 +400,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                   <div className={`w-9 h-9 rounded-xl border-2 border-black flex items-center justify-center text-base shrink-0 ${
                     currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
                   }`}>
-                    {currentUser.role === 'admin' ? '👑' : '📋'}
+                    {currentUser.role === 'admin' ? <Shield className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-black" />}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -496,8 +526,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                         <div className="font-display font-bold text-xs sm:text-sm truncate flex items-center justify-between gap-1">
                           <span>{item.label}</span>
                           {item.isLocked && (
-                            <span className="text-[9px] bg-[#FF3388]/15 text-[#FF3388] px-1.5 py-0.2 rounded border border-[#FF3388]/30 font-mono font-bold">
-                              🔒 TERKUNCI
+                            <span className="text-[9px] bg-[#FF3388]/15 text-[#FF3388] px-1.5 py-0.2 rounded border border-[#FF3388]/30 font-mono font-bold flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5" /> TERKUNCI
                             </span>
                           )}
                         </div>

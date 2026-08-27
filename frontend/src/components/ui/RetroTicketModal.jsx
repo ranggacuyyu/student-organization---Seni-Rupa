@@ -9,7 +9,10 @@ import {
   ShieldCheck, 
   Download, 
   RefreshCw, 
-  Clock 
+  Clock,
+  Ticket,
+  Sparkles,
+  UserCheck
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { EVENT_INFO } from '../../data/mockData';
@@ -67,8 +70,8 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
         <div className="bg-[#FFE600] border-b-3 border-black p-3.5 sm:p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#FF3388] border border-black rounded-full animate-ping"></span>
-            <h3 className="font-display font-black text-sm sm:text-lg text-black uppercase tracking-wider">
-              🎟️ DIGITAL ATTENDEE PASS
+            <h3 className="font-display font-black text-sm sm:text-lg text-black uppercase tracking-wider flex items-center gap-1.5">
+              <Ticket className="w-4 h-4 text-black" /> DIGITAL ATTENDEE PASS
             </h3>
           </div>
           <button
@@ -98,7 +101,7 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                   <p className="text-xs text-white/90 font-medium">Tema: {EVENT_INFO.theme}</p>
                 </div>
                 <div className="w-12 h-12 bg-[#FFE600] border-2 border-black rounded-xl text-black flex items-center justify-center font-display font-black text-lg shadow-retro-sm">
-                  ★
+                  <Sparkles className="w-5 h-5 text-black" />
                 </div>
               </div>
 
@@ -113,19 +116,19 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                 <div className={`p-2.5 rounded-xl border-2 border-black flex items-center justify-between text-xs font-bold ${
                   isCheckedIn ? 'bg-[#CCFF00] text-black shadow-retro-sm' : 'bg-[#FFE600] text-black shadow-retro-sm'
                 }`}>
-                  <div className="flex items-center gap-1.5">
-                    {isCheckedIn ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 text-black" />
-                        <span>TERVERIFIKASI PANITIA ✅</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-4 h-4 text-black" />
-                        <span>STATUS: MENUNGGU SCAN QR ⏳</span>
-                      </>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-1.5">
+                      {isCheckedIn ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-black" />
+                          <span>TERVERIFIKASI PANITIA</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-4 h-4 text-black" />
+                          <span>STATUS: MENUNGGU SCAN QR</span>
+                        </>
+                      )}
+                    </div>
                   <span className="text-[10px] font-mono uppercase bg-black text-white px-2 py-0.5 rounded">
                     {isCheckedIn ? 'AKSES TERBUKA' : 'BELUM SCAN'}
                   </span>
@@ -216,7 +219,7 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                   ) : downloadSuccess ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-black" />
-                      <span>✓ QR Berhasil Disimpan!</span>
+                      <span>QR Berhasil Disimpan!</span>
                     </>
                   ) : (
                     <>
@@ -235,7 +238,7 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
               </div>
 
               <p className="text-center text-[11px] text-neutral-500 font-medium">
-                💾 File QR otomatis terunduh dan dapat langsung discan panitia baik melalui kamera maupun foto/unggah gambar.
+                File QR otomatis terunduh dan dapat langsung discan panitia baik melalui kamera maupun foto/unggah gambar.
               </p>
             </div>
 
@@ -259,9 +262,10 @@ export default function RetroTicketModal({ isOpen, onClose, ticket, onGoToPresen
                 onClose();
                 onGoToPresensi();
               }}
-              className="btn-retro-pink w-full py-3"
+              className="btn-retro-pink w-full py-3 flex items-center justify-center gap-2"
             >
-              Isi Presensi Sekarang ✍️
+              <UserCheck className="w-4 h-4 text-white" />
+              <span>Isi Presensi Sekarang</span>
             </button>
           </div>
         )}

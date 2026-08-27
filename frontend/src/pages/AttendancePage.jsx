@@ -25,7 +25,9 @@ import {
   Calendar,
   MessageSquare,
   Palette,
-  AlertTriangle
+  AlertTriangle,
+  PlusCircle,
+  Check
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -257,7 +259,7 @@ export default function AttendancePage({
       if (result.success && result.ticket) {
         setSubmittedTicket(result.ticket);
         setIsEditing(false);
-        setUpdateFeedback({ type: 'success', message: '✓ Data presensi berhasil diperbarui!' });
+        setUpdateFeedback({ type: 'success', message: 'Data presensi berhasil diperbarui!' });
 
         onAttendanceUpdate && onAttendanceUpdate(result.ticket);
 
@@ -346,8 +348,8 @@ export default function AttendancePage({
               
               {/* Verified Ribbon */}
               <div className="flex items-start sm:items-center gap-3 bg-[#22C55E]/15 border-3 border-[#22C55E] p-4 rounded-2xl">
-                <div className="w-10 h-10 bg-[#22C55E] border-2 border-black rounded-xl text-black flex items-center justify-center font-display font-black shrink-0 shadow-retro-sm">
-                  ✓
+                <div className="w-10 h-10 bg-[#22C55E] border-2 border-black rounded-xl text-white flex items-center justify-center font-display font-black shrink-0 shadow-retro-sm">
+                  <CheckCircle2 className="w-5 h-5 text-white" />
                 </div>
                 <div className="space-y-0.5">
                   <div className="inline-flex items-center gap-1.5 bg-[#22C55E] text-black text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded border border-black uppercase">
@@ -432,7 +434,7 @@ export default function AttendancePage({
                   </div>
                   <div className="space-y-0.5 text-center">
                     <span className="text-xs font-black text-green-700 uppercase flex items-center justify-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-green-600" /> TIKET RESMI TERVALIDASI ✅
+                      <ShieldCheck className="w-4 h-4 text-green-600" /> TIKET RESMI TERVALIDASI
                     </span>
                     <p className="text-xs font-mono font-bold text-black">
                       ID: {activeTicket.id || 'PASS-POLIBATAM'}
@@ -461,7 +463,7 @@ export default function AttendancePage({
                     ) : downloadPassSuccess ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-black" />
-                        <span>✓ QR Berhasil Disimpan!</span>
+                        <span>QR Berhasil Disimpan!</span>
                       </>
                     ) : (
                       <>
@@ -637,7 +639,7 @@ export default function AttendancePage({
                     title="Ajukan ulang atau perbaiki data presensi jika ada kesalahan input"
                   >
                     <Edit3 className="w-4 h-4 text-black" />
-                    <span>✏️ Ajukan Ulang / Edit Data</span>
+                    <span>Ajukan Ulang / Edit Data</span>
                   </button>
 
                   <button
@@ -654,7 +656,7 @@ export default function AttendancePage({
                     ) : downloadPassSuccess ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-black" />
-                        <span>✓ QR Berhasil Disimpan!</span>
+                        <span>QR Berhasil Disimpan!</span>
                       </>
                     ) : (
                       <>
@@ -688,7 +690,8 @@ export default function AttendancePage({
                     }}
                     className="flex-1 btn-retro-white py-2.5 text-xs sm:text-sm flex items-center justify-center gap-1.5"
                   >
-                    Presensi Pengunjung Lain ➕
+                    <PlusCircle className="w-4 h-4 text-black" />
+                    <span>Presensi Pengunjung Lain</span>
                   </button>
                 </div>
               </div>
@@ -827,7 +830,7 @@ export default function AttendancePage({
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        <span>Simpan Perubahan Data 💾</span>
+                        <span>Simpan Perubahan Data</span>
                       </>
                     )}
                   </button>
@@ -859,7 +862,7 @@ export default function AttendancePage({
                   </p>
                 </div>
                 <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FFE600] border-2 border-black rounded-xl flex items-center justify-center font-bold shadow-retro-sm shrink-0">
-                  ✍️
+                  <UserCheck className="w-5 h-5 text-black" />
                 </div>
               </div>
 
@@ -962,7 +965,7 @@ export default function AttendancePage({
                   ) : (
                     <>
                       <Send className="w-5 h-5" />
-                      <span>Kirim Presensi & Dapatkan Tiket Digital ✨</span>
+                      <span>Kirim Presensi & Dapatkan Tiket Digital</span>
                     </>
                   )}
                 </button>

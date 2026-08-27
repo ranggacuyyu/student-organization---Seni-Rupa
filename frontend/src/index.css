@@ -117,3 +117,45 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #FF3388;
 }
+
+/* Seamless Hardware-Accelerated Marquee Animations */
+@keyframes marqueeSmooth {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marqueeSmoothReverse {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-marquee-smooth {
+  display: flex;
+  width: max-content;
+  animation: marqueeSmooth 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-smooth:hover {
+  animation-play-state: paused;
+}
+
+.animate-marquee-smooth-reverse {
+  display: flex;
+  width: max-content;
+  animation: marqueeSmoothReverse 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-smooth-reverse:hover {
+  animation-play-state: paused;
+}
+

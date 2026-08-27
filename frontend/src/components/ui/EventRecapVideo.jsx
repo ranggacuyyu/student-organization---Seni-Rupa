@@ -16,7 +16,8 @@ import {
   Music, 
   CheckCircle2,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Check
 } from 'lucide-react';
 
 /**
@@ -513,7 +514,9 @@ export default function EventRecapVideo() {
                 className="font-display font-black text-xs sm:text-sm text-white hover:text-[#FFE600] flex items-center gap-1"
               >
                 @{OFFICIAL_IG_CONFIG.username}
-                <span className="w-3.5 h-3.5 bg-[#00F0FF] text-black text-[8.5px] rounded-full inline-flex items-center justify-center font-bold">✓</span>
+                <span className="w-3.5 h-3.5 bg-[#00F0FF] text-black rounded-full inline-flex items-center justify-center font-bold">
+                  <Check className="w-2.5 h-2.5" />
+                </span>
               </a>
               <span className="bg-white/20 backdrop-blur-xs border border-white/40 text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full">
                 {currentVideo.tag}
@@ -623,7 +626,7 @@ export default function EventRecapVideo() {
               className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-black/85 hover:bg-[#FF3388] text-white border-2 border-white/60 hover:border-black text-[9.5px] sm:text-xs font-black px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl shadow-retro-sm flex items-center gap-1.5 backdrop-blur-sm transition-all z-20 cursor-pointer active:scale-95"
             >
               <VolumeX className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>Tap Suara 🔊</span>
+              <span>Buka Suara</span>
             </button>
           )}
         </div>

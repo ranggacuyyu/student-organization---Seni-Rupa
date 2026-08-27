@@ -10,7 +10,8 @@ import {
   Brush, 
   User, 
   Quote, 
-  Clock 
+  Clock,
+  Pin
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { GuestbookService } from '../services/api';
@@ -28,10 +29,10 @@ export default function GuestbookPage({ messages, onAddMessage }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const stickers = [
-    { id: 'retro-star', label: '⭐ Bintang', icon: Star },
-    { id: 'retro-heart', label: '💖 Cinta Seni', icon: Heart },
-    { id: 'retro-brush', label: '🖌️ Kuas Lukis', icon: Brush },
-    { id: 'retro-smile', label: '😃 Keren Banget', icon: Smile },
+    { id: 'retro-star', label: 'Bintang', icon: Star },
+    { id: 'retro-heart', label: 'Cinta Seni', icon: Heart },
+    { id: 'retro-brush', label: 'Kuas Lukis', icon: Brush },
+    { id: 'retro-smile', label: 'Keren Banget', icon: Smile },
   ];
 
   // Entrance animations on mount
@@ -138,7 +139,9 @@ export default function GuestbookPage({ messages, onAddMessage }) {
                   Tempelkan catatanmu di dinding pameran digital.
                 </p>
               </div>
-              <span className="text-xl sm:text-2xl">📝</span>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#FF3388] text-white border-2 border-black rounded-xl flex items-center justify-center shadow-retro-xs">
+                <MessageSquare className="w-4 h-4" />
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -177,20 +180,24 @@ export default function GuestbookPage({ messages, onAddMessage }) {
                   Pilih Stiker Ikon
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {stickers.map((stk) => (
-                    <button
-                      key={stk.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, sticker: stk.id })}
-                      className={`p-2 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 justify-center transition-all active:scale-95 ${
-                        formData.sticker === stk.id
-                          ? 'bg-[#FFE600] border-black shadow-retro-sm text-black scale-105'
-                          : 'bg-[#FAF7EE] border-neutral-300 text-neutral-600 hover:border-black'
-                      }`}
-                    >
-                      <span>{stk.label}</span>
-                    </button>
-                  ))}
+                  {stickers.map((stk) => {
+                    const StkIcon = stk.icon;
+                    return (
+                      <button
+                        key={stk.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, sticker: stk.id })}
+                        className={`p-2 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 justify-center transition-all active:scale-95 ${
+                          formData.sticker === stk.id
+                            ? 'bg-[#FFE600] border-black shadow-retro-sm text-black scale-105'
+                            : 'bg-[#FAF7EE] border-neutral-300 text-neutral-600 hover:border-black'
+                        }`}
+                      >
+                        <StkIcon className="w-3.5 h-3.5" />
+                        <span>{stk.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -214,7 +221,7 @@ export default function GuestbookPage({ messages, onAddMessage }) {
                 className="w-full btn-retro-pink py-3 text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
               >
                 <Send className="w-4 h-4" />
-                <span>{isSubmitting ? 'Mengirim...' : 'Tempelkan Catatan ✨'}</span>
+                <span>{isSubmitting ? 'Mengirim...' : 'Tempelkan Catatan'}</span>
               </button>
             </form>
           </div>
@@ -232,7 +239,8 @@ export default function GuestbookPage({ messages, onAddMessage }) {
               </p>
             </div>
             <div className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-[#FAF7EE] px-3 py-1.5 rounded-xl border border-black">
-              <span>📌 Live Guestbook</span>
+              <Pin className="w-3.5 h-3.5 text-[#FF3388]" />
+              <span>Live Guestbook</span>
             </div>
           </div>
 
@@ -254,8 +262,16 @@ export default function GuestbookPage({ messages, onAddMessage }) {
                       {item.role}
                     </span>
                   </div>
-                  <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center text-lg shadow-sm">
-                    {item.sticker === 'retro-heart' ? '💖' : item.sticker === 'retro-brush' ? '🖌️' : item.sticker === 'retro-smile' ? '😃' : '⭐'}
+                  <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center text-sm shadow-sm">
+                    {item.sticker === 'retro-heart' ? (
+                      <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                    ) : item.sticker === 'retro-brush' ? (
+                      <Brush className="w-4 h-4 text-amber-700" />
+                    ) : item.sticker === 'retro-smile' ? (
+                      <Smile className="w-4 h-4 text-yellow-600" />
+                    ) : (
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    )}
                   </div>
                 </div>
 

@@ -23,7 +23,11 @@ import {
   Info,
   SlidersHorizontal,
   RefreshCw,
-  Bell
+  Bell,
+  Radio,
+  Star,
+  Ticket,
+  Circle
 } from 'lucide-react';
 import { PanitiaService, RundownService } from '../../services/api';
 import { BOOTH_ZONES } from '../../data/mockData';
@@ -347,8 +351,18 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                     </div>
                     <div>
                       <span className="text-neutral-500 font-semibold block text-[10px] uppercase">Status Suvenir</span>
-                      <span className={`font-bold ${scannedTicket.isSouvenirClaimed ? 'text-[#22C55E]' : 'text-neutral-500'}`}>
-                        {scannedTicket.isSouvenirClaimed ? '🎁 Sudah Diambil' : '⚪ Belum Diambil'}
+                      <span className={`font-bold text-xs inline-flex items-center gap-1.5 ${scannedTicket.isSouvenirClaimed ? 'text-[#22C55E]' : 'text-neutral-500'}`}>
+                        {scannedTicket.isSouvenirClaimed ? (
+                          <>
+                            <Gift className="w-3.5 h-3.5" />
+                            <span>Sudah Diambil</span>
+                          </>
+                        ) : (
+                          <>
+                            <Circle className="w-3.5 h-3.5" />
+                            <span>Belum Diambil</span>
+                          </>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -481,25 +495,49 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                           <td className="py-3 px-4 text-center">
                             <button
                               onClick={() => handleToggleCheckIn(p.id)}
-                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold ${
+                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 ${
                                 p.isCheckedIn ? 'bg-[#22C55E] text-white border-black' : 'bg-neutral-100 text-neutral-600 border-neutral-300 hover:border-black'
                               }`}
                             >
-                              {p.isCheckedIn ? '✅ Hadir' : '⚪ Belum'}
+                              {p.isCheckedIn ? (
+                                <>
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Hadir</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Circle className="w-3 h-3" />
+                                  <span>Belum</span>
+                                </>
+                              )}
                             </button>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <button
                               onClick={() => handleToggleSouvenir(p.id)}
-                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold ${
+                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 ${
                                 p.isSouvenirClaimed ? 'bg-[#FF3388] text-white border-black' : 'bg-neutral-100 text-neutral-600 border-neutral-300 hover:border-black'
                               }`}
                             >
-                              {p.isSouvenirClaimed ? '🎁 Diberikan' : '⚪ Belum'}
+                              {p.isSouvenirClaimed ? (
+                                <>
+                                  <Gift className="w-3 h-3" />
+                                  <span>Diberikan</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Circle className="w-3 h-3" />
+                                  <span>Belum</span>
+                                </>
+                              )}
                             </button>
                           </td>
                           <td className="py-3 px-4 text-center font-bold text-[#7B2CBF]">
-                            {p.kategori === 'Mahasiswa Baru' ? '⭐ Gratis Maba' : p.isSouvenirClaimed ? '🎟️ Klaim' : '—'}
+                            {p.kategori === 'Mahasiswa Baru' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px]"><Star className="w-3 h-3" /> Gratis Maba</span>
+                            ) : p.isSouvenirClaimed ? (
+                              <span className="inline-flex items-center gap-1 text-[11px]"><Ticket className="w-3 h-3" /> Klaim</span>
+                            ) : '—'}
                           </td>
                           <td className="py-3 px-4 text-right">
                             <button
@@ -556,8 +594,9 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                       <p className="text-xs text-neutral-600">{zone.description}</p>
                     </div>
 
-                    <div className="pt-2 border-t border-neutral-100 text-xs font-bold text-[#7B2CBF]">
-                      🎯 {zone.featuredCount} Karya Display Terpasang
+                    <div className="pt-2 border-t border-neutral-100 text-xs font-bold text-[#7B2CBF] flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>{zone.featuredCount} Karya Display Terpasang</span>
                     </div>
                   </div>
                 ))}
@@ -640,23 +679,25 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => onUpdateRundownStatus(item.id, 'ongoing')}
-                        className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs ${
+                        className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 ${
                           item.status === 'ongoing'
                             ? 'bg-[#FF3388] text-white border-black shadow-retro-sm animate-pulse'
                             : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
                         }`}
                       >
-                        🔴 Set Live
+                        <Radio className="w-3 h-3" />
+                        <span>Set Live</span>
                       </button>
                       <button
                         onClick={() => onUpdateRundownStatus(item.id, 'completed')}
-                        className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs ${
+                        className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 ${
                           item.status === 'completed'
                             ? 'bg-[#22C55E] text-white border-black shadow-retro-sm'
                             : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
                         }`}
                       >
-                        ✅ Selesai
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Selesai</span>
                       </button>
                     </div>
                   </div>

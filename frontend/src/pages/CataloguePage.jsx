@@ -15,7 +15,9 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Compass
+  Compass,
+  EyeOff,
+  MoveHorizontal
 } from 'lucide-react';
 
 /**
@@ -192,8 +194,8 @@ function ArtworkCategoryRail({
         {/* Scroll Controls & Navigation Hint */}
         {artworks.length > 0 && (
           <div className="flex items-center gap-2.5 self-end sm:self-center">
-            <span className="text-[11px] text-neutral-500 font-bold bg-[#FAF7EE] px-2 py-1 rounded-lg border border-black/10 flex items-center gap-1">
-              <span>🖐️</span> <span className="hidden sm:inline">Tarik & Geser</span> Bebas
+            <span className="text-[11px] text-neutral-500 font-bold bg-[#FAF7EE] px-2 py-1 rounded-lg border border-black/10 flex items-center gap-1.5">
+              <MoveHorizontal className="w-3.5 h-3.5 text-neutral-600" /> <span className="hidden sm:inline">Tarik & Geser</span> Bebas
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -294,9 +296,9 @@ function ArtworkCategoryRail({
 
                         {/* Creator Info */}
                         {isSecret ? (
-                          <div className="flex items-center gap-1.5 text-xs text-purple-800 bg-purple-100 border border-purple-300 px-2 py-0.5 rounded-lg font-bold w-fit">
-                            <Sparkles className="w-3.5 h-3.5 text-purple-600 shrink-0 animate-pulse" />
-                            <span>🎭 Pencipta Dirahasiakan</span>
+                          <div className="flex items-center gap-1.5 text-[11px] text-purple-800 font-black bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200">
+                            <EyeOff className="w-3 h-3 text-[#7B2CBF]" />
+                            <span>Pencipta Dirahasiakan</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5 text-xs text-neutral-700 font-semibold truncate">
@@ -584,18 +586,18 @@ export default function CataloguePage({
                   onChange={(e) => handleArtistChange(e.target.value)}
                   className="w-full bg-transparent text-xs sm:text-sm font-bold text-black focus:outline-none truncate py-1 cursor-pointer"
                 >
-                  <option value="Semua">🎨 Semua Pencipta ({totalCount})</option>
+                  <option value="Semua">Semua Pencipta ({totalCount})</option>
                   
                   {secretCount > 0 && (
                     <option value="__anonymous__" className="font-bold text-purple-700 bg-purple-50">
-                      🎭 Pencipta Dirahasiakan ({secretCount} Karya)
+                      Pencipta Dirahasiakan ({secretCount} Karya)
                     </option>
                   )}
 
                   <optgroup label="Seniman & Anggota Terdaftar">
                     {artistList.map(({ name, count }) => (
                       <option key={name} value={name}>
-                        👤 {name} ({count})
+                        {name} ({count})
                       </option>
                     ))}
                   </optgroup>
@@ -617,9 +619,9 @@ export default function CataloguePage({
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full bg-transparent text-xs sm:text-sm font-bold text-black focus:outline-none truncate py-1 cursor-pointer"
                 >
-                  <option value="popular">🔥 Paling Disukai</option>
-                  <option value="newest">📅 Tahun Terbaru</option>
-                  <option value="title">🔤 Judul (A - Z)</option>
+                  <option value="popular">Paling Disukai (Terpopuler)</option>
+                  <option value="newest">Tahun Rilis Terbaru</option>
+                  <option value="title">Judul Karya (A - Z)</option>
                 </select>
               </div>
             </div>
@@ -637,8 +639,9 @@ export default function CataloguePage({
             {/* Active Secret Chip */}
             {(onlySecret || selectedArtist === '__anonymous__') && (
               <span className="inline-flex items-center gap-1 bg-[#7B2CBF] text-white border border-black px-2 py-0.5 rounded-lg font-bold text-[11px]">
-                🎭 Pencipta Dirahasiakan
-                <button onClick={() => { setOnlySecret(false); setSelectedArtist('Semua'); }} className="hover:text-[#FFE600]">
+                <EyeOff className="w-3 h-3" />
+                <span>Pencipta Dirahasiakan</span>
+                <button onClick={() => { setOnlySecret(false); setSelectedArtist('Semua'); }} className="hover:text-[#FFE600] ml-0.5">
                   <X className="w-3 h-3" />
                 </button>
               </span>
