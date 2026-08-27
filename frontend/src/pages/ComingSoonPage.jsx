@@ -86,23 +86,23 @@ export default function ComingSoonPage({ onNavigateHome }) {
   ];
 
   return (
-    <div ref={containerRef} className="min-h-[80vh] py-8 sm:py-12 px-3.5 sm:px-6 lg:px-8 bg-retro-dots flex flex-col items-center justify-center relative overflow-hidden">
+    <div ref={containerRef} className="min-h-[80vh] py-6 sm:py-10 md:py-12 px-3 sm:px-6 lg:px-8 bg-retro-dots flex flex-col items-center justify-center relative overflow-hidden">
       
       {/* Background Floating Memphis Accents */}
-      <div className="absolute top-10 left-10 w-16 h-16 bg-[#FFE600] rounded-full border-3 border-black opacity-40 blur-[1px] -z-10 animate-bounce"></div>
-      <div className="absolute bottom-12 right-12 w-24 h-24 bg-[#FF3388] rounded-3xl border-3 border-black rotate-12 opacity-30 -z-10"></div>
-      <div className="absolute top-1/3 right-8 w-12 h-12 bg-[#00F0FF] rounded-lg border-2 border-black rotate-45 opacity-40 -z-10"></div>
+      <div className="absolute top-10 left-10 w-12 h-12 sm:w-16 sm:h-16 bg-[#FFE600] rounded-full border-2 sm:border-3 border-black opacity-40 blur-[1px] -z-10 animate-bounce pointer-events-none"></div>
+      <div className="absolute bottom-12 right-12 w-16 h-16 sm:w-24 sm:h-24 bg-[#FF3388] rounded-3xl border-2 sm:border-3 border-black rotate-12 opacity-30 -z-10 pointer-events-none"></div>
+      <div className="absolute top-1/3 right-8 w-10 h-10 sm:w-12 sm:h-12 bg-[#00F0FF] rounded-lg border-2 border-black rotate-45 opacity-40 -z-10 pointer-events-none"></div>
 
-      <div className="max-w-4xl w-full mx-auto space-y-8 sm:space-y-10 text-center relative z-10">
+      <div className="max-w-4xl w-full mx-auto space-y-6 sm:space-y-8 md:space-y-10 text-center relative z-10">
 
         {/* Big Header Banner */}
         <div className="space-y-3 sm:space-y-4">
           
           {/* Animated Badge & Logo */}
-          <div className="coming-soon-badge inline-flex items-center gap-2.5 sm:gap-3 bg-[#FFE600] border-2 sm:border-3 border-black px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-retro-sm sm:shadow-retro">
-            <img src={senrupLogo} alt="Logo Seni Rupa" className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow shrink-0" />
+          <div className="coming-soon-badge inline-flex items-center gap-2 sm:gap-3 bg-[#FFE600] border-2 sm:border-3 border-black px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-retro-xs sm:shadow-retro max-w-full">
+            <img src={senrupLogo} alt="Logo Seni Rupa" className="w-7 h-7 sm:w-10 sm:h-10 object-contain drop-shadow shrink-0" />
             <div className="text-left min-w-0">
-              <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-black/70 block uppercase truncate">
+              <span className="text-[8.5px] sm:text-[10px] font-black tracking-wider text-black/70 block uppercase truncate">
                 DIVISI SENI RUPA POLIBATAM
               </span>
               <span className="font-display font-black text-xs sm:text-sm text-black truncate block">
@@ -112,14 +112,14 @@ export default function ComingSoonPage({ onNavigateHome }) {
           </div>
 
           <div className="coming-soon-title space-y-2 sm:space-y-3">
-            <h1 className="font-display font-black text-3xl sm:text-6xl lg:text-7xl text-black tracking-tight leading-tight">
+            <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-black tracking-tight leading-tight">
               COMING{' '}
-              <span className="bg-[#FF3388] text-white px-3 sm:px-4 py-0.5 sm:py-1 border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl shadow-retro inline-block rotate-[-2deg]">
+              <span className="bg-[#FF3388] text-white px-2.5 sm:px-4 py-0.5 sm:py-1 border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl shadow-retro inline-block rotate-[-2deg]">
                 SOON!
               </span>
             </h1>
 
-            <p className="text-xs sm:text-lg font-medium text-neutral-700 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-base md:text-lg font-medium text-neutral-700 max-w-2xl mx-auto leading-relaxed px-1">
               Kami sedang menyiapkan serangkaian <strong className='text-[#FF3388]'>Program Kerja & Agenda Seni Spektakuler</strong> berikutnya untuk seluruh mahasiswa dan civitas akademika Politeknik Negeri Batam!
             </p>
           </div>
@@ -127,41 +127,41 @@ export default function ComingSoonPage({ onNavigateHome }) {
         </div>
 
         {/* Upcoming Proker Grid Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5 text-left">
           {upcomingProkerList.map((proker) => {
             const Icon = proker.icon;
             return (
               <div
                 key={proker.id}
-                className="coming-soon-card card-retro-hover p-4 sm:p-6 bg-white flex flex-col justify-between space-y-4 group"
+                className="coming-soon-card card-retro-hover p-3.5 sm:p-5 md:p-6 bg-white border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl flex flex-col justify-between space-y-3 sm:space-y-4 group"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 sm:border-3 border-black flex items-center justify-center shadow-retro-sm ${proker.color} ${proker.textColor || 'text-black'} group-hover:rotate-6 transition-transform shrink-0`}>
-                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                <div className="space-y-2.5 sm:space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 sm:border-3 border-black flex items-center justify-center shadow-retro-xs sm:shadow-retro-sm ${proker.color} ${proker.textColor || 'text-black'} group-hover:rotate-6 transition-transform shrink-0`}>
+                      <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] bg-black text-[#FFE600] font-black px-2 py-0.5 rounded border border-black uppercase block">
+                      <span className="text-[9px] sm:text-[10px] bg-black text-[#FFE600] font-black px-1.5 sm:px-2 py-0.5 rounded border border-black uppercase inline-block">
                         {proker.tag}
                       </span>
-                      <span className="text-xs font-mono font-bold text-neutral-600 block mt-1">
+                      <span className="text-[11px] sm:text-xs font-mono font-bold text-neutral-600 block mt-0.5 sm:mt-1">
                         {proker.date}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="font-display font-black text-xl text-black group-hover:text-[#FF3388] transition-colors">
+                    <h3 className="font-display font-black text-base sm:text-xl text-black group-hover:text-[#FF3388] transition-colors leading-snug">
                       {proker.title}
                     </h3>
-                    <p className="text-xs text-neutral-600 font-medium leading-relaxed mt-2">
+                    <p className="text-xs sm:text-sm text-neutral-600 font-medium leading-relaxed mt-1.5 sm:mt-2">
                       {proker.desc}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t-2 border-dashed border-neutral-200 flex items-center justify-between text-xs font-bold text-neutral-500">
-                  <span>Status: Dalam Tahap Kurasi</span>
+                <div className="pt-2.5 sm:pt-3 border-t-2 border-dashed border-neutral-200 flex items-center justify-between text-[11px] sm:text-xs font-bold text-neutral-500">
+                  <span>Status: Kurasi</span>
                   <span className="text-[#FF3388] font-black">Nantikan Segera</span>
                 </div>
               </div>
@@ -173,20 +173,20 @@ export default function ComingSoonPage({ onNavigateHome }) {
         <EventRecapVideo />
 
         {/* Bottom CTA Box */}
-        <div className="card-retro p-8 bg-[#00F0FF] border-3 border-black text-black text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-white text-black border-2 border-black text-xs font-black px-3 py-1 rounded-full shadow-retro-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF3388]" /> TETAP TERHUBUNG BERSAMA KAMI
+        <div className="card-retro p-5 sm:p-8 bg-[#00F0FF] border-2 sm:border-3 border-black text-black text-center space-y-3 sm:space-y-4 rounded-xl sm:rounded-2xl">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-white text-black border-2 border-black text-[10px] sm:text-xs font-black px-3 py-1 rounded-full shadow-retro-xs sm:shadow-retro-sm">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FF3388]" /> TETAP TERHUBUNG BERSAMA KAMI
           </div>
-          <h2 className="font-display font-black text-2xl sm:text-3xl text-black">
+          <h2 className="font-display font-black text-xl sm:text-2xl md:text-3xl text-black leading-tight">
             Ingin Berkolaborasi atau Mengajukan Karya?
           </h2>
-          <p className="text-xs sm:text-sm text-neutral-800 font-semibold max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-neutral-800 font-semibold max-w-lg mx-auto leading-relaxed">
             Kunjungi booth pameran kami di <strong>Student Centre Lantai 3 Polibatam</strong> atau temui tim panitia di lokasi pameran.
           </p>
-          <div className="pt-2">
+          <div className="pt-1 sm:pt-2">
             <button
               onClick={onNavigateHome}
-              className="btn-retro-pink text-xs sm:text-sm px-6 py-3 shadow-retro"
+              className="btn-retro-pink text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3 shadow-retro w-full sm:w-auto"
             >
               Jelajahi Pameran Sekarang
             </button>
