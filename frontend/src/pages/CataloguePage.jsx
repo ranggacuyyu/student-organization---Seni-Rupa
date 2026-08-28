@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import { 
   Palette, 
@@ -91,67 +91,118 @@ function ArtworkCategoryRail({
   likedIds = []
 }) {
   const railRef = useRef(null);
-  const isMouseDown = useRef(false);
-  const startX = useRef(0);
-  const scrollLeftStart = useRef(0);
-  const isDragging = useRef(false);
-  const [isDraggingState, setIsDraggingState] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
 
-  const handleScrollLeft = () => {
-    if (railRef.current) {
-      railRef.current.scrollBy({ left: -340, behavior: 'smooth' });
+  // Drag tracking refs
+  const dragStartXRef = useRef(0);
+  const scrollLeftStartRef = useRef(0);
+  const hasMovedRef = useRef(false);
+
+  // Update Left/Right Scroll Arrows state & Active Card index
+  const updateScrollState = useCallback(() => {
+    if (!railRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = railRef.current;
+    setCanScrollLeft(scrollLeft > 8);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 8);
+
+    // Calculate approximate active card index for dots indicator
+    if (artworks.length > 0) {
+      const cardWidth = 280; // approximate width + gap on mobile
+      const index = Math.round(scrollLeft / cardWidth);
+      setActiveCardIndex(Math.max(0, Math.min(index, artworks.length - 1)));
     }
+  }, [artworks.length]);
+
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [updateScrollState, artworks]);
+
+  // Smooth scroll helper for Next / Prev buttons
+  const scrollRail = (direction) => {
+    if (!railRef.current) return;
+    const step = 320;
+    const targetScroll = direction === 'left' 
+      ? railRef.current.scrollLeft - step 
+      : railRef.current.scrollLeft + step;
+    
+    railRef.current.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth'
+    });
   };
 
-  const handleScrollRight = () => {
-    if (railRef.current) {
-      railRef.current.scrollBy({ left: 340, behavior: 'smooth' });
+  // Auto-scroll card into view
+  const scrollToCard = useCallback((idx) => {
+    if (!railRef.current) return;
+    const cards = railRef.current.children;
+    if (cards && cards[idx]) {
+      cards[idx].scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+      setActiveCardIndex(idx);
     }
-  };
+  }, []);
 
-  // Mouse Drag Scroll Handlers (Drag to scroll without clicking buttons)
+  // Mouse Drag to Scroll Handlers
   const handleMouseDown = (e) => {
     if (!railRef.current) return;
-    // Don't drag if clicking buttons or inputs
     if (e.target.closest('button')) return;
-    isMouseDown.current = true;
-    isDragging.current = false;
-    startX.current = e.pageX - railRef.current.offsetLeft;
-    scrollLeftStart.current = railRef.current.scrollLeft;
+    setIsDragging(true);
+    hasMovedRef.current = false;
+    dragStartXRef.current = e.pageX - railRef.current.offsetLeft;
+    scrollLeftStartRef.current = railRef.current.scrollLeft;
   };
 
   const handleMouseMove = (e) => {
-    if (!isMouseDown.current || !railRef.current) return;
+    if (!isDragging || !railRef.current) return;
     e.preventDefault();
     const x = e.pageX - railRef.current.offsetLeft;
-    const distance = x - startX.current;
-    if (Math.abs(distance) > 5) {
-      isDragging.current = true;
-      if (!isDraggingState) setIsDraggingState(true);
+    const walk = (x - dragStartXRef.current) * 1.5;
+    if (Math.abs(walk) > 6) {
+      hasMovedRef.current = true;
     }
-    railRef.current.scrollLeft = scrollLeftStart.current - (distance * 1.3);
+    railRef.current.scrollLeft = scrollLeftStartRef.current - walk;
   };
 
   const handleMouseUpOrLeave = () => {
-    isMouseDown.current = false;
-    setIsDraggingState(false);
-    setTimeout(() => {
-      isDragging.current = false;
-    }, 80);
+    setIsDragging(false);
   };
 
-  // Smooth wheel & trackpad horizontal scroll
-  const handleWheel = (e) => {
-    if (!railRef.current) return;
-    if (e.deltaY !== 0 && !e.shiftKey) {
-      railRef.current.scrollLeft += e.deltaY * 0.85;
+  // Touch swipe tracking handlers
+  const handleTouchStart = (e) => {
+    if (!railRef.current || !e.touches[0]) return;
+    hasMovedRef.current = false;
+    dragStartXRef.current = e.touches[0].pageX - railRef.current.offsetLeft;
+    scrollLeftStartRef.current = railRef.current.scrollLeft;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!railRef.current || !e.touches[0]) return;
+    const x = e.touches[0].pageX - railRef.current.offsetLeft;
+    const walk = x - dragStartXRef.current;
+    if (Math.abs(walk) > 6) {
+      hasMovedRef.current = true;
     }
   };
 
   // Card Click Protection (Prevent opening modal if user was dragging/swiping)
-  const handleCardClick = (art) => {
-    if (isDragging.current) return;
+  const handleCardClick = (art, idx) => {
+    if (hasMovedRef.current) return;
     onSelectArtwork(art);
+    scrollToCard(idx);
   };
 
   // Pesan informatif jika pencipta atau pencarian tidak memiliki karya pada kategori ini
@@ -199,16 +250,26 @@ function ArtworkCategoryRail({
             </span>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={handleScrollLeft}
-                className="p-2 sm:p-2.5 rounded-xl bg-[#FAF7EE] border-2 border-black hover:bg-[#FFE600] active:scale-90 shadow-retro-xs transition-all text-black flex items-center justify-center cursor-pointer"
+                onClick={() => scrollRail('left')}
+                disabled={!canScrollLeft}
+                className={`p-2 sm:p-2.5 rounded-xl border-2 border-black transition-all flex items-center justify-center ${
+                  canScrollLeft
+                    ? 'bg-[#FAF7EE] hover:bg-[#FFE600] text-black shadow-retro-xs active:translate-x-0.5 active:translate-y-0.5 cursor-pointer'
+                    : 'bg-neutral-200 text-neutral-400 border-neutral-300 cursor-not-allowed opacity-50'
+                }`}
                 title="Geser karya ke kiri"
                 aria-label="Geser ke kiri"
               >
                 <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
-                onClick={handleScrollRight}
-                className="p-2 sm:p-2.5 rounded-xl bg-[#FAF7EE] border-2 border-black hover:bg-[#FFE600] active:scale-90 shadow-retro-xs transition-all text-black flex items-center justify-center cursor-pointer"
+                onClick={() => scrollRail('right')}
+                disabled={!canScrollRight}
+                className={`p-2 sm:p-2.5 rounded-xl border-2 border-black transition-all flex items-center justify-center ${
+                  canScrollRight
+                    ? 'bg-[#FAF7EE] hover:bg-[#FFE600] text-black shadow-retro-xs active:translate-x-0.5 active:translate-y-0.5 cursor-pointer'
+                    : 'bg-neutral-200 text-neutral-400 border-neutral-300 cursor-not-allowed opacity-50'
+                }`}
                 title="Geser karya ke kanan"
                 aria-label="Geser ke kanan"
               >
@@ -221,36 +282,40 @@ function ArtworkCategoryRail({
 
       {/* Artworks Horizontal Carousel Slider with Drag-to-Scroll Support */}
       {artworks.length > 0 ? (
-        <div className="relative group/slider">
+        <div className="space-y-2">
           <div
             ref={railRef}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUpOrLeave}
             onMouseLeave={handleMouseUpOrLeave}
-            onWheel={handleWheel}
-            className={`flex gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin select-none touch-pan-y overscroll-x-contain ${
-              isDraggingState ? 'cursor-grabbing' : 'cursor-grab scroll-smooth'
-            } focus:outline-none`}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            className={`flex gap-3.5 sm:gap-6 overflow-x-auto pb-4 pt-1 touch-pan-x overscroll-x-contain select-none transition-colors ${
+              isDragging ? 'cursor-grabbing' : 'cursor-grab sm:cursor-default'
+            } no-scrollbar focus:outline-none -mx-1 px-1`}
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
             tabIndex={0}
           >
-            {artworks.map((art) => {
+            {artworks.map((art, idx) => {
               const isLiked = likedIds.includes(art.id);
               const isSecret = isArtworkSecret(art);
 
               return (
                 <div
                   key={art.id}
-                  className={`w-[270px] sm:w-[320px] shrink-0 snap-start cat-artwork-card card-retro-hover bg-white overflow-hidden flex flex-col justify-between group ${
+                  onClick={() => handleCardClick(art, idx)}
+                  className={`w-[260px] xs:w-[280px] sm:w-[320px] shrink-0 cat-artwork-card card-retro-hover bg-white overflow-hidden flex flex-col justify-between group cursor-pointer select-none ${
                     isSecret ? 'border-purple-900 shadow-[4px_4px_0px_#7B2CBF]' : ''
                   }`}
                 >
                   {/* Artwork Image Container */}
                   <div>
-                    <div 
-                      onClick={() => handleCardClick(art)}
-                      className="relative aspect-[3/4] overflow-hidden bg-neutral-800 border-b-3 border-black cursor-pointer flex items-center justify-center pointer-events-auto"
-                    >
+                    <div className="relative aspect-[3/4] overflow-hidden bg-neutral-800 border-b-3 border-black flex items-center justify-center pointer-events-none">
                       <img
                         src={art.imageUrl}
                         alt={art.title}
@@ -284,11 +349,10 @@ function ArtworkCategoryRail({
                     </div>
 
                     {/* Artwork Details */}
-                    <div className="p-4 sm:p-5 space-y-2.5">
+                    <div className="p-4 sm:p-5 space-y-2.5 pointer-events-none">
                       <div className="space-y-1">
                         <h3 
-                          onClick={() => handleCardClick(art)}
-                          className="font-display font-black text-lg sm:text-xl text-black hover:text-[#FF3388] cursor-pointer transition-colors line-clamp-1"
+                          className="font-display font-black text-lg sm:text-xl text-black group-hover:text-[#FF3388] transition-colors line-clamp-1"
                           title={art.title}
                         >
                           {art.title}
@@ -322,7 +386,7 @@ function ArtworkCategoryRail({
 
                   {/* Card Footer: Location & Like Action */}
                   <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-2 border-t-2 border-neutral-100 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-[#7B2CBF] truncate">
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-[#7B2CBF] truncate pointer-events-none">
                       <MapPin className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">{art.boothName?.split('-')[0] || section.boothHint.split('-')[0]}</span>
                     </div>
@@ -332,7 +396,7 @@ function ArtworkCategoryRail({
                         e.stopPropagation();
                         onLikeArtwork(art.id);
                       }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-black font-display font-bold text-xs transition-all active:scale-90 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-black font-display font-bold text-xs transition-all active:scale-90 cursor-pointer ${
                         isLiked
                           ? 'bg-[#FF3388] text-white shadow-retro-sm'
                           : 'bg-white text-black hover:bg-neutral-100'
@@ -347,6 +411,26 @@ function ArtworkCategoryRail({
               );
             })}
           </div>
+
+          {/* Mobile Indicator Strip */}
+          {artworks.length > 1 && (
+            <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
+              {artworks.map((art, idx) => {
+                const isCurrent = idx === activeCardIndex;
+                return (
+                  <button
+                    key={art.id}
+                    onClick={() => scrollToCard(idx)}
+                    className={`h-2 rounded-full border border-black transition-all ${
+                      isCurrent ? `w-6 ${section.badgeBg}` : 'w-2 bg-neutral-300 hover:bg-neutral-400'
+                    }`}
+                    title={`Lihat karya ${art.title}`}
+                    aria-label={`Lihat karya ${art.title}`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       ) : (
         /* Empty State Notice for this Category */

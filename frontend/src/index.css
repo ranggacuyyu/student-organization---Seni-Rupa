@@ -118,6 +118,15 @@
   background: #FF3388;
 }
 
+/* No Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Seamless Hardware-Accelerated Marquee Animations */
 @keyframes marqueeSmooth {
   0% {

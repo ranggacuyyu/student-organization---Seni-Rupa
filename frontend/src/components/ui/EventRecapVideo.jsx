@@ -15,6 +15,7 @@ import {
   Bookmark, 
   Music, 
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Sparkles,
   Check
@@ -40,7 +41,7 @@ export const OFFICIAL_IG_HIGHLIGHTS = [
     tag: 'Reels Resmi',
     badgeColor: 'bg-[#FF3388] text-white',
     category: 'Profil & Pengenalan Divisi',
-    audioTitle: 'Seni Rupa Polibatam • Audio Pengenalan',
+    audioTitle: 'Seni Rupa Polibatam • Sesi Pengenalan',
     likesCount: '1.2k',
     commentsCount: '64',
     description: 'Video pengenalan resmi Divisi Seni Rupa Politeknik Negeri Batam: Mengenal visi, karya, dan semangat kreativitas kami.',
@@ -104,10 +105,21 @@ export default function EventRecapVideo() {
   const [isSaved, setIsSaved] = useState(false);
   const [tapRipple, setTapRipple] = useState(null);
 
+  // Scroll & Drag State for Reels Tray
+  const [isDragging, setIsDragging] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const playerWrapperRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
+  const trayRef = useRef(null);
+
+  // Drag tracking refs
+  const dragStartXRef = useRef(0);
+  const scrollLeftStartRef = useRef(0);
+  const hasMovedRef = useRef(false);
 
   const currentVideo = OFFICIAL_IG_HIGHLIGHTS[selectedIdx] || OFFICIAL_IG_HIGHLIGHTS[0];
 
@@ -127,6 +139,94 @@ export default function EventRecapVideo() {
       }
     }, 3500);
   }, []);
+
+  // Update Left/Right Scroll Arrows state
+  const updateScrollButtons = useCallback(() => {
+    if (!trayRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = trayRef.current;
+    setCanScrollLeft(scrollLeft > 8);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    const el = trayRef.current;
+    if (!el) return;
+    updateScrollButtons();
+    el.addEventListener('scroll', updateScrollButtons, { passive: true });
+    window.addEventListener('resize', updateScrollButtons);
+    return () => {
+      el.removeEventListener('scroll', updateScrollButtons);
+      window.removeEventListener('resize', updateScrollButtons);
+    };
+  }, [updateScrollButtons]);
+
+  // Smooth scroll helper for Next / Prev buttons
+  const scrollTray = (direction) => {
+    if (!trayRef.current) return;
+    const step = 260;
+    const targetScroll = direction === 'left' 
+      ? trayRef.current.scrollLeft - step 
+      : trayRef.current.scrollLeft + step;
+    
+    trayRef.current.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth'
+    });
+  };
+
+  // Auto-scroll card into view
+  const scrollToCard = useCallback((idx) => {
+    if (!trayRef.current) return;
+    const cards = trayRef.current.children;
+    if (cards && cards[idx]) {
+      cards[idx].scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
+  }, []);
+
+  // Mouse Drag to Scroll handlers
+  const handleMouseDown = (e) => {
+    if (!trayRef.current) return;
+    setIsDragging(true);
+    hasMovedRef.current = false;
+    dragStartXRef.current = e.pageX - trayRef.current.offsetLeft;
+    scrollLeftStartRef.current = trayRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !trayRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - trayRef.current.offsetLeft;
+    const walk = (x - dragStartXRef.current) * 1.5;
+    if (Math.abs(walk) > 6) {
+      hasMovedRef.current = true;
+    }
+    trayRef.current.scrollLeft = scrollLeftStartRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false);
+  };
+
+  // Touch swipe tracking handlers
+  const handleTouchStart = (e) => {
+    if (!trayRef.current || !e.touches[0]) return;
+    hasMovedRef.current = false;
+    dragStartXRef.current = e.touches[0].pageX - trayRef.current.offsetLeft;
+    scrollLeftStartRef.current = trayRef.current.scrollLeft;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!trayRef.current || !e.touches[0]) return;
+    const x = e.touches[0].pageX - trayRef.current.offsetLeft;
+    const walk = x - dragStartXRef.current;
+    if (Math.abs(walk) > 6) {
+      hasMovedRef.current = true;
+    }
+  };
 
   // IntersectionObserver: Auto-play when video scrolls into view, auto-pause when scrolled away
   useEffect(() => {
@@ -325,6 +425,12 @@ export default function EventRecapVideo() {
     }
   };
 
+  const handleCardClick = (idx) => {
+    if (hasMovedRef.current) return;
+    handleSelectHighlight(idx);
+    scrollToCard(idx);
+  };
+
   return (
     <div 
       ref={containerRef} 
@@ -366,27 +472,82 @@ export default function EventRecapVideo() {
           <span className="flex items-center gap-1.5 text-[11px] sm:text-xs">
             <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ee2a7b]" /> PILIH SOROTAN UNTUK DIPUTAR:
           </span>
-          <span className="text-[10px] sm:text-[11px] text-neutral-500 font-mono">
+
+          {/* Quick Navigation Arrows for Mobile / Small Screens */}
+          <div className="flex items-center gap-1.5 sm:hidden">
+            <button
+              onClick={() => scrollTray('left')}
+              disabled={!canScrollLeft}
+              className={`w-7 h-7 rounded-lg border-2 border-black flex items-center justify-center font-bold text-xs transition-all ${
+                canScrollLeft 
+                  ? 'bg-[#FFE600] text-black shadow-retro-xs active:translate-x-0.5 active:translate-y-0.5 cursor-pointer' 
+                  : 'bg-neutral-200 text-neutral-400 border-neutral-300 cursor-not-allowed opacity-50'
+              }`}
+              title="Geser ke Kiri"
+              aria-label="Geser ke Kiri"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => scrollTray('right')}
+              disabled={!canScrollRight}
+              className={`w-7 h-7 rounded-lg border-2 border-black flex items-center justify-center font-bold text-xs transition-all ${
+                canScrollRight 
+                  ? 'bg-[#FFE600] text-black shadow-retro-xs active:translate-x-0.5 active:translate-y-0.5 cursor-pointer' 
+                  : 'bg-neutral-200 text-neutral-400 border-neutral-300 cursor-not-allowed opacity-50'
+              }`}
+              title="Geser ke Kanan"
+              aria-label="Geser ke Kanan"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <span className="hidden sm:inline-block text-[10px] sm:text-[11px] text-neutral-500 font-mono">
             {OFFICIAL_IG_HIGHLIGHTS.length} Video Tersedia
           </span>
         </div>
 
-        {/* Highlights Selector Tray: Horizontal Scroll on Mobile (<sm), 3-col Grid on Desktop (sm+) */}
-        <div className="flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 snap-x snap-mandatory scroll-smooth no-scrollbar -mx-1 px-1">
+        {/* Highlights Selector Tray: Horizontal Scroll & Drag Support */}
+        <div 
+          ref={trayRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          className={`flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 touch-pan-x overscroll-x-contain select-none -mx-1 px-1 transition-colors ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab sm:cursor-default'
+          }`}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
           {OFFICIAL_IG_HIGHLIGHTS.map((item, idx) => {
             const isCurrent = idx === selectedIdx;
             return (
-              <button
+              <div
                 key={item.id}
-                onClick={() => handleSelectHighlight(idx)}
-                className={`flex-shrink-0 w-[240px] xs:w-[270px] sm:w-auto p-2.5 sm:p-3.5 md:p-4 rounded-xl sm:rounded-2xl border-2 sm:border-3 border-black text-left transition-all duration-150 flex items-start gap-2.5 sm:gap-3 relative cursor-pointer snap-start ${
+                role="button"
+                tabIndex={0}
+                onClick={() => handleCardClick(idx)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardClick(idx);
+                  }
+                }}
+                className={`flex-shrink-0 w-[240px] xs:w-[260px] sm:w-auto p-2.5 sm:p-3.5 md:p-4 rounded-xl sm:rounded-2xl border-2 sm:border-3 border-black text-left transition-all duration-150 flex items-start gap-2.5 sm:gap-3 relative cursor-pointer select-none ${
                   isCurrent 
                     ? 'bg-white shadow-retro -translate-y-0.5 sm:-translate-y-1 ring-2 ring-[#ee2a7b] border-[#FF3388]' 
                     : 'bg-neutral-50/90 hover:bg-white shadow-retro-sm opacity-90 hover:opacity-100'
                 }`}
               >
                 {/* Bubble Avatar with Instagram Gradient Ring */}
-                <div className={`p-[2px] rounded-full shrink-0 ${
+                <div className={`p-[2px] rounded-full shrink-0 pointer-events-none ${
                   isCurrent 
                     ? 'bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] shadow-sm' 
                     : 'bg-neutral-300'
@@ -395,13 +556,13 @@ export default function EventRecapVideo() {
                     <img 
                       src={item.avatarUrl || item.posterUrl} 
                       alt={item.title} 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover pointer-events-none"
                     />
                   </div>
                 </div>
 
                 {/* Info Text */}
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className="min-w-0 flex-1 space-y-1 pointer-events-none">
                   <div className="flex items-center justify-between gap-1">
                     <span className={`text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded border border-black uppercase ${item.badgeColor}`}>
                       {item.tag}
@@ -421,7 +582,28 @@ export default function EventRecapVideo() {
                     {item.category}
                   </p>
                 </div>
-              </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mobile Reel Dots / Indicator Strip */}
+        <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
+          {OFFICIAL_IG_HIGHLIGHTS.map((item, idx) => {
+            const isCurrent = idx === selectedIdx;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  handleSelectHighlight(idx);
+                  scrollToCard(idx);
+                }}
+                className={`h-2 rounded-full border border-black transition-all ${
+                  isCurrent ? 'w-6 bg-[#FF3388]' : 'w-2 bg-neutral-300 hover:bg-neutral-400'
+                }`}
+                title={`Pilih ${item.title}`}
+                aria-label={`Pilih ${item.title}`}
+              />
             );
           })}
         </div>
@@ -459,9 +641,6 @@ export default function EventRecapVideo() {
                 PAUSED
               </span>
             )}
-            <span className="hidden sm:inline bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded text-[10px]">
-              HD RECAP
-            </span>
           </div>
         </div>
 
@@ -528,7 +707,7 @@ export default function EventRecapVideo() {
             </p>
 
             <div className="flex items-center gap-1.5 text-[9.5px] sm:text-[10.5px] text-neutral-300 font-mono">
-              <Music className="w-3 h-3 text-[#FFE600] animate-spin shrink-0" />
+              <Music className="w-3 h-3 text-[#FFE600] shrink-0" />
               <span className="truncate max-w-[200px] sm:max-w-xs">{currentVideo.audioTitle}</span>
             </div>
           </div>
