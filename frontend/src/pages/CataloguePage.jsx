@@ -291,13 +291,11 @@ function ArtworkCategoryRail({
             onMouseLeave={handleMouseUpOrLeave}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
-            className={`flex gap-3.5 sm:gap-6 overflow-x-auto pb-4 pt-1 touch-pan-x overscroll-x-contain select-none transition-colors ${
+            className={`flex gap-3.5 sm:gap-6 overflow-x-auto pb-4 pt-1 touch-auto overscroll-x-contain select-none transition-colors ${
               isDragging ? 'cursor-grabbing' : 'cursor-grab sm:cursor-default'
-            } no-scrollbar focus:outline-none -mx-1 px-1`}
+            } catalogue-scrollbar focus:outline-none -mx-1 px-1`}
             style={{
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
+              WebkitOverflowScrolling: 'touch'
             }}
             tabIndex={0}
           >
@@ -412,25 +410,7 @@ function ArtworkCategoryRail({
             })}
           </div>
 
-          {/* Mobile Indicator Strip */}
-          {artworks.length > 1 && (
-            <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
-              {artworks.map((art, idx) => {
-                const isCurrent = idx === activeCardIndex;
-                return (
-                  <button
-                    key={art.id}
-                    onClick={() => scrollToCard(idx)}
-                    className={`h-2 rounded-full border border-black transition-all ${
-                      isCurrent ? `w-6 ${section.badgeBg}` : 'w-2 bg-neutral-300 hover:bg-neutral-400'
-                    }`}
-                    title={`Lihat karya ${art.title}`}
-                    aria-label={`Lihat karya ${art.title}`}
-                  />
-                );
-              })}
-            </div>
-          )}
+
         </div>
       ) : (
         /* Empty State Notice for this Category */

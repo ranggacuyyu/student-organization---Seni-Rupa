@@ -127,6 +127,27 @@
   scrollbar-width: none;
 }
 
+/* Catalogue Rail Scrollbar — thin retro themed */
+.catalogue-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #FFE600 #F0EFE9;
+}
+.catalogue-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.catalogue-scrollbar::-webkit-scrollbar-track {
+  background: #F0EFE9;
+  border-radius: 99px;
+}
+.catalogue-scrollbar::-webkit-scrollbar-thumb {
+  background: #FFE600;
+  border-radius: 99px;
+  border: 1px solid #121212;
+}
+.catalogue-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #FF3388;
+}
+
 /* Seamless Hardware-Accelerated Marquee Animations */
 @keyframes marqueeSmooth {
   0% {
