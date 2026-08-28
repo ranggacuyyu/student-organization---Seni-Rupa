@@ -133,6 +133,7 @@
   scrollbar-color: #FFE600 #F0EFE9;
 }
 .catalogue-scrollbar::-webkit-scrollbar {
+  width: 6px;
   height: 6px;
 }
 .catalogue-scrollbar::-webkit-scrollbar-track {

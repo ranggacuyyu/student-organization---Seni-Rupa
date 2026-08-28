@@ -283,7 +283,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
               </div>
 
               {zoneArtworks.length > 0 ? (
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1.5 catalogue-scrollbar">
                   {zoneArtworks.map((art) => (
                     <div
                       key={art.id}

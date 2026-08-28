@@ -45,7 +45,18 @@ export default function App() {
   const [artworks, setArtworks] = useState(() => {
     try {
       const saved = localStorage.getItem('senrup_artworks_v1');
-      return saved ? JSON.parse(saved) : INITIAL_ARTWORKS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= INITIAL_ARTWORKS.length) {
+          return parsed;
+        }
+        if (Array.isArray(parsed)) {
+          const existingIds = new Set(parsed.map(a => a.id));
+          const newDefaults = INITIAL_ARTWORKS.filter(a => !existingIds.has(a.id));
+          return [...parsed, ...newDefaults];
+        }
+      }
+      return INITIAL_ARTWORKS;
     } catch {
       return INITIAL_ARTWORKS;
     }

@@ -59,12 +59,14 @@ export const ArtworkDb = {
     try {
       const res = await axios.get(`${API_BASE_URL}/artworks`, { timeout: 4000 });
       if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-        const formatted = res.data.data.map(art => ({
+        const existingIds = new Set(res.data.data.map(a => a.id));
+        const newDefaults = INITIAL_ARTWORKS.filter(a => !existingIds.has(a.id));
+        const formatted = [...res.data.data, ...newDefaults].map(art => ({
           ...art,
           isAnonymous: Boolean(
             art.isAnonymous || 
             art.is_anonymous || 
-            (typeof art.artist === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(art.artist))
+            (typeof (art.seniman_nama || art.artist) === 'string' && /rahasia|dirahasiakan|anonim|anonymous|secret|misterius/i.test(art.seniman_nama || art.artist))
           )
         }));
         saveLocalArtworks(formatted);
