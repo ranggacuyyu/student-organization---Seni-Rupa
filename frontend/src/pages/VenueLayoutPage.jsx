@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 import { 
   MapPin, 
@@ -15,18 +15,92 @@ import {
   Brush,
   Shapes,
   Camera,
-  EyeOff
+  RotateCw,
+  EyeOff,
+  Database
 } from 'lucide-react';
 import { BOOTH_ZONES } from '../data/mockData';
+import { BoothService, ArtworkService } from '../services/api';
+import { resolveBoothId } from '../services/db/artworkDb';
 
-export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoothId, onNavigateCatalogue }) {
+export default function VenueLayoutPage({ artworks = [], onSelectArtwork, selectedBoothId, onNavigateCatalogue }) {
   const containerRef = useRef(null);
   const detailBoxRef = useRef(null);
 
+  const [zones, setZones] = useState(BOOTH_ZONES);
+  const [liveArtworks, setLiveArtworks] = useState(artworks);
   const [activeZoneId, setActiveZoneId] = useState(selectedBoothId || 'booth-a');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSynced, setIsSynced] = useState(false);
 
-  const activeZone = BOOTH_ZONES.find(z => z.id === activeZoneId) || BOOTH_ZONES[0];
-  const zoneArtworks = artworks.filter(a => a.boothId === activeZone.id);
+  // Sync selectedBoothId if changed from parent
+  useEffect(() => {
+    if (selectedBoothId) {
+      setActiveZoneId(selectedBoothId);
+    }
+  }, [selectedBoothId]);
+
+  // Load live data from Backend & Database on mount
+  useEffect(() => {
+    loadLiveData();
+  }, []);
+
+  // Update live artworks if prop updates
+  useEffect(() => {
+    if (artworks && artworks.length > 0) {
+      setLiveArtworks(artworks);
+    }
+  }, [artworks]);
+
+  const loadLiveData = async () => {
+    setIsLoading(true);
+    try {
+      const [boothsData, artsData] = await Promise.all([
+        BoothService.getBooths(),
+        ArtworkService.getAllArtworks()
+      ]);
+
+      if (Array.isArray(boothsData) && boothsData.length > 0) {
+        setZones(boothsData);
+      }
+      if (Array.isArray(artsData) && artsData.length > 0) {
+        setLiveArtworks(artsData);
+      }
+      setIsSynced(true);
+    } catch (err) {
+      console.warn('VenueLayoutPage live sync fallback:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Find active zone with resilient fallback
+  const activeZone = useMemo(() => {
+    return zones.find(z => z.id === activeZoneId) || 
+           zones.find(z => z.code?.toLowerCase() === activeZoneId?.toLowerCase()) || 
+           zones[0] || 
+           BOOTH_ZONES[0];
+  }, [zones, activeZoneId]);
+
+  // Filter artworks strictly connected to active zone
+  const currentArtworkList = useMemo(() => {
+    return (liveArtworks && liveArtworks.length > 0) ? liveArtworks : artworks;
+  }, [liveArtworks, artworks]);
+
+  const zoneArtworks = useMemo(() => {
+    return currentArtworkList.filter(a => {
+      const bId = a.boothId || a.booth_id || resolveBoothId(a);
+      return bId === activeZone.id || bId === activeZone.code?.toLowerCase();
+    });
+  }, [currentArtworkList, activeZone]);
+
+  // Real-time count of artworks in each zone
+  const getZoneArtworkCount = (zoneId) => {
+    return currentArtworkList.filter(a => {
+      const bId = a.boothId || a.booth_id || resolveBoothId(a);
+      return bId === zoneId;
+    }).length;
+  };
 
   // Entrance animations on mount
   useEffect(() => {
@@ -65,7 +139,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
       gsap.fromTo(
         '.denah-artwork-item',
         { opacity: 0, x: 10 },
-        { opacity: 1, x: 0, stagger: 0.05, duration: 0.3, ease: 'power1.out', delay: 0.1 }
+        { opacity: 1, x: 0, stagger: 0.04, duration: 0.3, ease: 'power1.out', delay: 0.05 }
       );
     }
   }, [activeZoneId]);
@@ -76,9 +150,15 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
       {/* Header Banner */}
       <div className="denah-header-banner bg-[#00F0FF] text-black border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro relative overflow-hidden bg-retro-dots">
         <div className="max-w-3xl space-y-2 sm:space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-black text-[#00F0FF] px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase">
-            <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFE600]" /> DENAH & PETA INTERAKTIF
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-black text-[#00F0FF] px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase">
+              <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFE600]" /> DENAH & PETA INTERAKTIF
+            </div>
+            <div className="inline-flex items-center gap-1.5 bg-white border-2 border-black text-black px-2.5 py-0.5 rounded-lg text-[10px] sm:text-xs font-black">
+              <Database className="w-3 h-3 text-[#22C55E]" /> Terhubung Database
+            </div>
           </div>
+
           <h1 className="font-display font-black text-2xl sm:text-5xl text-black leading-tight">
             Layout Student Centre Lantai 3
           </h1>
@@ -101,12 +181,22 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                   Peta Denah Lantai 3 (Klik Zona)
                 </h3>
                 <p className="text-[11px] sm:text-xs text-neutral-500">
-                  Klik salah satu kotak zona di bawah untuk melihat detail display & karya.
+                  Klik salah satu kotak zona di bawah untuk melihat detail display & karya terdaftar.
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-neutral-600 shrink-0">
-                <span className="w-2.5 h-2.5 bg-[#22C55E] rounded-full animate-ping"></span>
-                <span>Interaktif</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={loadLiveData}
+                  disabled={isLoading}
+                  title="Sinkronkan dengan Database"
+                  className="p-1.5 rounded-lg border-2 border-black bg-[#FAF7EE] hover:bg-[#FFE600] transition-colors disabled:opacity-50"
+                >
+                  <RotateCw className={`w-3.5 h-3.5 text-black ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-neutral-600 shrink-0">
+                  <span className="w-2.5 h-2.5 bg-[#22C55E] rounded-full animate-ping"></span>
+                  <span>Interaktif</span>
+                </div>
               </div>
             </div>
 
@@ -132,7 +222,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                     <span className="font-display font-black text-xs sm:text-sm text-black truncate pr-2 flex items-center gap-1.5">
                       <Palette className="w-4 h-4 text-black shrink-0" /> ZONA A: GALERI LUKISAN
                     </span>
-                    <span className="text-[9px] sm:text-[10px] bg-black text-white font-black px-2 py-0.5 rounded shrink-0">12 Karya</span>
+                    <span className="text-[9px] sm:text-[10px] bg-black text-white font-black px-2 py-0.5 rounded shrink-0">
+                      {getZoneArtworkCount('booth-a')} Karya
+                    </span>
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-neutral-700 mt-0.5 sm:mt-1">Sisi Utara (Pencahayaan Kaca Terbuka)</p>
                 </button>
@@ -167,12 +259,17 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                       : 'bg-white hover:bg-neutral-50 text-black'
                   }`}
                 >
-                  <span className="font-display font-black text-xs flex items-center gap-1.5">
-                    <Brush className="w-3.5 h-3.5 shrink-0" /> ZONA C: POJOK GAMBAR
-                  </span>
-                  <p className="text-[10px] text-neutral-700 mt-1">
-                    Live Painting
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-display font-black text-xs flex items-center gap-1.5">
+                      <Brush className="w-3.5 h-3.5 shrink-0" /> ZONA C: POJOK GAMBAR
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-[10px] text-neutral-700">Live Painting</p>
+                    <span className="text-[9px] bg-black text-[#00F0FF] font-black px-1.5 py-0.5 rounded">
+                      {getZoneArtworkCount('booth-c')} Karya
+                    </span>
+                  </div>
                 </button>
 
                 {/* Zona B: Kriya Kerajinan Timur */}
@@ -187,9 +284,14 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                   <span className="font-display font-black text-xs flex items-center gap-1.5">
                     <Shapes className="w-3.5 h-3.5 shrink-0" /> ZONA B: KERAJINAN
                   </span>
-                  <p className={`text-[10px] mt-1 ${activeZoneId === 'booth-b' ? 'text-white/80' : 'text-neutral-600'}`}>
-                    Display 3D Kriya
-                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className={`text-[10px] ${activeZoneId === 'booth-b' ? 'text-white/80' : 'text-neutral-600'}`}>
+                      Display 3D Kriya
+                    </p>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${activeZoneId === 'booth-b' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                      {getZoneArtworkCount('booth-b')} Karya
+                    </span>
+                  </div>
                 </button>
 
               </div>
@@ -259,7 +361,7 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                 Aktivitas di Zona Ini:
               </h4>
               <div className="space-y-1.5">
-                {activeZone.activities.map((act, idx) => (
+                {(activeZone.activities || []).map((act, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-neutral-700 bg-[#FAF7EE] p-2 rounded-lg border border-black/20">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E]" />
                     <span>{act}</span>
@@ -295,6 +397,10 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                           src={art.imageUrl}
                           alt={art.title}
                           className="w-10 h-10 object-cover rounded-lg border border-black shrink-0"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=300&q=80';
+                          }}
                         />
                         <div className="overflow-hidden">
                           <h5 className="font-display font-bold text-xs text-black group-hover:text-[#FF3388] truncate">
@@ -312,8 +418,9 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
                   ))}
                 </div>
               ) : (
-                <div className="p-4 bg-[#FAF7EE] border-2 border-dashed border-neutral-300 rounded-xl text-center text-xs text-neutral-500">
-                  Area ini difokuskan untuk aktivitas interaktif, panggung, atau photobooth.
+                <div className="p-4 bg-[#FAF7EE] border-2 border-dashed border-neutral-300 rounded-xl text-center text-xs text-neutral-500 space-y-1">
+                  <p className="font-bold text-neutral-700">Tidak ada karya di zona ini.</p>
+                  <p>Area ini difokuskan untuk aktivitas interaktif, panggung utama, atau photobooth.</p>
                 </div>
               )}
             </div>
@@ -326,4 +433,3 @@ export default function VenueLayoutPage({ artworks, onSelectArtwork, selectedBoo
     </div>
   );
 }
-

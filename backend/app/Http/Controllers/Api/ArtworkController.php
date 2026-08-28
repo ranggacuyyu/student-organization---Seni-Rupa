@@ -11,8 +11,55 @@ use Illuminate\Support\Str;
 
 class ArtworkController extends Controller
 {
+    private function resolveBoothId(?string $boothId, ?string $kategori): string
+    {
+        if (!empty($boothId)) {
+            $b = strtolower(trim($boothId));
+            if (in_array($b, ['booth-a', 'booth-b', 'booth-c', 'booth-d', 'booth-e'])) {
+                return $b;
+            }
+            if (str_contains($b, 'a') || str_contains($b, 'lukis')) return 'booth-a';
+            if (str_contains($b, 'b') || str_contains($b, 'kriya') || str_contains($b, 'rajin')) return 'booth-b';
+            if (str_contains($b, 'c') || str_contains($b, 'sketsa') || str_contains($b, 'ilustrasi') || str_contains($b, 'gambar')) return 'booth-c';
+            if (str_contains($b, 'd') || str_contains($b, 'stage') || str_contains($b, 'panggung')) return 'booth-d';
+            if (str_contains($b, 'e') || str_contains($b, 'photo') || str_contains($b, 'pintu')) return 'booth-e';
+        }
+
+        $cat = strtolower($kategori ?? '');
+        if (str_contains($cat, 'lukis') || str_contains($cat, 'paint') || str_contains($cat, 'kanvas')) {
+            return 'booth-a';
+        }
+        if (str_contains($cat, 'kriya') || str_contains($cat, 'rajin') || str_contains($cat, 'craft') || str_contains($cat, 'patung') || str_contains($cat, '3d') || str_contains($cat, 'keramik') || str_contains($cat, 'resin')) {
+            return 'booth-b';
+        }
+        if (str_contains($cat, 'sketsa') || str_contains($cat, 'ilustrasi') || str_contains($cat, 'gambar') || str_contains($cat, 'sketch') || str_contains($cat, 'doodle') || str_contains($cat, 'digital')) {
+            return 'booth-c';
+        }
+
+        return 'booth-a';
+    }
+
+    private function resolveBoothName(string $boothId): string
+    {
+        return match ($boothId) {
+            'booth-b' => 'Zona B - Galeri Kerajinan & Kriya Tangan',
+            'booth-c' => 'Zona C - Pojok Gambar & Live Painting',
+            'booth-d' => 'Zona D - Panggung Utama (Talkshow & Seminar)',
+            'booth-e' => 'Zona E - Photobooth Retro & Info Desk',
+            default => 'Zona A - Galeri Karya Lukis',
+        };
+    }
+
     private function formatArtwork(Artwork $art): array
     {
+        $resolvedBoothId = $this->resolveBoothId($art->booth_id, $art->kategori);
+        $resolvedBoothName = $art->booth_name ?: $this->resolveBoothName($resolvedBoothId);
+
+        $imageUrl = $art->foto_utama_url;
+        if ($imageUrl && !Str::startsWith($imageUrl, ['http://', 'https://', 'data:'])) {
+            $imageUrl = url($imageUrl);
+        }
+
         return [
             'id' => $art->id,
             'slug' => $art->slug,
@@ -24,14 +71,14 @@ class ArtworkController extends Controller
             'medium' => $art->medium_bahan,
             'dimensions' => $art->dimensi,
             'year' => $art->tahun_pembuatan,
-            'imageUrl' => $art->foto_utama_url,
+            'imageUrl' => $imageUrl,
             'description' => $art->deskripsi_filosofi,
-            'boothId' => $art->booth_id,
-            'boothName' => $art->booth_name,
-            'likesCount' => $art->likes_count,
+            'boothId' => $resolvedBoothId,
+            'boothName' => $resolvedBoothName,
+            'likesCount' => (int)($art->likes_count ?? 0),
             'isHighlighted' => (bool)$art->is_highlighted,
             'isAnonymous' => (bool)($art->is_anonymous ?? false) || (stripos($art->seniman_nama ?? '', 'rahasia') !== false) || (stripos($art->seniman_nama ?? '', 'dirahasiakan') !== false) || (stripos($art->seniman_nama ?? '', 'anonim') !== false),
-            'tags' => $art->tags ?? ['Retro Pop', 'History'],
+            'tags' => is_array($art->tags) ? $art->tags : (is_string($art->tags) ? json_decode($art->tags, true) : ['Retro Pop', 'History']),
         ];
     }
 
@@ -44,7 +91,17 @@ class ArtworkController extends Controller
         }
 
         if ($request->filled('booth_id')) {
-            $query->where('booth_id', $request->booth_id);
+            $b = $request->booth_id;
+            $query->where(function($q) use ($b) {
+                $q->where('booth_id', $b);
+                if ($b === 'booth-a') {
+                    $q->orWhereNull('booth_id')->orWhere('booth_id', '')->orWhere('kategori', 'like', '%Lukis%');
+                } elseif ($b === 'booth-b') {
+                    $q->orWhere('kategori', 'like', '%Kerajinan%')->orWhere('kategori', 'like', '%Kriya%');
+                } elseif ($b === 'booth-c') {
+                    $q->orWhere('kategori', 'like', '%Sketsa%')->orWhere('kategori', 'like', '%Ilustrasi%');
+                }
+            });
         }
 
         if ($request->filled('search')) {
@@ -109,6 +166,9 @@ class ArtworkController extends Controller
             $slug = $baseSlug . '-' . $counter++;
         }
 
+        $resolvedBoothId = $this->resolveBoothId($request->boothId ?? null, $request->category);
+        $resolvedBoothName = $request->boothName ?? $this->resolveBoothName($resolvedBoothId);
+
         $art = Artwork::create([
             'id' => 'art-' . time() . '-' . Str::random(3),
             'judul' => $title,
@@ -122,8 +182,8 @@ class ArtworkController extends Controller
             'dimensi' => $request->dimensions ?? 'Ukuran Standar',
             'tahun_pembuatan' => $request->year ?? '2024',
             'foto_utama_url' => $imageUrl,
-            'booth_id' => $request->boothId ?? 'booth-a',
-            'booth_name' => $request->boothName ?? 'Zona A - Galeri Lukis Sejarah',
+            'booth_id' => $resolvedBoothId,
+            'booth_name' => $resolvedBoothName,
             'likes_count' => 0,
             'is_highlighted' => filter_var($request->isHighlighted, FILTER_VALIDATE_BOOLEAN),
             'tags' => $request->tags ?? ['Retro Pop', 'History'],
