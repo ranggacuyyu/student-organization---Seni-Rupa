@@ -24,8 +24,7 @@ ON CONFLICT (id) DO UPDATE SET
     file_size_limit = 2097152,
     allowed_mime_types = ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
 
--- 2. Aktifkan Row Level Security (RLS) pada tabel storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- 2. (Catatan: storage.objects sudah memiliki RLS aktif secara default oleh Supabase)
 
 -- 3. Hapus policy lama jika ada untuk mencegah konflik nama
 DROP POLICY IF EXISTS "Public Access - Anyone can view artwork images" ON storage.objects;

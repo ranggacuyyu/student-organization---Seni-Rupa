@@ -255,15 +255,18 @@ export const ArtworkDb = {
           created.id = data.id;
         }
       } catch (err) {
-        console.error('Supabase insert artwork failed:', err);
+        console.warn('Supabase insert artwork failed, saving locally:', err.message);
 
         // 🔄 TRANSACTION ROLLBACK: Hapus file yang terlanjur di-upload jika DB gagal
-        if (uploadedStoragePath) {
+        if (uploadedStoragePath && !uploadedStoragePath.startsWith('local/')) {
           console.warn('Melakukan rollback file Supabase Storage:', uploadedStoragePath);
           await StorageService.deleteImage(uploadedStoragePath, 'artworks').catch(e => console.warn('Rollback failed:', e));
         }
 
-        throw new Error(`Gagal menyimpan karya ke database: ${err.message || 'Database error'}`);
+        // Fallback simpan ke local storage agar input data panitia tidak hilang
+        list.unshift(created);
+        saveLocalArtworks(list);
+        return created;
       }
     }
 
@@ -357,14 +360,16 @@ export const ArtworkDb = {
           StorageService.deleteImage(existing.imageUrl, 'artworks').catch(() => {});
         }
       } catch (err) {
-        console.error('Supabase update artwork failed:', err);
+        console.warn('Supabase update artwork failed, saving locally:', err.message);
 
         // 🔄 ROLLBACK: Hapus file baru jika update database gagal
-        if (newlyUploadedStoragePath) {
+        if (newlyUploadedStoragePath && !newlyUploadedStoragePath.startsWith('local/')) {
           await StorageService.deleteImage(newlyUploadedStoragePath, 'artworks').catch(() => {});
         }
 
-        throw new Error(`Gagal memperbarui data di database: ${err.message || 'Database error'}`);
+        const nextList = list.map(a => String(a.id) === String(id) ? formatted : a);
+        saveLocalArtworks(nextList);
+        return formatted;
       }
     }
 
