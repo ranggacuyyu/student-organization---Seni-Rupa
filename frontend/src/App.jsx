@@ -306,6 +306,8 @@ export default function App() {
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 rundowns={rundowns}
+                artworks={artworks}
+                onRefreshData={loadAllData}
                 onUpdateRundownStatus={handleUpdateRundownStatus}
               />
             )
@@ -398,6 +400,8 @@ export default function App() {
               currentUser={currentUser}
               onLogout={handleLogout}
               rundowns={rundowns}
+              artworks={artworks}
+              onRefreshData={loadAllData}
               onUpdateRundownStatus={handleUpdateRundownStatus}
             />
           ) : (

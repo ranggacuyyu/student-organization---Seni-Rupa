@@ -40,6 +40,7 @@ import {
 import { BOOTH_ZONES, INITIAL_PANITIA_SHIFTS } from '../../data/mockData';
 import { ArtworkService, PanitiaService, testDatabaseConnection, isSupabaseConfigured } from '../../services/api';
 import { seedArtworksToSupabase, countSupabaseArtworks, clearAllSupabaseArtworks } from '../../utils/seedArtworksToSupabase';
+import ImageUploadField from '../../components/common/ImageUploadField';
 
 export default function AdminDashboard({ 
   currentUser,
@@ -372,15 +373,7 @@ export default function AdminDashboard({
             {dbStatus.isConnected === null ? 'Memeriksa Database...' :
              dbStatus.isConnected ? 'Cloud Supabase (Online)' : 'Local Engine (Offline Mode)'}
           </div>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="btn-retro-white text-xs sm:text-sm px-4 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto active:scale-95"
-            >
-              <LogOut className="w-4 h-4 text-red-500 shrink-0" />
-              <span>Keluar (Logout)</span>
-            </button>
-          )}
+        
         </div>
       </div>
 
@@ -598,18 +591,18 @@ export default function AdminDashboard({
             )}
 
             {/* Accounts Table */}
-            <div className="card-retro bg-white overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="card-retro bg-white overflow-hidden flex flex-col">
+              <div className="overflow-x-auto overflow-y-auto max-h-[480px] catalogue-scrollbar">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-[#FAF7EE] border-b-2 border-black font-display font-black text-black">
-                      <th className="py-3.5 px-4">Nama & Akun</th>
-                      <th className="py-3.5 px-4">Role / Peran</th>
-                      <th className="py-3.5 px-4">Divisi</th>
-                      <th className="py-3.5 px-4">Penugasan Stand</th>
-                      <th className="py-3.5 px-4">Kontak</th>
-                      <th className="py-3.5 px-4 text-center">Status</th>
-                      <th className="py-3.5 px-4 text-right">Aksi</th>
+                  <thead className="sticky top-0 z-10 bg-[#FAF7EE] shadow-sm">
+                    <tr className="border-b-2 border-black font-display font-black text-black">
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Nama & Akun</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Role / Peran</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Divisi</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Penugasan Stand</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Kontak</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE] text-center">Status</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE] text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200">
@@ -903,38 +896,57 @@ export default function AdminDashboard({
             </div>
 
             {/* Attendance Table */}
-            <div className="card-retro bg-white overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="card-retro bg-white overflow-hidden flex flex-col">
+              <div className="overflow-x-auto overflow-y-auto max-h-[480px] sm:max-h-[540px] catalogue-scrollbar">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-[#FAF7EE] border-b-2 border-black font-display font-black text-black">
-                      <th className="py-3.5 px-4">Nama Lengkap</th>
-                      <th className="py-3.5 px-4">NIM / Identitas</th>
-                      <th className="py-3.5 px-4">Kategori</th>
-                      <th className="py-3.5 px-4">Program Studi</th>
-                      <th className="py-3.5 px-4">IP Address Log</th>
-                      <th className="py-3.5 px-4">Perangkat</th>
-                      <th className="py-3.5 px-4">Waktu</th>
+                  <thead className="sticky top-0 z-10 bg-[#FAF7EE] shadow-sm">
+                    <tr className="border-b-2 border-black font-display font-black text-black">
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Nama Lengkap</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">NIM / Identitas</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Kategori</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Program Studi</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">IP Address Log</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Perangkat</th>
+                      <th className="py-3.5 px-4 bg-[#FAF7EE]">Waktu</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200">
-                    {filteredAttendances.map((att) => (
-                      <tr key={att.id} className="hover:bg-neutral-50">
-                        <td className="py-3 px-4 font-bold text-black">{att.nama_lengkap}</td>
-                        <td className="py-3 px-4 font-mono font-bold text-neutral-700">{att.identifier || '-'}</td>
-                        <td className="py-3 px-4">
-                          <span className="bg-[#FAF7EE] px-2 py-0.5 rounded border border-black text-[10px] font-bold">
-                            {att.kategori}
-                          </span>
+                    {filteredAttendances.length > 0 ? (
+                      filteredAttendances.map((att) => (
+                        <tr key={att.id} className="hover:bg-neutral-50 transition-colors">
+                          <td className="py-3 px-4 font-bold text-black">{att.nama_lengkap}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-neutral-700">{att.identifier || '-'}</td>
+                          <td className="py-3 px-4">
+                            <span className="bg-[#FAF7EE] px-2 py-0.5 rounded border border-black text-[10px] font-bold">
+                              {att.kategori}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-neutral-600">{att.jurusan_prodi || 'Polibatam'}</td>
+                          <td className="py-3 px-4 font-mono font-bold bg-[#00F0FF]/15 text-black">{att.ip_address}</td>
+                          <td className="py-3 px-4 text-neutral-500">{att.device_type || 'Desktop'}</td>
+                          <td className="py-3 px-4 font-mono text-[11px] text-neutral-500">{att.waktu_kehadiran}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="py-8 text-center text-neutral-400 font-bold">
+                          Tidak ada data presensi yang sesuai filter.
                         </td>
-                        <td className="py-3 px-4 text-neutral-600">{att.jurusan_prodi || 'Polibatam'}</td>
-                        <td className="py-3 px-4 font-mono font-bold bg-[#00F0FF]/15 text-black">{att.ip_address}</td>
-                        <td className="py-3 px-4 text-neutral-500">{att.device_type || 'Desktop'}</td>
-                        <td className="py-3 px-4 font-mono text-[11px] text-neutral-500">{att.waktu_kehadiran}</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Footer summary bar */}
+              <div className="p-3 bg-[#FAF7EE] border-t-2 border-black flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-neutral-700">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
+                  Menampilkan {filteredAttendances.length} dari {attendances.length} data presensi
+                </span>
+                <span className="text-[11px] font-mono text-neutral-500">
+                  Gunakan scroll vertikal untuk melihat data ↓
+                </span>
               </div>
             </div>
 
@@ -1127,17 +1139,15 @@ export default function AdminDashboard({
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-black">URL Gambar *</label>
-                  <input
-                    type="url"
-                    value={newArtwork.imageUrl}
-                    onChange={(e) => setNewArtwork({ ...newArtwork, imageUrl: e.target.value })}
-                    placeholder="https://..."
-                    required
-                    className="input-retro text-xs sm:text-sm"
-                  />
-                </div>
+                <ImageUploadField
+                  value={newArtwork.imageUrl}
+                  file={newArtwork.imageFile}
+                  onChangeFile={(file) => setNewArtwork({ ...newArtwork, imageFile: file })}
+                  onChangeUrl={(url) => setNewArtwork({ ...newArtwork, imageUrl: url, imageFile: null })}
+                  required={!newArtwork.imageUrl && !newArtwork.imageFile}
+                  label="Foto Karya (Upload ke Supabase Storage atau Direct URL)"
+                  maxSizeMB={2}
+                />
 
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-black">Deskripsi & Filosofi *</label>

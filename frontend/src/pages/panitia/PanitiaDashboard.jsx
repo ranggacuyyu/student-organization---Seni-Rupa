@@ -17,42 +17,135 @@ import {
   CheckSquare, 
   Square, 
   LogOut, 
-  ArrowRight,
-  ShieldCheck,
-  Smartphone,
-  Info,
-  SlidersHorizontal,
-  RefreshCw,
-  Bell,
-  Radio,
-  Star,
-  Ticket,
-  Circle
+  ArrowRight, 
+  ShieldCheck, 
+  Smartphone, 
+  Info, 
+  SlidersHorizontal, 
+  RefreshCw, 
+  Bell, 
+  Radio, 
+  Star, 
+  Ticket, 
+  Circle,
+  Palette,
+  Plus,
+  Pencil,
+  Trash2,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  Tag,
+  Save,
+  X,
+  AlertTriangle,
+  RotateCcw,
+  Maximize2,
+  FileText,
+  Compass
 } from 'lucide-react';
-import { PanitiaService, RundownService } from '../../services/api';
+import { PanitiaService, RundownService, ArtworkService } from '../../services/api';
 import { BOOTH_ZONES } from '../../data/mockData';
+import { resolveBoothId, resolveBoothName } from '../../services/db/artworkDb';
 import CameraQrScanner from '../../components/panitia/CameraQrScanner';
+import ImageUploadField from '../../components/common/ImageUploadField';
 
-export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUpdateRundownStatus }) {
+const INITIAL_ARTWORK_FORM = {
+  title: '',
+  artist: '',
+  artistNim: '',
+  artistBatch: '2024 (Maba)',
+  isAnonymous: false,
+  category: 'Lukis',
+  medium: 'Acrylic on Canvas',
+  dimensions: '100 x 80 cm',
+  year: '2024',
+  imageUrl: '',
+  imageFile: null,
+  description: '',
+  boothId: 'booth-a',
+  boothName: 'Zona A - Galeri Karya Lukis',
+  isHighlighted: false,
+  tags: 'Retro Pop, History'
+};
+
+export default function PanitiaDashboard({ 
+  currentUser, 
+  onLogout, 
+  rundowns, 
+  artworks = [], 
+  onRefreshData, 
+  onUpdateRundownStatus 
+}) {
   const containerRef = useRef(null);
   const tabContentRef = useRef(null);
 
-  const [activeTab, setActiveTab] = useState('scanner'); // 'scanner' | 'participants' | 'monitoring'
+  const [activeTab, setActiveTab] = useState('artworks'); // 'artworks' | 'scanner' | 'participants' | 'monitoring'
 
-  // Scanner State
+  // ================= SCANNER STATE =================
   const [scanQuery, setScanQuery] = useState('');
   const [scannedTicket, setScannedTicket] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [scanFeedback, setScanFeedback] = useState(null); // { type: 'success'|'warning'|'error', text: '' }
+  const [scanFeedback, setScanFeedback] = useState(null);
 
-  // Participant Needs State
+  // ================= PARTICIPANT NEEDS STATE =================
   const [participantSearch, setParticipantSearch] = useState('');
   const [participantCatFilter, setParticipantCatFilter] = useState('Semua');
   const [participants, setParticipants] = useState(() => PanitiaService.getParticipantNeeds());
 
-  // Tasks & Monitoring State
+  // ================= TASKS & MONITORING STATE =================
   const [tasks, setTasks] = useState(() => PanitiaService.getPanitiaTasks());
   const [announcements, setAnnouncements] = useState(() => PanitiaService.getAnnouncements());
+
+  // ================= ARTWORKS CRUD STATE =================
+  const [artworksList, setArtworksList] = useState(artworks);
+  const [artSearchQuery, setArtSearchQuery] = useState('');
+  const [artCategoryFilter, setArtCategoryFilter] = useState('Semua');
+  const [artBoothFilter, setArtBoothFilter] = useState('Semua');
+  
+  // Modal & Form States
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingArtId, setEditingArtId] = useState(null);
+  const [formData, setFormData] = useState(INITIAL_ARTWORK_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteConfirmArt, setDeleteConfirmArt] = useState(null);
+  const [previewArt, setPreviewArt] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Sync with prop artworks
+  useEffect(() => {
+    if (artworks && artworks.length > 0) {
+      setArtworksList(artworks);
+    }
+  }, [artworks]);
+
+  // Load live artworks on mount
+  useEffect(() => {
+    loadLatestArtworks();
+  }, []);
+
+  const loadLatestArtworks = async () => {
+    try {
+      const live = await ArtworkService.getAllArtworks();
+      if (Array.isArray(live) && live.length > 0) {
+        setArtworksList(live);
+      }
+    } catch (e) {
+      console.warn('Failed to load live artworks in PanitiaDashboard:', e);
+    }
+  };
+
+  // Toast auto dismiss
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  const showToast = (type, text) => {
+    setToastMessage({ type, text });
+  };
 
   // Load participants data
   const refreshParticipantData = () => {
@@ -96,7 +189,151 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
     }
   }, [activeTab]);
 
-  // Handle QR Verify
+  // ================= ARTWORK FORM HANDLERS =================
+  const handleOpenAddForm = () => {
+    setEditingArtId(null);
+    setFormData({
+      ...INITIAL_ARTWORK_FORM,
+      artistBatch: '2024 (Maba)',
+      category: 'Lukis',
+      boothId: 'booth-a',
+      boothName: 'Zona A - Galeri Karya Lukis',
+      imageUrl: '',
+      imageFile: null,
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditForm = (art) => {
+    setEditingArtId(art.id);
+    const bId = resolveBoothId(art);
+    setFormData({
+      title: art.title || art.judul || '',
+      artist: art.artist || art.seniman_nama || '',
+      artistNim: art.artistNim || art.seniman_nim || '',
+      artistBatch: art.artistBatch || art.seniman_angkatan || '2024 (Maba)',
+      isAnonymous: Boolean(art.isAnonymous || art.is_anonymous),
+      category: art.category || art.kategori || 'Lukis',
+      medium: art.medium || art.medium_bahan || 'Acrylic on Canvas',
+      dimensions: art.dimensions || art.dimensi || '100 x 80 cm',
+      year: String(art.year || art.tahun_pembuatan || '2024'),
+      imageUrl: art.imageUrl || art.foto_utama_url || '',
+      imageFile: null,
+      description: art.description || art.deskripsi_filosofi || '',
+      boothId: bId,
+      boothName: art.boothName || art.booth_name || resolveBoothName(bId),
+      isHighlighted: Boolean(art.isHighlighted || art.is_highlighted),
+      tags: Array.isArray(art.tags) ? art.tags.join(', ') : (typeof art.tags === 'string' ? art.tags : 'Retro Pop, History')
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleCategoryChange = (newCat) => {
+    let bId = 'booth-a';
+    if (newCat === 'Kerajinan') bId = 'booth-b';
+    if (newCat === 'Sketsa & Ilustrasi') bId = 'booth-c';
+    
+    setFormData(prev => ({
+      ...prev,
+      category: newCat,
+      boothId: bId,
+      boothName: resolveBoothName(bId)
+    }));
+  };
+
+  const handleSubmitArtwork = async (e) => {
+    e.preventDefault();
+    if (!formData.title.trim() || !formData.artist.trim()) {
+      showToast('error', 'Harap isi Judul dan Nama Seniman karya!');
+      return;
+    }
+
+    if (!formData.imageUrl.trim() && !formData.imageFile) {
+      showToast('error', 'Harap unggah file foto karya atau masukkan URL gambar!');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        ...formData,
+        tags: typeof formData.tags === 'string' 
+          ? formData.tags.split(',').map(t => t.trim()).filter(Boolean)
+          : (formData.tags || ['Retro Pop', 'History']),
+        boothId: resolveBoothId({ category: formData.category, boothId: formData.boothId }),
+        boothName: resolveBoothName(formData.boothId)
+      };
+
+      if (editingArtId) {
+        // UPDATE
+        const updated = await ArtworkService.updateArtwork(editingArtId, payload);
+        setArtworksList(prev => prev.map(a => String(a.id) === String(editingArtId) ? updated : a));
+        showToast('success', `Karya "${payload.title}" berhasil diperbarui!`);
+      } else {
+        // CREATE
+        const created = await ArtworkService.addArtwork(payload);
+        setArtworksList(prev => [created, ...prev]);
+        showToast('success', `Karya "${payload.title}" berhasil disimpan ke Supabase Storage & Katalog!`);
+      }
+
+      setIsFormOpen(false);
+      setEditingArtId(null);
+      onRefreshData && onRefreshData();
+    } catch (err) {
+      console.error('Submit artwork error:', err);
+      showToast('error', `Gagal menyimpan karya: ${err.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteArtwork = async () => {
+    if (!deleteConfirmArt) return;
+    setIsSubmitting(true);
+    try {
+      await ArtworkService.deleteArtwork(deleteConfirmArt.id);
+      setArtworksList(prev => prev.filter(a => String(a.id) !== String(deleteConfirmArt.id)));
+      showToast('success', `Karya "${deleteConfirmArt.title}" dan filenya di Supabase Storage berhasil dihapus.`);
+      setDeleteConfirmArt(null);
+      onRefreshData && onRefreshData();
+    } catch (err) {
+      console.error('Delete artwork error:', err);
+      showToast('error', `Gagal menghapus karya: ${err.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Filtered Artworks
+  const filteredArtworks = useMemo(() => {
+    return artworksList.filter(art => {
+      const matchCat = artCategoryFilter === 'Semua' || (art.category || art.kategori) === artCategoryFilter;
+      const bId = resolveBoothId(art);
+      const matchBooth = artBoothFilter === 'Semua' || bId === artBoothFilter;
+      
+      const q = artSearchQuery.toLowerCase().trim();
+      const matchSearch = !q || (
+        (art.title || art.judul || '').toLowerCase().includes(q) ||
+        (art.artist || art.seniman_nama || '').toLowerCase().includes(q) ||
+        (art.artistNim || art.seniman_nim || '').toLowerCase().includes(q) ||
+        (art.medium || art.medium_bahan || '').toLowerCase().includes(q) ||
+        (art.description || art.deskripsi_filosofi || '').toLowerCase().includes(q)
+      );
+
+      return matchCat && matchBooth && matchSearch;
+    });
+  }, [artworksList, artCategoryFilter, artBoothFilter, artSearchQuery]);
+
+  // Metrics
+  const artworkMetrics = useMemo(() => {
+    const total = artworksList.length;
+    const lukis = artworksList.filter(a => resolveBoothId(a) === 'booth-a').length;
+    const kerajinan = artworksList.filter(a => resolveBoothId(a) === 'booth-b').length;
+    const sketsa = artworksList.filter(a => resolveBoothId(a) === 'booth-c').length;
+    return { total, lukis, kerajinan, sketsa };
+  }, [artworksList]);
+
+  // Scanner handlers
   const handleVerifyTicket = (query) => {
     setScanFeedback(null);
     const result = PanitiaService.verifyTicket(query);
@@ -115,25 +352,16 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
     }
   };
 
-  // Handle Quick Sample Scan
-  const handleSampleScan = (sampleId) => {
-    setScanQuery(sampleId);
-    handleVerifyTicket(sampleId);
-  };
-
-  // Toggle Check In
   const handleToggleCheckIn = (ticketId) => {
     PanitiaService.toggleCheckIn(ticketId);
     refreshParticipantData();
   };
 
-  // Toggle Souvenir
   const handleToggleSouvenir = (ticketId) => {
     PanitiaService.toggleSouvenir(ticketId);
     refreshParticipantData();
   };
 
-  // Toggle Task
   const handleToggleTask = (taskId) => {
     const updated = PanitiaService.toggleTask(taskId);
     setTasks(updated);
@@ -162,6 +390,21 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
   return (
     <div ref={containerRef} className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
       
+      {/* ================= TOAST NOTIFICATION ================= */}
+      {toastMessage && (
+        <div className="fixed top-20 right-4 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className={`p-4 rounded-2xl border-3 border-black shadow-retro flex items-center gap-3 text-xs sm:text-sm font-bold ${
+            toastMessage.type === 'success' ? 'bg-[#22C55E] text-white' : 'bg-[#FF3388] text-white'
+          }`}>
+            {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+            <span>{toastMessage.text}</span>
+            <button onClick={() => setToastMessage(null)} className="ml-2 hover:opacity-75">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ================= HEADER BAR ================= */}
       <div className="panitia-header-card bg-[#FFE600] border-3 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-retro flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden bg-retro-dots">
         <div className="space-y-1.5 relative z-10 min-w-0">
@@ -170,7 +413,7 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
               PORTAL PANITIA LAPANGAN
             </span>
             <span className="bg-black text-[#00F0FF] font-mono text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded border border-black truncate">
-              {currentUser?.divisi || 'Divisi Pelaksana'}
+              {currentUser?.divisi || 'Divisi Seni Rupa'}
             </span>
           </div>
           <h1 className="font-display font-black text-xl sm:text-4xl text-black leading-tight">
@@ -178,91 +421,346 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
           </h1>
           <p className="text-xs sm:text-sm text-neutral-800 font-semibold flex items-center gap-1.5 sm:gap-2">
             <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF3388] shrink-0" />
-            <span className="truncate text-white/85">Penugasan: <strong>{currentUser?.assignedBooth || 'Student Centre Lt. 3'}</strong></span>
+            <span className="truncate">Penugasan: <strong>{currentUser?.assignedBooth || 'Student Centre Lt. 3'}</strong></span>
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 relative z-10 w-full md:w-auto">
+          <button
+            onClick={loadLatestArtworks}
+            className="p-2.5 bg-white hover:bg-neutral-100 border-2 border-black rounded-xl text-black font-bold text-xs flex items-center gap-1.5 shadow-retro-sm transition-all active:scale-95"
+            title="Sinkronkan Data"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Sinkron Data</span>
+          </button>
         </div>
       </div>
 
       {/* ================= QUICK STATS BAR ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between hover:-translate-y-0.5 transition-transform">
           <div className="space-y-0.5">
-            <span className="text-xs font-bold text-neutral-500 uppercase">Total Peserta Terdaftar</span>
-            <div className="font-display font-black text-2xl text-black">{participantStats.total} Orang</div>
+            <span className="text-[11px] font-bold text-neutral-500 uppercase">Total Karya Pameran</span>
+            <div className="font-display font-black text-2xl text-black">{artworkMetrics.total} Karya</div>
           </div>
-          <div className="w-10 h-10 bg-[#FFE600] border-2 border-black rounded-xl flex items-center justify-center">
-            <Users className="w-5 h-5 text-black" />
+          <div className="w-10 h-10 bg-[#FFE600] border-2 border-black rounded-xl flex items-center justify-center shrink-0">
+            <Palette className="w-5 h-5 text-black" />
           </div>
         </div>
 
-        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between">
+        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between hover:-translate-y-0.5 transition-transform">
           <div className="space-y-0.5">
-            <span className="text-xs font-bold text-neutral-500 uppercase">Telah Hadir (Checked In)</span>
-            <div className="font-display font-black text-2xl text-[#22C55E]">{participantStats.checkedIn} Peserta</div>
+            <span className="text-[11px] font-bold text-neutral-500 uppercase">Zona A (Lukisan)</span>
+            <div className="font-display font-black text-2xl text-black">{artworkMetrics.lukis} Karya</div>
           </div>
-          <div className="w-10 h-10 bg-[#22C55E]/20 border-2 border-black rounded-xl flex items-center justify-center">
-            <UserCheck className="w-5 h-5 text-[#22C55E]" />
+          <div className="w-10 h-10 bg-[#FFE600] text-black border-2 border-black rounded-xl flex items-center justify-center shrink-0 font-display font-black text-sm">
+            A
           </div>
         </div>
 
-        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between">
+        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between hover:-translate-y-0.5 transition-transform">
           <div className="space-y-0.5">
-            <span className="text-xs font-bold text-neutral-500 uppercase">Suvenir & Pass Terbagi</span>
-            <div className="font-display font-black text-2xl text-[#FF3388]">{participantStats.souvenirClaimed} Paket</div>
+            <span className="text-[11px] font-bold text-neutral-500 uppercase">Zona B (Kriya 3D)</span>
+            <div className="font-display font-black text-2xl text-[#FF3388]">{artworkMetrics.kerajinan} Karya</div>
           </div>
-          <div className="w-10 h-10 bg-[#FF3388]/20 border-2 border-black rounded-xl flex items-center justify-center">
-            <Gift className="w-5 h-5 text-[#FF3388]" />
+          <div className="w-10 h-10 bg-[#FF3388] text-white border-2 border-black rounded-xl flex items-center justify-center shrink-0 font-display font-black text-sm">
+            B
+          </div>
+        </div>
+
+        <div className="panitia-quick-stat card-retro p-4 bg-white flex items-center justify-between hover:-translate-y-0.5 transition-transform">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-bold text-neutral-500 uppercase">Zona C (Sketsa)</span>
+            <div className="font-display font-black text-2xl text-[#00F0FF]">{artworkMetrics.sketsa} Karya</div>
+          </div>
+          <div className="w-10 h-10 bg-[#00F0FF] text-black border-2 border-black rounded-xl flex items-center justify-center shrink-0 font-display font-black text-sm">
+            C
           </div>
         </div>
       </div>
 
       {/* ================= PANITIA NAVIGATION TABS ================= */}
-      <div className="flex items-center gap-4 border-b-3 border-black p-3 overflow-x-auto">
+      <div className="flex items-center gap-2 sm:gap-4 border-b-3 border-black p-2 overflow-x-auto">
         <button
-          onClick={() => setActiveTab('scanner')}
-          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
-            activeTab === 'scanner'
+          onClick={() => setActiveTab('artworks')}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'artworks'
               ? 'bg-[#FFE600] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
-          <QrCode className="w-4 h-4" />
-          <span>Scan QR & Validasi Tiket</span>
+          <Palette className="w-4 h-4 text-black" />
+          <span>Kelola & CRUD Karya ({artworksList.length})</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('participants')}
-          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
-            activeTab === 'participants'
+          onClick={() => setActiveTab('scanner')}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'scanner'
               ? 'bg-[#FF3388] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
-          <Package className="w-4 h-4" />
-          <span>Kebutuhan & Hak Peserta ({participants.length})</span>
+          <QrCode className="w-4 h-4" />
+          <span>Scan QR Presensi</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('monitoring')}
-          className={`px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
-            activeTab === 'monitoring'
+          onClick={() => setActiveTab('participants')}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'participants'
               ? 'bg-[#00F0FF] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
               : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
           }`}
         >
+          <Package className="w-4 h-4" />
+          <span>Kebutuhan Peserta ({participants.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('monitoring')}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'monitoring'
+              ? 'bg-[#7B2CBF] text-white border-black shadow-retro-sm -translate-y-0.5 scale-105'
+              : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
+          }`}
+        >
           <CheckSquare className="w-4 h-4" />
-          <span>Monitoring & Cek Semua Zona</span>
+          <span>Monitoring & Shift</span>
         </button>
       </div>
 
       {/* ================= TAB CONTENTS ================= */}
       <div ref={tabContentRef}>
 
-        {/* ================= TAB 1: QR SCANNER & VALIDATOR ================= */}
+        {/* ================= TAB 1: KELOLA & CRUD KARYA SENI ================= */}
+        {activeTab === 'artworks' && (
+          <div className="space-y-6">
+            
+            {/* Action Bar: Search, Filters & Add Button */}
+            <div className="card-retro p-4 sm:p-5 bg-white space-y-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto flex-1">
+                  
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                    <input
+                      type="text"
+                      value={artSearchQuery}
+                      onChange={(e) => setArtSearchQuery(e.target.value)}
+                      placeholder="Cari Judul, Seniman, NIM, Medium..."
+                      className="w-full pl-10 pr-4 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FFE600]"
+                    />
+                    {artSearchQuery && (
+                      <button onClick={() => setArtSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Filter */}
+                  <select
+                    value={artCategoryFilter}
+                    onChange={(e) => setArtCategoryFilter(e.target.value)}
+                    className="w-full sm:w-auto px-3 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-bold focus:outline-none"
+                  >
+                    <option value="Semua">Semua Kategori</option>
+                    <option value="Lukis">Lukis</option>
+                    <option value="Kerajinan">Kerajinan</option>
+                    <option value="Sketsa & Ilustrasi">Sketsa & Ilustrasi</option>
+                  </select>
+
+                  {/* Booth Filter */}
+                  <select
+                    value={artBoothFilter}
+                    onChange={(e) => setArtBoothFilter(e.target.value)}
+                    className="w-full sm:w-auto px-3 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-bold focus:outline-none"
+                  >
+                    <option value="Semua">Semua Zona Booth</option>
+                    <option value="booth-a">Zona A: Galeri Lukis</option>
+                    <option value="booth-b">Zona B: Kriya Kerajinan</option>
+                    <option value="booth-c">Zona C: Pojok Gambar</option>
+                  </select>
+
+                </div>
+
+                {/* Tambah Karya Button */}
+                <button
+                  onClick={handleOpenAddForm}
+                  className="btn-retro-pink text-xs sm:text-sm px-5 py-2.5 flex items-center justify-center gap-2 w-full md:w-auto shrink-0 active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah Karya Baru</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Artworks Grid Card (Fixed Size & Scrollable) */}
+            <div className="card-retro bg-white overflow-hidden flex flex-col">
+              <div className="p-4 sm:p-5 border-b-2 border-black bg-[#FAF7EE] flex items-center justify-between">
+                <div>
+                  <h3 className="font-display font-black text-base sm:text-lg text-black">
+                    Daftar Karya Seni Pameran
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-neutral-500">
+                    Menampilkan {filteredArtworks.length} dari {artworksList.length} total karya terdaftar di database.
+                  </p>
+                </div>
+                <button
+                  onClick={loadLatestArtworks}
+                  className="p-1.5 bg-white hover:bg-neutral-100 border border-black rounded-lg text-xs font-bold flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+              </div>
+
+              {/* Scrollable Container */}
+              <div className="p-4 sm:p-6 overflow-y-auto max-h-[580px] sm:max-h-[640px] catalogue-scrollbar">
+                {filteredArtworks.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredArtworks.map((art) => {
+                      const bId = resolveBoothId(art);
+                      const isAnon = Boolean(art.isAnonymous || art.is_anonymous || /rahasia|dirahasiakan|anonim|anonymous|secret/i.test(art.artist || art.seniman_nama || ''));
+                      
+                      return (
+                        <div 
+                          key={art.id} 
+                          className="bg-[#FAF7EE] border-2 border-black rounded-2xl p-4 space-y-3 flex flex-col justify-between hover:border-[#FF3388] transition-all group"
+                        >
+                          <div className="space-y-2.5">
+                            
+                            {/* Artwork Image & Badges */}
+                            <div className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-black bg-neutral-900 flex items-center justify-center">
+                              <img 
+                                src={art.imageUrl || art.foto_utama_url} 
+                                alt={art.title || art.judul} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80';
+                                }}
+                              />
+
+                              {/* Category Badge */}
+                              <span className="absolute top-2 left-2 bg-[#FFE600] text-black font-mono text-[10px] font-black px-2 py-0.5 rounded border border-black shadow-retro-sm">
+                                {art.category || art.kategori}
+                              </span>
+
+                              {/* Booth Zone Badge */}
+                              <span className={`absolute bottom-2 left-2 text-[10px] font-black px-2 py-0.5 rounded border border-black ${
+                                bId === 'booth-b' ? 'bg-[#FF3388] text-white' : bId === 'booth-c' ? 'bg-[#00F0FF] text-black' : 'bg-black text-[#FFE600]'
+                              }`}>
+                                {bId === 'booth-b' ? 'ZONA B (KRIYA)' : bId === 'booth-c' ? 'ZONA C (SKETSA)' : 'ZONA A (LUKIS)'}
+                              </span>
+
+                              {/* Anonymous Badge */}
+                              {isAnon && (
+                                <span className="absolute top-2 right-2 bg-[#7B2CBF] text-white text-[9px] font-black px-1.5 py-0.5 rounded border border-black flex items-center gap-1">
+                                  <EyeOff className="w-3 h-3" /> Anonim
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Title & Artist Info */}
+                            <div>
+                              <h4 className="font-display font-black text-sm text-black line-clamp-1 group-hover:text-[#FF3388] transition-colors">
+                                {art.title || art.judul}
+                              </h4>
+                              <p className="text-xs text-neutral-600 font-semibold mt-0.5">
+                                Oleh: <strong className="text-black">{isAnon ? 'Pencipta Dirahasiakan' : (art.artist || art.seniman_nama)}</strong>
+                                {art.artistBatch && <span className="text-neutral-400 font-normal"> ({art.artistBatch || art.seniman_angkatan})</span>}
+                              </p>
+                            </div>
+
+                            {/* Medium & Dimensions */}
+                            <div className="text-[11px] text-neutral-500 font-medium space-y-0.5 bg-white p-2 rounded-xl border border-black/20">
+                              <div className="truncate"><strong>Medium:</strong> {art.medium || art.medium_bahan || 'Mixed Media'}</div>
+                              <div><strong>Ukuran:</strong> {art.dimensions || art.dimensi || 'Standar'} • <strong>Tahun:</strong> {art.year || art.tahun_pembuatan || '2024'}</div>
+                            </div>
+
+                          </div>
+
+                          {/* Action Buttons: Preview, Edit, Delete */}
+                          <div className="pt-2 border-t border-black/10 flex items-center justify-between gap-1.5">
+                            <button
+                              onClick={() => setPreviewArt(art)}
+                              className="px-2.5 py-1.5 bg-white hover:bg-neutral-100 border border-black rounded-lg text-xs font-bold text-neutral-700 flex items-center gap-1 transition-colors"
+                              title="Lihat Detail"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-[#00F0FF]" />
+                              <span>Lihat</span>
+                            </button>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenEditForm(art)}
+                                className="px-3 py-1.5 bg-[#FFE600] hover:bg-[#FFE600]/80 border border-black rounded-lg text-xs font-bold text-black flex items-center gap-1 shadow-retro-sm active:scale-95 transition-all"
+                                title="Edit Karya"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              
+                              <button
+                                onClick={() => setDeleteConfirmArt(art)}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 rounded-lg transition-colors"
+                                title="Hapus Karya"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center space-y-3">
+                    <div className="w-14 h-14 bg-[#FAF7EE] border-2 border-black rounded-2xl mx-auto flex items-center justify-center shadow-retro-sm">
+                      <Palette className="w-7 h-7 text-neutral-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-display font-bold text-base text-black">Tidak Ada Karya Ditemukan</h4>
+                      <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                        Karya dengan filter yang dipilih tidak ditemukan. Coba sesuaikan kata kunci pencarian atau tambah karya baru.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleOpenAddForm}
+                      className="btn-retro-yellow text-xs px-4 py-2 inline-flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Tambah Karya Baru</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Card Footer */}
+              <div className="p-3 bg-[#FAF7EE] border-t-2 border-black flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-neutral-700">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
+                  Menampilkan {filteredArtworks.length} dari {artworksList.length} karya di sistem
+                </span>
+                <span className="text-[11px] font-mono text-neutral-500">
+                  Scroll vertikal untuk melihat seluruh daftar karya ↓
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ================= TAB 2: QR SCANNER & VALIDATOR ================= */}
         {activeTab === 'scanner' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* Left Column: Interactive QR Scanner Viewfinder */}
+            {/* Left Column: QR Scanner Viewfinder */}
             <div className="lg:col-span-6 space-y-6">
               <div className="card-retro p-6 bg-white space-y-4">
                 <div className="flex items-center justify-between">
@@ -276,7 +774,6 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                   </span>
                 </div>
 
-                {/* Live Device Camera & Image File QR Scanner */}
                 <CameraQrScanner
                   onScanSuccess={(code) => {
                     setScanQuery(code);
@@ -284,7 +781,6 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                   }}
                 />
 
-                {/* Manual Input Search Fallback */}
                 <form onSubmit={(e) => { e.preventDefault(); handleVerifyTicket(scanQuery); }} className="space-y-2">
                   <label className="block text-xs font-bold text-black">
                     Atau Masukkan Check-in ID / NIM / Nama Peserta Secara Manual:
@@ -298,14 +794,14 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                       className="input-retro text-xs sm:text-sm flex-1"
                     />
                     <button type="submit" className="btn-retro-yellow px-5 py-2 text-xs sm:text-sm shrink-0">
-                      <i className='bx bx-check'></i> Cek Tiket
+                      Cek Tiket
                     </button>
                   </div>
                 </form>
               </div>
             </div>
 
-            {/* Right Column: Scanned Ticket Details & Actions */}
+            {/* Right Column: Scanned Ticket Details */}
             <div className="lg:col-span-6 space-y-6">
               {scannedTicket ? (
                 <div className="card-retro p-6 sm:p-8 bg-white space-y-6 animate-in zoom-in-95 duration-150">
@@ -335,7 +831,6 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                     </div>
                   </div>
 
-                  {/* Ticket Details Grid */}
                   <div className="grid grid-cols-2 gap-3 text-xs bg-[#FAF7EE] border-2 border-black rounded-2xl p-4">
                     <div>
                       <span className="text-neutral-500 font-semibold block text-[10px] uppercase">Program Studi</span>
@@ -367,7 +862,6 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                     </div>
                   </div>
 
-                  {/* Quick Verification Actions */}
                   <div className="space-y-3 pt-2">
                     <button
                       type="button"
@@ -425,7 +919,7 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
           </div>
         )}
 
-        {/* ================= TAB 2: KEBUTUHAN & HAK PESERTA ================= */}
+        {/* ================= TAB 3: KEBUTUHAN & HAK PESERTA ================= */}
         {activeTab === 'participants' && (
           <div className="space-y-6">
             
@@ -451,114 +945,95 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                   <option value="Semua">Semua Kategori</option>
                   <option value="Mahasiswa Baru">Mahasiswa Baru</option>
                   <option value="Mahasiswa Polibatam">Mahasiswa Polibatam</option>
-                  <option value="Dosen/Staff">Dosen / Staff</option>
+                  <option value="Dosen/Staff">Dosen/Staff</option>
                   <option value="Umum">Umum</option>
                 </select>
               </div>
 
-              <div className="text-xs font-bold text-neutral-600">
-                Menampilkan <strong>{filteredParticipants.length}</strong> peserta
+              <div className="flex items-center gap-2 text-xs font-bold text-neutral-500">
+                <span>Total Terdaftar: <strong className="text-black">{filteredParticipants.length}</strong></span>
               </div>
             </div>
 
-            {/* Participants Checklist Table */}
-            <div className="card-retro bg-white overflow-hidden">
-              <div className="overflow-x-auto">
+            {/* Participants Needs Table (Scrollable Card) */}
+            <div className="card-retro bg-white overflow-hidden flex flex-col">
+              <div className="overflow-x-auto overflow-y-auto max-h-[500px] catalogue-scrollbar">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-[#FAF7EE] border-b-2 border-black font-display font-black text-black">
-                      <th className="py-3.5 px-4">Nama Peserta</th>
-                      <th className="py-3.5 px-4">NIM / Identitas</th>
-                      <th className="py-3.5 px-4">Kategori</th>
-                      <th className="py-3.5 px-4 text-center">Status Masuk</th>
-                      <th className="py-3.5 px-4 text-center">Suvenir & Stiker</th>
-                      <th className="py-3.5 px-4 text-center">Kupon Photobooth</th>
-                      <th className="py-3.5 px-4 text-right">Aksi Cepat</th>
+                  <thead className="sticky top-0 z-10 bg-[#FAF7EE] shadow-sm">
+                    <tr className="border-b-2 border-black font-display font-black text-black">
+                      <th className="py-3 px-4 bg-[#FAF7EE]">Nama Lengkap</th>
+                      <th className="py-3 px-4 bg-[#FAF7EE]">Identitas / NIM</th>
+                      <th className="py-3 px-4 bg-[#FAF7EE]">Kategori</th>
+                      <th className="py-3 px-4 bg-[#FAF7EE] text-center">Status Kehadiran</th>
+                      <th className="py-3 px-4 bg-[#FAF7EE] text-center">Hak Suvenir</th>
+                      <th className="py-3 px-4 bg-[#FAF7EE] text-right">Aksi Cepat</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200">
-                    {filteredParticipants.length > 0 ? (
-                      filteredParticipants.map((p) => (
-                        <tr key={p.id} className="hover:bg-neutral-50 transition-colors">
-                          <td className="py-3 px-4 font-bold text-black">
-                            {p.nama_lengkap}
-                            <span className="block text-[10px] font-normal text-neutral-500">{p.jurusan_prodi}</span>
-                          </td>
-                          <td className="py-3 px-4 font-mono font-bold text-neutral-700">
-                            {p.identifier || '-'}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="bg-[#FAF7EE] text-black font-bold px-2 py-0.5 rounded border border-black text-[10px]">
-                              {p.kategori}
+                    {filteredParticipants.map((p) => (
+                      <tr key={p.id} className="hover:bg-neutral-50 transition-colors">
+                        <td className="py-3 px-4">
+                          <strong className="text-black block font-bold">{p.nama_lengkap}</strong>
+                          <span className="text-[10px] text-neutral-500">{p.jurusan_prodi || 'Polibatam'}</span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-neutral-700">
+                          {p.identifier || '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="bg-[#FAF7EE] px-2 py-0.5 rounded border border-black text-[10px] font-bold">
+                            {p.kategori}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {p.isCheckedIn ? (
+                            <span className="bg-[#22C55E]/15 text-[#22C55E] border border-black font-black text-[10px] px-2 py-0.5 rounded inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> HADIR
                             </span>
-                          </td>
-                          <td className="py-3 px-4 text-center">
+                          ) : (
+                            <span className="bg-neutral-100 text-neutral-500 font-bold text-[10px] px-2 py-0.5 rounded border border-neutral-300">
+                              Belum Check-in
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {p.isSouvenirClaimed ? (
+                            <span className="bg-[#FF3388]/15 text-[#FF3388] border border-black font-black text-[10px] px-2 py-0.5 rounded inline-flex items-center gap-1">
+                              <Gift className="w-3 h-3" /> SUDAH AMBIL
+                            </span>
+                          ) : (
+                            <span className="bg-[#FFE600]/30 text-black font-bold text-[10px] px-2 py-0.5 rounded border border-black/30">
+                              Belum Ambil
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => handleToggleCheckIn(p.id)}
-                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 ${
-                                p.isCheckedIn ? 'bg-[#22C55E] text-white border-black' : 'bg-neutral-100 text-neutral-600 border-neutral-300 hover:border-black'
+                              className={`p-1.5 rounded-lg border text-xs font-bold transition-all ${
+                                p.isCheckedIn
+                                  ? 'bg-neutral-200 text-neutral-700 border-neutral-400'
+                                  : 'bg-[#22C55E] text-white border-black shadow-retro-sm active:scale-95'
                               }`}
+                              title={p.isCheckedIn ? 'Batalkan Check-in' : 'Check-in Pengunjung'}
                             >
-                              {p.isCheckedIn ? (
-                                <>
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  <span>Hadir</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Circle className="w-3 h-3" />
-                                  <span>Belum</span>
-                                </>
-                              )}
+                              <UserCheck className="w-3.5 h-3.5" />
                             </button>
-                          </td>
-                          <td className="py-3 px-4 text-center">
                             <button
                               onClick={() => handleToggleSouvenir(p.id)}
-                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 ${
-                                p.isSouvenirClaimed ? 'bg-[#FF3388] text-white border-black' : 'bg-neutral-100 text-neutral-600 border-neutral-300 hover:border-black'
+                              className={`p-1.5 rounded-lg border text-xs font-bold transition-all ${
+                                p.isSouvenirClaimed
+                                  ? 'bg-neutral-200 text-neutral-700 border-neutral-400'
+                                  : 'bg-[#FFE600] text-black border-black shadow-retro-sm active:scale-95'
                               }`}
+                              title={p.isSouvenirClaimed ? 'Batalkan Status Suvenir' : 'Serahkan Suvenir'}
                             >
-                              {p.isSouvenirClaimed ? (
-                                <>
-                                  <Gift className="w-3 h-3" />
-                                  <span>Diberikan</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Circle className="w-3 h-3" />
-                                  <span>Belum</span>
-                                </>
-                              )}
+                              <Gift className="w-3.5 h-3.5" />
                             </button>
-                          </td>
-                          <td className="py-3 px-4 text-center font-bold text-[#7B2CBF]">
-                            {p.kategori === 'Mahasiswa Baru' ? (
-                              <span className="inline-flex items-center gap-1 text-[11px]"><Star className="w-3 h-3" /> Gratis Maba</span>
-                            ) : p.isSouvenirClaimed ? (
-                              <span className="inline-flex items-center gap-1 text-[11px]"><Ticket className="w-3 h-3" /> Klaim</span>
-                            ) : '—'}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <button
-                              onClick={() => {
-                                setActiveTab('scanner');
-                                handleSampleScan(p.id);
-                              }}
-                              className="btn-retro-yellow text-[10px] px-2.5 py-1"
-                            >
-                              Buka Detail
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="7" className="py-8 text-center text-neutral-500">
-                          Tidak ada peserta yang cocok dengan kata kunci pencarian.
+                          </div>
                         </td>
                       </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -567,65 +1042,71 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
           </div>
         )}
 
-        {/* ================= TAB 3: MONITORING & CEK SEMUA ZONA ================= */}
+        {/* ================= TAB 4: MONITORING SEMUA ZONA & TUGAS ================= */}
         {activeTab === 'monitoring' && (
           <div className="space-y-8">
             
-            {/* Zone Status Cards */}
-            <div className="space-y-3">
+            {/* Zone Cards Grid */}
+            <div className="space-y-4">
               <h3 className="font-display font-black text-xl text-black flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-[#FF3388]" />
-                <span>Kesiapan Zona Pameran (Student Centre Lt. 3)</span>
+                <span>Monitoring Penempatan Stand & Booth Lantai 3</span>
               </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {BOOTH_ZONES.map((zone) => (
-                  <div key={zone.id} className="card-retro p-5 bg-white space-y-3 flex flex-col justify-between">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold bg-[#FFE600] px-2 py-0.5 rounded border border-black">
-                          {zone.name.split(' - ')[0]}
-                        </span>
-                        <span className="text-[10px] bg-[#22C55E]/20 text-[#22C55E] font-black px-2 py-0.5 rounded border border-black">
-                          AKTIF
-                        </span>
-                      </div>
-                      <h4 className="font-display font-black text-base text-black">{zone.name}</h4>
-                      <p className="text-xs text-neutral-600">{zone.description}</p>
+                  <div key={zone.id} className="card-retro p-5 bg-white space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-black px-2 py-0.5 rounded border border-black bg-black text-[#FFE600]">
+                        {zone.code}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {zone.location?.split('(')[0]}
+                      </span>
                     </div>
 
-                    <div className="pt-2 border-t border-neutral-100 text-xs font-bold text-[#7B2CBF] flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5" />
-                      <span>{zone.featuredCount} Karya Display Terpasang</span>
+                    <div>
+                      <h4 className="font-display font-black text-base text-black">{zone.name}</h4>
+                      <p className="text-xs text-neutral-600 mt-1 line-clamp-2">{zone.description}</p>
+                    </div>
+
+                    <div className="space-y-1.5 pt-2 border-t border-neutral-200 text-xs">
+                      <span className="font-bold text-[11px] text-neutral-700 block">Aktivitas Utama:</span>
+                      {zone.activities?.map((act, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 text-neutral-600 font-medium">
+                          <CheckCircle2 className="w-3 h-3 text-[#22C55E] shrink-0" />
+                          <span className="truncate">{act}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Panitia Task Checklist */}
-            <div className="card-retro p-6 sm:p-8 bg-white space-y-4">
+            {/* Tasks Checklist */}
+            <div className="card-retro p-6 bg-white space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-black text-xl text-black flex items-center gap-2">
                   <CheckSquare className="w-5 h-5 text-[#7B2CBF]" />
-                  <span>Checklist Tugas Lapangan Panitia</span>
+                  <span>Daftar Checklist Tugas Panitia Lapangan</span>
                 </h3>
                 <span className="text-xs font-bold text-neutral-500">
-                  {tasks.filter(t => t.isCompleted).length} dari {tasks.length} Selesai
+                  {tasks.filter(t => t.isCompleted).length} / {tasks.length} Selesai
                 </span>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {tasks.map((task) => (
                   <div
                     key={task.id}
                     onClick={() => handleToggleTask(task.id)}
-                    className={`p-3.5 rounded-2xl border-2 border-black flex items-center justify-between gap-3 cursor-pointer transition-all active:scale-98 ${
-                      task.isCompleted ? 'bg-[#FAF7EE] opacity-75' : 'bg-white shadow-retro-sm hover:-translate-y-0.5'
+                    className={`p-3.5 rounded-xl border-2 border-black flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                      task.isCompleted ? 'bg-[#FAF7EE] opacity-75' : 'bg-white shadow-retro-sm hover:translate-x-1'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-1 rounded-lg border border-black ${task.isCompleted ? 'bg-[#22C55E] text-white' : 'bg-white'}`}>
+                      <div className={`p-1 rounded border border-black ${task.isCompleted ? 'bg-[#22C55E] text-white' : 'bg-white'}`}>
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -633,73 +1114,14 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
                           {task.title}
                         </h5>
                         <p className="text-xs text-neutral-500 font-semibold">
-                          Lokasi: {task.location} • Petugas: {task.assignedTo}
+                          Lokasi: {task.location} • PIC: <strong>{task.assignedTo}</strong>
                         </p>
                       </div>
                     </div>
 
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded border border-black ${
-                      task.priority === 'Tinggi' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
-                    }`}>
-                      {task.priority}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-black bg-[#FFE600]">
+                      {task.category || 'Logistik'}
                     </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Rundown Live Session Controller */}
-            <div className="card-retro p-6 sm:p-8 bg-white space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-black text-xl text-black flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-[#00F0FF]" />
-                  <span>Kontrol Cepat Sesi Rundown Acara</span>
-                </h3>
-              </div>
-
-              <div className="space-y-3">
-                {rundowns.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`p-4 rounded-2xl border-2 border-black flex flex-col md:flex-row md:items-center justify-between gap-3 ${
-                      item.status === 'ongoing' ? 'bg-[#FFE600]/30 border-3 border-[#FF3388]' : 'bg-white'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-xs bg-[#FFE600] px-2 py-0.5 rounded border border-black">
-                          {item.time} WIB
-                        </span>
-                        <span className="text-xs font-bold text-neutral-600">{item.location}</span>
-                      </div>
-                      <h4 className="font-display font-black text-base text-black mt-1">{item.title}</h4>
-                      <p className="text-xs text-neutral-600">Oleh: {item.speaker}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => onUpdateRundownStatus(item.id, 'ongoing')}
-                        className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 ${
-                          item.status === 'ongoing'
-                            ? 'bg-[#FF3388] text-white border-black shadow-retro-sm animate-pulse'
-                            : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
-                        }`}
-                      >
-                        <Radio className="w-3 h-3" />
-                        <span>Set Live</span>
-                      </button>
-                      <button
-                        onClick={() => onUpdateRundownStatus(item.id, 'completed')}
-                        className={`px-3 py-1.5 rounded-xl border-2 font-display font-bold text-xs flex items-center gap-1.5 ${
-                          item.status === 'completed'
-                            ? 'bg-[#22C55E] text-white border-black shadow-retro-sm'
-                            : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Selesai</span>
-                      </button>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -709,6 +1131,457 @@ export default function PanitiaDashboard({ currentUser, onLogout, rundowns, onUp
         )}
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* ======================= POLISHED MODAL 1: FORM CRUD ===================== */}
+      {/* ========================================================================= */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="card-retro bg-white w-full max-w-3xl max-h-[92vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border-3 border-black">
+            
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 bg-[#FAF7EE] border-b-3 border-black flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-[#FFE600] border-2 border-black rounded-2xl flex items-center justify-center shadow-retro-sm shrink-0">
+                  <Palette className="w-6 h-6 text-black" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display font-black text-lg sm:text-xl text-black">
+                      {editingArtId ? 'Edit Data Karya Seni' : 'Tambah Karya Baru ke Katalog'}
+                    </h3>
+                    <span className="bg-[#FF3388] text-white text-[10px] font-black px-2 py-0.5 rounded border border-black">
+                      {editingArtId ? 'MODE EDIT' : 'FORM KURASI'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 font-medium mt-0.5">
+                    {editingArtId ? 'Perbarui detail data teknis dan kurasi karya seni.' : 'Lengkapi metadata karya pameran sesuai standar kurasi SenRup.'}
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => { setIsFormOpen(false); setEditingArtId(null); }}
+                className="w-9 h-9 rounded-xl bg-white hover:bg-neutral-100 border-2 border-black flex items-center justify-center text-neutral-700 hover:text-black transition-colors shadow-retro-sm"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <form id="artwork-crud-form" onSubmit={handleSubmitArtwork} className="p-5 sm:p-7 space-y-6 overflow-y-auto catalogue-scrollbar flex-1">
+              
+              {/* SECTION 1: IDENTITAS UTAMA KARYA */}
+              <div className="bg-[#FAF7EE] border-2 border-black rounded-2xl p-4 sm:p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-black/15 pb-2">
+                  <FileText className="w-4 h-4 text-[#FF3388]" />
+                  <h4 className="font-display font-black text-sm text-black uppercase tracking-wider">
+                    1. Identitas Karya & Pencipta
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">
+                      Judul Karya Seni <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="Contoh: Harmoni Geometris Pesisir #1"
+                      required
+                      className="input-retro text-xs sm:text-sm font-bold bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">
+                      Nama Seniman / Mahasiswa <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.artist}
+                      onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
+                      placeholder="Contoh: Muhammad Rangga"
+                      required
+                      disabled={formData.isAnonymous}
+                      className={`input-retro text-xs sm:text-sm font-bold bg-white ${formData.isAnonymous ? 'bg-neutral-100 text-neutral-400' : ''}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">NIM Mahasiswa</label>
+                    <input
+                      type="text"
+                      value={formData.artistNim}
+                      onChange={(e) => setFormData({ ...formData, artistNim: e.target.value })}
+                      placeholder="Contoh: 3312101012"
+                      className="input-retro text-xs bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">Angkatan / Status</label>
+                    <select
+                      value={formData.artistBatch}
+                      onChange={(e) => setFormData({ ...formData, artistBatch: e.target.value })}
+                      className="input-retro text-xs bg-white font-semibold"
+                    >
+                      <option value="2024 (Maba)">2024 (Mahasiswa Baru)</option>
+                      <option value="2023">2023 (Tingkat 2)</option>
+                      <option value="2022">2022 (Tingkat 3)</option>
+                      <option value="2021">2021 (Tingkat Akhir)</option>
+                      <option value="Alumni / Dosen">Alumni / Dosen Pengajar</option>
+                      <option value="Kolektif Divisi">Kolektif Tim Divisi</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col justify-end">
+                    <label className="flex items-center gap-2.5 cursor-pointer bg-white border-2 border-black p-2.5 rounded-xl text-xs font-bold hover:bg-neutral-50 shadow-retro-sm transition-all">
+                      <input
+                        type="checkbox"
+                        checked={formData.isAnonymous}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData({
+                            ...formData,
+                            isAnonymous: checked,
+                            artist: checked && (!formData.artist || formData.artist === '') ? 'Pencipta Dirahasiakan' : formData.artist
+                          });
+                        }}
+                        className="w-4 h-4 text-[#7B2CBF] rounded border-black focus:ring-black"
+                      />
+                      <span className="flex items-center gap-1.5">
+                        <EyeOff className="w-4 h-4 text-[#7B2CBF]" /> Karya Anonim
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: KATEGORI, ZONA & MEDIA */}
+              <div className="bg-[#FAF7EE] border-2 border-black rounded-2xl p-4 sm:p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-black/15 pb-2">
+                  <Compass className="w-4 h-4 text-[#00F0FF]" />
+                  <h4 className="font-display font-black text-sm text-black uppercase tracking-wider">
+                    2. Kategori & Penempatan Zona
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">
+                      Kategori Pameran <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      className="input-retro text-xs bg-white font-bold text-black"
+                    >
+                      <option value="Lukis">Lukis (Canvas / Akrilik)</option>
+                      <option value="Kerajinan">Kerajinan (Kriya 3D / Resin)</option>
+                      <option value="Sketsa & Ilustrasi">Sketsa & Ilustrasi (Pojok Gambar)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">Zona Booth (Otomatis)</label>
+                    <div className="input-retro text-xs bg-neutral-100 font-bold text-neutral-800 flex items-center justify-between">
+                      <span className="truncate">{formData.boothName}</span>
+                      <span className="w-2 h-2 rounded-full bg-[#22C55E] shrink-0"></span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">Tahun Pembuatan</label>
+                    <input
+                      type="text"
+                      value={formData.year}
+                      onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                      placeholder="2024"
+                      className="input-retro text-xs bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">Medium & Bahan</label>
+                    <input
+                      type="text"
+                      value={formData.medium}
+                      onChange={(e) => setFormData({ ...formData, medium: e.target.value })}
+                      placeholder="Contoh: Acrylic on Canvas / Clay & Resin 3D"
+                      className="input-retro text-xs bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">Dimensi / Ukuran Fisik</label>
+                    <input
+                      type="text"
+                      value={formData.dimensions}
+                      onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                      placeholder="Contoh: 100 x 80 cm / A3 / 30 x 20 x 15 cm"
+                      className="input-retro text-xs bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: MEDIA GAMBAR & STORAGE UPLOAD */}
+              <div className="bg-[#FAF7EE] border-2 border-black rounded-2xl p-4 sm:p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-black/15 pb-2">
+                  <ImageIcon className="w-4 h-4 text-[#FFE600]" />
+                  <h4 className="font-display font-black text-sm text-black uppercase tracking-wider">
+                    3. Foto Dokumentasi Utama (Supabase Storage)
+                  </h4>
+                </div>
+
+                <ImageUploadField
+                  value={formData.imageUrl}
+                  file={formData.imageFile}
+                  onChangeFile={(file) => setFormData(prev => ({ ...prev, imageFile: file }))}
+                  onChangeUrl={(url) => setFormData(prev => ({ ...prev, imageUrl: url, imageFile: null }))}
+                  required={!formData.imageUrl && !formData.imageFile}
+                  label="Upload File Foto atau Masukkan Direct URL"
+                  maxSizeMB={2}
+                />
+              </div>
+
+              {/* SECTION 4: FILOSOFI & LABEL */}
+              <div className="bg-[#FAF7EE] border-2 border-black rounded-2xl p-4 sm:p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-black/15 pb-2">
+                  <Sparkles className="w-4 h-4 text-[#7B2CBF]" />
+                  <h4 className="font-display font-black text-sm text-black uppercase tracking-wider">
+                    4. Filosofi & Labeling
+                  </h4>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-black">
+                    Deskripsi & Filosofi Karya <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Jelaskan makna filosofis, inspirasi tema History, dan teknik pembuatan karya..."
+                    required
+                    className="input-retro text-xs sm:text-sm bg-white resize-none"
+                  ></textarea>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">Tagar / Labels (Pisahkan dengan koma)</label>
+                    <input
+                      type="text"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                      placeholder="Retro Pop, History, Masterpiece"
+                      className="input-retro text-xs bg-white"
+                    />
+                  </div>
+
+                  <div className="pt-2 sm:pt-5">
+                    <label className="flex items-center gap-2.5 cursor-pointer bg-white border-2 border-black p-2.5 rounded-xl text-xs font-bold hover:bg-neutral-50 shadow-retro-sm transition-all">
+                      <input
+                        type="checkbox"
+                        checked={formData.isHighlighted}
+                        onChange={(e) => setFormData({ ...formData, isHighlighted: e.target.checked })}
+                        className="w-4 h-4 text-[#FF3388] rounded border-black focus:ring-black"
+                      />
+                      <span className="flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 text-[#FFE600] fill-[#FFE600]" /> Karya Unggulan (Highlight)
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+
+            {/* Modal Sticky Footer */}
+            <div className="p-4 sm:p-5 bg-[#FAF7EE] border-t-3 border-black flex items-center justify-between gap-3 shrink-0">
+              <span className="text-[11px] font-bold text-neutral-500 hidden sm:inline">
+                * Kolom bertanda bintang wajib diisi
+              </span>
+
+              <div className="flex items-center justify-end gap-3 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => { setIsFormOpen(false); setEditingArtId(null); }}
+                  className="btn-retro-white text-xs px-4 py-2.5"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  form="artwork-crud-form"
+                  disabled={isSubmitting}
+                  className="btn-retro-pink text-xs sm:text-sm px-6 py-2.5 flex items-center gap-2 shadow-retro disabled:opacity-50 active:scale-95"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSubmitting ? 'Mengunggah & Menyimpan...' : (editingArtId ? 'Simpan Perubahan' : 'Terbitkan ke Katalog')}</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ======================= POLISHED MODAL 2: DELETE CONFIRM ================ */}
+      {/* ========================================================================= */}
+      {deleteConfirmArt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="card-retro bg-white w-full max-w-md p-6 sm:p-7 space-y-5 text-center rounded-3xl border-3 border-black shadow-2xl">
+            <div className="w-16 h-16 bg-red-100 border-2 border-black rounded-2xl mx-auto flex items-center justify-center shadow-retro-sm">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-display font-black text-xl text-black">
+                Hapus Karya Ini?
+              </h3>
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                Anda yakin ingin menghapus karya <strong className="text-black font-bold">"{deleteConfirmArt.title}"</strong> oleh <strong>{deleteConfirmArt.artist}</strong> dari katalog pameran?
+              </p>
+              <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-[11px] text-red-700 font-bold">
+                ⚠️ Data di database dan file gambar di Supabase Storage akan dihapus secara permanen.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => setDeleteConfirmArt(null)}
+                className="btn-retro-white text-xs px-5 py-2.5"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDeleteArtwork}
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-xl border-2 border-black font-display font-black text-xs bg-red-500 text-white hover:bg-red-600 shadow-retro active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isSubmitting ? 'Menghapus...' : 'Ya, Hapus Karya'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ======================= POLISHED MODAL 3: PREVIEW DETAIL ================ */}
+      {/* ========================================================================= */}
+      {previewArt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-6 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="card-retro bg-white w-full max-w-xl max-h-[92vh] flex flex-col rounded-3xl overflow-hidden border-3 border-black shadow-2xl">
+            
+            {/* Header */}
+            <div className="p-4 sm:p-5 bg-[#FAF7EE] border-b-3 border-black flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-black text-[#FFE600] px-2.5 py-1 rounded-lg border border-black shadow-retro-sm">
+                  DETAIL KURASI KARYA
+                </span>
+                <span className="text-xs font-bold text-neutral-500">ID: {previewArt.id}</span>
+              </div>
+              <button 
+                onClick={() => setPreviewArt(null)} 
+                className="w-8 h-8 rounded-xl bg-white hover:bg-neutral-100 border-2 border-black flex items-center justify-center text-neutral-700 hover:text-black transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto catalogue-scrollbar flex-1">
+              
+              {/* Image */}
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-black bg-neutral-900 relative shadow-retro-sm">
+                <img 
+                  src={previewArt.imageUrl || previewArt.foto_utama_url} 
+                  alt={previewArt.title} 
+                  className="w-full h-full object-cover" 
+                />
+                <span className="absolute top-3 left-3 bg-[#FFE600] text-black font-mono text-[11px] font-black px-2.5 py-1 rounded-lg border-2 border-black shadow-retro-sm">
+                  {previewArt.category || previewArt.kategori}
+                </span>
+              </div>
+
+              {/* Title & Creator */}
+              <div className="space-y-1">
+                <h3 className="font-display font-black text-2xl text-black">
+                  {previewArt.title || previewArt.judul}
+                </h3>
+                <p className="text-xs text-neutral-700 font-semibold">
+                  Oleh: <strong className="text-black font-bold">{previewArt.isAnonymous ? 'Pencipta Dirahasiakan' : (previewArt.artist || previewArt.seniman_nama)}</strong>
+                  {previewArt.artistBatch && <span className="text-neutral-500"> • Angkatan {previewArt.artistBatch || previewArt.seniman_angkatan}</span>}
+                  {previewArt.artistNim && previewArt.artistNim !== '-' && <span className="text-neutral-500"> • NIM {previewArt.artistNim}</span>}
+                </p>
+              </div>
+
+              {/* Specs Grid */}
+              <div className="grid grid-cols-2 gap-2.5 text-xs bg-[#FAF7EE] p-3.5 rounded-2xl border-2 border-black">
+                <div>
+                  <span className="text-[10px] text-neutral-500 font-bold block uppercase">Zona Penempatan</span>
+                  <strong className="text-black">{previewArt.boothName || resolveBoothName(resolveBoothId(previewArt))}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-neutral-500 font-bold block uppercase">Tahun Pembuatan</span>
+                  <strong className="text-black">{previewArt.year || previewArt.tahun_pembuatan || '2024'}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-neutral-500 font-bold block uppercase">Medium & Bahan</span>
+                  <strong className="text-black">{previewArt.medium || previewArt.medium_bahan || 'Mixed Media'}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-neutral-500 font-bold block uppercase">Dimensi / Ukuran</span>
+                  <strong className="text-black">{previewArt.dimensions || previewArt.dimensi || 'Standar'}</strong>
+                </div>
+              </div>
+
+              {/* Philosophy */}
+              <div className="space-y-1.5 text-xs">
+                <span className="font-display font-bold text-black uppercase tracking-wider text-[11px] block">
+                  Filosofi & Narasi Karya:
+                </span>
+                <p className="leading-relaxed bg-neutral-50 p-3.5 rounded-2xl border border-neutral-300 text-neutral-800">
+                  {previewArt.description || previewArt.deskripsi_filosofi}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 bg-[#FAF7EE] border-t-3 border-black flex items-center justify-end gap-2.5 shrink-0">
+              <button
+                onClick={() => setPreviewArt(null)}
+                className="btn-retro-white text-xs px-4 py-2"
+              >
+                Tutup
+              </button>
+              <button
+                onClick={() => {
+                  const artToEdit = previewArt;
+                  setPreviewArt(null);
+                  handleOpenEditForm(artToEdit);
+                }}
+                className="btn-retro-yellow text-xs px-5 py-2 flex items-center gap-1.5 shadow-retro-sm"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Edit Karya Ini</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

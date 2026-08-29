@@ -4,6 +4,7 @@
  */
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { StorageService } from '../storageService';
 import { INITIAL_ARTWORKS } from '../../data/mockData';
 
 const LOCAL_STORAGE_KEY = 'senrup_artworks_v1';
@@ -179,8 +180,28 @@ export const ArtworkDb = {
 
   /**
    * Tambah karya baru ke katalog
+   * Mendukung upload file fisik (imageFile) langsung ke Supabase Storage
+   * Dilengkapi Transactional Rollback jika insert database gagal!
    */
   async addArtwork(newArt) {
+    let uploadedStoragePath = null;
+    let finalImageUrl = newArt.imageUrl || '';
+
+    // 1. Jika ada file fisik gambar (imageFile), upload langsung ke Supabase Storage
+    if (newArt.imageFile && (newArt.imageFile instanceof File || newArt.imageFile instanceof Blob)) {
+      try {
+        const uploadRes = await StorageService.uploadImage(newArt.imageFile, {
+          bucket: 'artworks',
+          folder: 'artworks'
+        });
+        finalImageUrl = uploadRes.publicUrl;
+        uploadedStoragePath = uploadRes.filePath;
+      } catch (uploadErr) {
+        console.error('Gagal mengunggah gambar ke Supabase Storage:', uploadErr);
+        throw new Error(`Upload gambar gagal: ${uploadErr.message}`);
+      }
+    }
+
     const list = getLocalArtworks();
     const created = {
       id: 'art-' + Date.now(),
@@ -189,21 +210,27 @@ export const ArtworkDb = {
       tags: ['Retro Pop', 'History'],
       isAnonymous: Boolean(newArt.isAnonymous),
       ...newArt,
+      imageUrl: finalImageUrl,
     };
+    delete created.imageFile;
 
-    // 1. Coba kirim ke Laravel REST API
+    let dbSucceeded = false;
+
+    // 2. Coba simpan ke Laravel REST API
     try {
-      const res = await axios.post(`${API_BASE_URL}/artworks`, newArt, { timeout: 5000 });
+      const res = await axios.post(`${API_BASE_URL}/artworks`, created, { timeout: 5000 });
       if (res.data && res.data.success && res.data.data) {
-        list.unshift(res.data.data);
+        dbSucceeded = true;
+        const synced = formatArtItem(res.data.data);
+        list.unshift(synced);
         saveLocalArtworks(list);
-        return res.data.data;
+        return synced;
       }
     } catch (apiErr) {
       console.warn('Laravel API add artwork failed, fallback to Supabase/Local:', apiErr.message);
     }
 
-    // 2. Coba kirim ke Supabase
+    // 3. Coba simpan ke PostgreSQL Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -223,16 +250,31 @@ export const ArtworkDb = {
               foto_utama_url: created.imageUrl,
               booth_name: created.boothName,
               likes_count: 0,
+              is_highlighted: Boolean(created.isHighlighted),
+              tags: created.tags,
             },
           ])
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          dbSucceeded = true;
           created.id = data.id;
         }
       } catch (err) {
-        console.warn('Supabase insert artwork failed:', err);
+        console.error('Supabase insert artwork failed:', err);
+
+        // 🔄 TRANSACTION ROLLBACK: Hapus file yang terlanjur di-upload jika DB gagal
+        if (uploadedStoragePath) {
+          console.warn('Melakukan rollback file Supabase Storage:', uploadedStoragePath);
+          await StorageService.deleteImage(uploadedStoragePath, 'artworks').catch(e => console.warn('Rollback failed:', e));
+        }
+
+        throw new Error(`Gagal menyimpan karya ke database: ${err.message || 'Database error'}`);
       }
     }
 
@@ -242,9 +284,113 @@ export const ArtworkDb = {
   },
 
   /**
-   * Hapus karya dari katalog
+   * Perbarui / Edit data karya di katalog
+   * Dilengkapi upload gambar baru & pembersihan gambar lama
+   */
+  async updateArtwork(id, updatedArt) {
+    const list = getLocalArtworks();
+    const existing = list.find(a => String(a.id) === String(id)) || {};
+    let finalImageUrl = updatedArt.imageUrl || existing.imageUrl || '';
+    let newlyUploadedStoragePath = null;
+
+    // 1. Jika ada file gambar baru yang di-upload
+    if (updatedArt.imageFile && (updatedArt.imageFile instanceof File || updatedArt.imageFile instanceof Blob)) {
+      try {
+        const uploadRes = await StorageService.uploadImage(updatedArt.imageFile, {
+          bucket: 'artworks',
+          folder: 'artworks'
+        });
+        finalImageUrl = uploadRes.publicUrl;
+        newlyUploadedStoragePath = uploadRes.filePath;
+      } catch (uploadErr) {
+        console.error('Gagal mengunggah gambar baru:', uploadErr);
+        throw new Error(`Upload gambar baru gagal: ${uploadErr.message}`);
+      }
+    }
+
+    const formatted = formatArtItem({
+      ...existing,
+      ...updatedArt,
+      id,
+      imageUrl: finalImageUrl,
+      slug: (updatedArt.title || existing.title || 'karya').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      isAnonymous: Boolean(updatedArt.isAnonymous),
+      isHighlighted: Boolean(updatedArt.isHighlighted),
+    });
+    delete formatted.imageFile;
+
+    // 2. Coba kirim ke Laravel REST API
+    try {
+      const res = await axios.put(`${API_BASE_URL}/artworks/${id}`, formatted, { timeout: 5000 });
+      if (res.data && res.data.success && res.data.data) {
+        // Hapus file lama jika ada file baru dan berbeda
+        if (newlyUploadedStoragePath && existing.imageUrl && existing.imageUrl !== finalImageUrl) {
+          StorageService.deleteImage(existing.imageUrl, 'artworks').catch(() => {});
+        }
+        const synced = formatArtItem(res.data.data);
+        const nextList = list.map(a => String(a.id) === String(id) ? synced : a);
+        saveLocalArtworks(nextList);
+        return synced;
+      }
+    } catch (apiErr) {
+      console.warn('Laravel API update artwork failed, fallback to Supabase/Local:', apiErr.message);
+    }
+
+    // 3. Coba kirim ke Supabase
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('artworks')
+          .update({
+            judul: formatted.title,
+            slug: formatted.slug,
+            seniman_nama: formatted.artist,
+            seniman_nim: formatted.artistNim || '-',
+            seniman_angkatan: formatted.artistBatch || '2024',
+            kategori: formatted.category,
+            deskripsi_filosofi: formatted.description,
+            medium_bahan: formatted.medium,
+            dimensi: formatted.dimensions,
+            tahun_pembuatan: formatted.year || '2024',
+            foto_utama_url: formatted.imageUrl,
+            booth_name: formatted.boothName,
+            is_highlighted: formatted.isHighlighted,
+            tags: formatted.tags,
+          })
+          .eq('id', id);
+
+        if (error) {
+          throw error;
+        }
+
+        // Hapus file lama dari storage jika berhasil diperbarui
+        if (newlyUploadedStoragePath && existing.imageUrl && existing.imageUrl !== finalImageUrl) {
+          StorageService.deleteImage(existing.imageUrl, 'artworks').catch(() => {});
+        }
+      } catch (err) {
+        console.error('Supabase update artwork failed:', err);
+
+        // 🔄 ROLLBACK: Hapus file baru jika update database gagal
+        if (newlyUploadedStoragePath) {
+          await StorageService.deleteImage(newlyUploadedStoragePath, 'artworks').catch(() => {});
+        }
+
+        throw new Error(`Gagal memperbarui data di database: ${err.message || 'Database error'}`);
+      }
+    }
+
+    const nextList = list.map(a => String(a.id) === String(id) ? formatted : a);
+    saveLocalArtworks(nextList);
+    return formatted;
+  },
+
+  /**
+   * Hapus karya dari katalog (Lengkap dengan penghapusan file fisik di Supabase Storage)
    */
   async deleteArtwork(id) {
+    const list = getLocalArtworks();
+    const targetArt = list.find((a) => String(a.id) === String(id));
+
     // 1. Coba hapus via Laravel REST API
     try {
       await axios.delete(`${API_BASE_URL}/artworks/${id}`, { timeout: 4000 });
@@ -261,8 +407,14 @@ export const ArtworkDb = {
       }
     }
 
-    const list = getLocalArtworks();
-    const filtered = list.filter((a) => a.id !== id);
+    // 3. 🧹 LIFECYCLE CLEANUP: Hapus file fisik gambar dari Supabase Storage
+    if (targetArt && targetArt.imageUrl) {
+      StorageService.deleteImage(targetArt.imageUrl, 'artworks').catch((err) => {
+        console.warn('Storage file cleanup failed on delete:', err);
+      });
+    }
+
+    const filtered = list.filter((a) => String(a.id) !== String(id));
     saveLocalArtworks(filtered);
     return filtered;
   },
