@@ -273,7 +273,7 @@ export default function AdminDashboard({
 
     try {
       const result = await seedArtworksToSupabase({
-        clearExisting: clearFirst,
+        clearExisting: resetFirst,
         onProgress: (current, total, message) => {
           setSeedStatus(prev => ({ ...prev, progress: message }));
         },
