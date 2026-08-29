@@ -13,26 +13,38 @@ class ArtworkController extends Controller
 {
     private function resolveBoothId(?string $boothId, ?string $kategori): string
     {
-        if (!empty($boothId)) {
-            $b = strtolower(trim($boothId));
-            if (in_array($b, ['booth-a', 'booth-b', 'booth-c', 'booth-d', 'booth-e'])) {
-                return $b;
-            }
-            if (str_contains($b, 'a') || str_contains($b, 'lukis')) return 'booth-a';
-            if (str_contains($b, 'b') || str_contains($b, 'kriya') || str_contains($b, 'rajin')) return 'booth-b';
-            if (str_contains($b, 'c') || str_contains($b, 'sketsa') || str_contains($b, 'ilustrasi') || str_contains($b, 'gambar')) return 'booth-c';
-            if (str_contains($b, 'd') || str_contains($b, 'stage') || str_contains($b, 'panggung')) return 'booth-d';
-            if (str_contains($b, 'e') || str_contains($b, 'photo') || str_contains($b, 'pintu')) return 'booth-e';
-        }
+        $rawBoothId = strtolower(trim($boothId ?? ''));
+        $rawCat = strtolower(trim($kategori ?? ''));
 
-        $cat = strtolower($kategori ?? '');
-        if (str_contains($cat, 'lukis') || str_contains($cat, 'paint') || str_contains($cat, 'kanvas')) {
+        // 1. Direct standard IDs
+        if (in_array($rawBoothId, ['booth-a', 'zona-a'])) return 'booth-a';
+        if (in_array($rawBoothId, ['booth-b', 'zona-b'])) return 'booth-b';
+        if (in_array($rawBoothId, ['booth-c', 'zona-c'])) return 'booth-c';
+        if (in_array($rawBoothId, ['booth-d', 'zona-d'])) return 'booth-d';
+        if (in_array($rawBoothId, ['booth-e', 'zona-e'])) return 'booth-e';
+
+        // 2. Supabase fixed UUIDs from seed scripts
+        if (Str::endsWith($rawBoothId, ['-000000000001', '0001'])) return 'booth-a';
+        if (Str::endsWith($rawBoothId, ['-000000000002', '0002'])) return 'booth-b';
+        if (Str::endsWith($rawBoothId, ['-000000000003', '0003'])) return 'booth-c';
+        if (Str::endsWith($rawBoothId, ['-000000000004', '0004'])) return 'booth-d';
+        if (Str::endsWith($rawBoothId, ['-000000000005', '0005'])) return 'booth-e';
+
+        // 3. Word boundary regex check
+        if (preg_match('/\b(zona|booth)[- ]?a\b/i', $rawBoothId) || str_contains($rawBoothId, 'galeri lukis')) return 'booth-a';
+        if (preg_match('/\b(zona|booth)[- ]?b\b/i', $rawBoothId) || str_contains($rawBoothId, 'kriya') || str_contains($rawBoothId, 'kerajinan')) return 'booth-b';
+        if (preg_match('/\b(zona|booth)[- ]?c\b/i', $rawBoothId) || str_contains($rawBoothId, 'live painting') || str_contains($rawBoothId, 'pojok gambar')) return 'booth-c';
+        if (preg_match('/\b(zona|booth)[- ]?d\b/i', $rawBoothId) || str_contains($rawBoothId, 'panggung') || str_contains($rawBoothId, 'stage')) return 'booth-d';
+        if (preg_match('/\b(zona|booth)[- ]?e\b/i', $rawBoothId) || str_contains($rawBoothId, 'photobooth') || str_contains($rawBoothId, 'souvenir')) return 'booth-e';
+
+        // 4. Primary Categorical Mapping
+        if (str_contains($rawCat, 'lukis') || str_contains($rawCat, 'paint') || str_contains($rawCat, 'kanvas') || str_contains($rawCat, 'canvas') || str_contains($rawCat, 'akrilik') || str_contains($rawCat, 'oil')) {
             return 'booth-a';
         }
-        if (str_contains($cat, 'kriya') || str_contains($cat, 'rajin') || str_contains($cat, 'craft') || str_contains($cat, 'patung') || str_contains($cat, '3d') || str_contains($cat, 'keramik') || str_contains($cat, 'resin')) {
+        if (str_contains($rawCat, 'kriya') || str_contains($rawCat, 'rajin') || str_contains($rawCat, 'craft') || str_contains($rawCat, 'resin') || str_contains($rawCat, '3d') || str_contains($rawCat, 'keramik') || str_contains($rawCat, 'terracotta') || str_contains($rawCat, 'patung') || str_contains($rawCat, 'makrame') || str_contains($rawCat, 'daur ulang')) {
             return 'booth-b';
         }
-        if (str_contains($cat, 'sketsa') || str_contains($cat, 'ilustrasi') || str_contains($cat, 'gambar') || str_contains($cat, 'sketch') || str_contains($cat, 'doodle') || str_contains($cat, 'digital')) {
+        if (str_contains($rawCat, 'sketsa') || str_contains($rawCat, 'ilustrasi') || str_contains($rawCat, 'sketch') || str_contains($rawCat, 'draw') || str_contains($rawCat, 'digital') || str_contains($rawCat, 'doodle') || str_contains($rawCat, 'gambar') || str_contains($rawCat, 'vektor') || str_contains($rawCat, 'komik')) {
             return 'booth-c';
         }
 

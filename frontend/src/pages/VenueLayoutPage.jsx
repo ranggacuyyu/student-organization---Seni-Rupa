@@ -89,7 +89,7 @@ export default function VenueLayoutPage({ artworks = [], onSelectArtwork, select
 
   const zoneArtworks = useMemo(() => {
     return currentArtworkList.filter(a => {
-      const bId = a.boothId || a.booth_id || resolveBoothId(a);
+      const bId = resolveBoothId(a);
       return bId === activeZone.id || bId === activeZone.code?.toLowerCase();
     });
   }, [currentArtworkList, activeZone]);
@@ -97,7 +97,7 @@ export default function VenueLayoutPage({ artworks = [], onSelectArtwork, select
   // Real-time count of artworks in each zone
   const getZoneArtworkCount = (zoneId) => {
     return currentArtworkList.filter(a => {
-      const bId = a.boothId || a.booth_id || resolveBoothId(a);
+      const bId = resolveBoothId(a);
       return bId === zoneId;
     }).length;
   };

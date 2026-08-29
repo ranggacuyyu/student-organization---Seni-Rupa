@@ -11,21 +11,46 @@ const LIKED_KEY = 'senrup_liked_artworks_v1';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export const resolveBoothId = (art) => {
-  const b = String(art.boothId || art.booth_id || '').toLowerCase().trim();
-  if (['booth-a', 'booth-b', 'booth-c', 'booth-d', 'booth-e'].includes(b)) {
-    return b;
+  if (!art) return 'booth-a';
+
+  const rawCat = String(art.category || art.kategori || '').toLowerCase().trim();
+  const rawBoothId = String(art.boothId || art.booth_id || '').toLowerCase().trim();
+  const rawBoothName = String(art.boothName || art.booth_name || '').toLowerCase().trim();
+
+  // 1. Primary Mapping by Category (Most accurate & deterministic across all databases)
+  if (rawCat.includes('lukis') || rawCat.includes('paint') || rawCat.includes('kanvas') || rawCat.includes('canvas') || rawCat.includes('akrilik') || rawCat.includes('oil')) {
+    return 'booth-a';
   }
-  if (b.includes('a') || b.includes('lukis')) return 'booth-a';
-  if (b.includes('b') || b.includes('kriya') || b.includes('rajin')) return 'booth-b';
-  if (b.includes('c') || b.includes('sketsa') || b.includes('ilustrasi') || b.includes('gambar')) return 'booth-c';
-  if (b.includes('d') || b.includes('stage') || b.includes('panggung')) return 'booth-d';
-  if (b.includes('e') || b.includes('photo') || b.includes('pintu')) return 'booth-e';
+  if (rawCat.includes('kriya') || rawCat.includes('rajin') || rawCat.includes('craft') || rawCat.includes('resin') || rawCat.includes('3d') || rawCat.includes('keramik') || rawCat.includes('terracotta') || rawCat.includes('patung') || rawCat.includes('makrame') || rawCat.includes('daur ulang')) {
+    return 'booth-b';
+  }
+  if (rawCat.includes('sketsa') || rawCat.includes('ilustrasi') || rawCat.includes('sketch') || rawCat.includes('draw') || rawCat.includes('digital') || rawCat.includes('doodle') || rawCat.includes('gambar') || rawCat.includes('vektor') || rawCat.includes('komik')) {
+    return 'booth-c';
+  }
 
-  const cat = String(art.category || art.kategori || '').toLowerCase();
-  if (cat.includes('lukis') || cat.includes('paint') || cat.includes('kanvas')) return 'booth-a';
-  if (cat.includes('kriya') || cat.includes('rajin') || cat.includes('craft') || cat.includes('3d') || cat.includes('resin') || cat.includes('patung') || cat.includes('keramik')) return 'booth-b';
-  if (cat.includes('sketsa') || cat.includes('ilustrasi') || cat.includes('sketch') || cat.includes('draw') || cat.includes('digital') || cat.includes('doodle')) return 'booth-c';
+  // 2. Direct standard IDs
+  if (rawBoothId === 'booth-a' || rawBoothId === 'zona-a') return 'booth-a';
+  if (rawBoothId === 'booth-b' || rawBoothId === 'zona-b') return 'booth-b';
+  if (rawBoothId === 'booth-c' || rawBoothId === 'zona-c') return 'booth-c';
+  if (rawBoothId === 'booth-d' || rawBoothId === 'zona-d') return 'booth-d';
+  if (rawBoothId === 'booth-e' || rawBoothId === 'zona-e') return 'booth-e';
 
+  // 3. Supabase fixed UUIDs from seed scripts
+  if (rawBoothId.endsWith('-000000000001') || rawBoothId.endsWith('0001')) return 'booth-a';
+  if (rawBoothId.endsWith('-000000000002') || rawBoothId.endsWith('0002')) return 'booth-b';
+  if (rawBoothId.endsWith('-000000000003') || rawBoothId.endsWith('0003')) return 'booth-c';
+  if (rawBoothId.endsWith('-000000000004') || rawBoothId.endsWith('0004')) return 'booth-d';
+  if (rawBoothId.endsWith('-000000000005') || rawBoothId.endsWith('0005')) return 'booth-e';
+
+  // 4. Exact word boundary regex check on boothId & boothName (e.g. "zona a", "booth a", "zona-a")
+  const combinedBoothText = `${rawBoothId} ${rawBoothName}`;
+  if (/\b(zona|booth)[- ]?a\b/i.test(combinedBoothText) || combinedBoothText.includes('galeri lukis')) return 'booth-a';
+  if (/\b(zona|booth)[- ]?b\b/i.test(combinedBoothText) || combinedBoothText.includes('kriya') || combinedBoothText.includes('kerajinan')) return 'booth-b';
+  if (/\b(zona|booth)[- ]?c\b/i.test(combinedBoothText) || combinedBoothText.includes('live painting') || combinedBoothText.includes('pojok gambar')) return 'booth-c';
+  if (/\b(zona|booth)[- ]?d\b/i.test(combinedBoothText) || combinedBoothText.includes('panggung') || combinedBoothText.includes('stage') || combinedBoothText.includes('talkshow')) return 'booth-d';
+  if (/\b(zona|booth)[- ]?e\b/i.test(combinedBoothText) || combinedBoothText.includes('photobooth') || combinedBoothText.includes('souvenir') || combinedBoothText.includes('suvenir') || combinedBoothText.includes('info desk')) return 'booth-e';
+
+  // 5. Default fallback to Zona A
   return 'booth-a';
 };
 
