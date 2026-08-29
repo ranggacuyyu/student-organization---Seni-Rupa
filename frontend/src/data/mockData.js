@@ -446,8 +446,8 @@ export function generateMockArtworks(options = {}) {
   return artworksList;
 }
 
-// Inisialisasi Master Data Karya Pameran (+160 Karya Terstruktur)
-export const INITIAL_ARTWORKS = generateMockArtworks();
+// Master Data Karya Pameran (Kosong secara default - Hanya menggunakan data dari Supabase)
+export const INITIAL_ARTWORKS = [];
 
 export const BOOTH_ZONES = [
   {

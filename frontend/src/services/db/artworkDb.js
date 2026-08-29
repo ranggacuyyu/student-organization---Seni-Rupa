@@ -99,32 +99,20 @@ export const formatArtItem = (art) => {
 const getLocalArtworks = () => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) {
-      const formatted = INITIAL_ARTWORKS.map(formatArtItem);
-      saveLocalArtworks(formatted);
-      return formatted;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      const existingIds = new Set(parsed.map(a => a.id));
-      const newDefaults = INITIAL_ARTWORKS.filter(a => !existingIds.has(a.id));
-      const combined = [...parsed, ...newDefaults].map(formatArtItem);
-      if (newDefaults.length > 0) {
-        saveLocalArtworks(combined);
-      }
-      return combined;
+      return parsed.map(formatArtItem);
     }
-    const formatted = INITIAL_ARTWORKS.map(formatArtItem);
-    saveLocalArtworks(formatted);
-    return formatted;
+    return [];
   } catch {
-    return INITIAL_ARTWORKS.map(formatArtItem);
+    return [];
   }
 };
 
 const saveLocalArtworks = (list) => {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list || []));
   } catch (e) {
     console.error('Failed to save artworks to localStorage:', e);
   }
@@ -132,39 +120,40 @@ const saveLocalArtworks = (list) => {
 
 export const ArtworkDb = {
   /**
-   * Ambil seluruh karya seni dari Backend / DB
+   * Ambil seluruh karya seni murni dari Supabase / Backend Database
+   * Tidak menggunakan data dummy frontend
    */
   async getAllArtworks() {
-    // 1. Coba dari Laravel REST API
-    try {
-      const res = await axios.get(`${API_BASE_URL}/artworks`, { timeout: 4000 });
-      if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-        const existingIds = new Set(res.data.data.map(a => a.id));
-        const newDefaults = INITIAL_ARTWORKS.filter(a => !existingIds.has(a.id));
-        const formatted = [...res.data.data, ...newDefaults].map(formatArtItem);
-        saveLocalArtworks(formatted);
-        return formatted;
-      }
-    } catch (apiErr) {
-      console.warn('Laravel API fetch artworks failed, fallback to Supabase/Local:', apiErr.message);
-    }
-
-    // 2. Coba dari Supabase
+    // 1. Prioritas Utama: Ambil langsung dari Supabase Database
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
           .from('artworks')
           .select('*')
-          .order('likes_count', { ascending: false });
+          .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data)) {
           const formatted = data.map(formatArtItem);
           saveLocalArtworks(formatted);
           return formatted;
+        } else if (error) {
+          console.warn('Supabase fetch artworks error:', error.message);
         }
       } catch (err) {
-        console.warn('Supabase fetch artworks failed, using fallback:', err);
+        console.warn('Supabase fetch artworks exception:', err);
       }
+    }
+
+    // 2. Fallback Opsional: Laravel REST API (jika ada)
+    try {
+      const res = await axios.get(`${API_BASE_URL}/artworks`, { timeout: 3000 });
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        const formatted = res.data.data.map(formatArtItem);
+        saveLocalArtworks(formatted);
+        return formatted;
+      }
+    } catch (apiErr) {
+      // Offline / API inactive
     }
 
     return getLocalArtworks();

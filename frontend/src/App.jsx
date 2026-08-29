@@ -41,24 +41,23 @@ export default function App() {
     return localStorage.getItem('senrup_active_tab') || 'home';
   });
 
-  // Synchronous initial state from localStorage to prevent re-render flashing
+  // Synchronous initial state from localStorage - Pure Supabase data without dummy mock
   const [artworks, setArtworks] = useState(() => {
     try {
       const saved = localStorage.getItem('senrup_artworks_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= INITIAL_ARTWORKS.length) {
-          return parsed;
-        }
-        if (Array.isArray(parsed)) {
-          const existingIds = new Set(parsed.map(a => a.id));
-          const newDefaults = INITIAL_ARTWORKS.filter(a => !existingIds.has(a.id));
-          return [...parsed, ...newDefaults];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Bersihkan data dummy mock lama jika ada di localStorage pengguna
+          const hasLegacyMock = parsed.some(a => String(a.id).startsWith('art-') && Number(String(a.id).replace('art-', '')) < 500);
+          if (!hasLegacyMock) {
+            return parsed;
+          }
         }
       }
-      return INITIAL_ARTWORKS;
+      return [];
     } catch {
-      return INITIAL_ARTWORKS;
+      return [];
     }
   });
 
