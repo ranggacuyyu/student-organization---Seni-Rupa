@@ -20,7 +20,10 @@ import {
   Copy,
   Info,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ZoomIn,
+  Download,
+  Maximize2
 } from 'lucide-react';
 import { OrderService } from '../../services/api';
 
@@ -42,10 +45,13 @@ export default function PurchaseModal({
 
   const [proofFile, setProofFile] = useState(null);
   const [proofPreview, setProofPreview] = useState(null);
+  const [isQrisZoomOpen, setIsQrisZoomOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const [qrisSettings, setQrisSettings] = useState({
-    merchant_name: 'SENI RUPA POLIBATAM',
+    merchant_name: 'CHARMY LUCK ART OFFICIAL',
     qris_image_url: '/qris-dana.png',
-    dana_number: '0812-3456-7890 (DANA Panitia)',
+    dana_number: 'NMID: ID1025452455724',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +66,7 @@ export default function PurchaseModal({
       setSuccessOrder(null);
       setProofFile(null);
       setProofPreview(null);
+      setIsQrisZoomOpen(false);
       
       OrderService.getQrisSettings().then((data) => {
         if (data) setQrisSettings(data);
@@ -102,10 +109,35 @@ export default function PurchaseModal({
     }
   };
 
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  // Unduh Gambar QRIS ke HP / Laptop Pengunjung
+  const handleDownloadQris = async () => {
+    try {
+      setIsDownloading(true);
+      const imageUrl = qrisSettings.qris_image_url || '/qris-dana.png';
+      
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `QRIS_Pembayaran_${(qrisSettings.merchant_name || 'SenRup').replace(/\s+/g, '_')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.warn('Direct blob download failed, fallback to standard link:', err);
+      const link = document.createElement('a');
+      link.href = qrisSettings.qris_image_url || '/qris-dana.png';
+      link.download = 'QRIS_Pembayaran_Seni_Rupa.png';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleSubmitOrder = async (e) => {
@@ -145,7 +177,7 @@ export default function PurchaseModal({
         pickupNotes: formData.pickupNotes.trim(),
         paymentProofFile: proofFile,
         paymentProofUrl: proofPreview,
-        paymentType: 'QRIS DANA / Transfer Bank',
+        paymentType: 'QRIS (DANA / Bank / E-Wallet)',
       });
 
       setIsLoading(false);
@@ -156,7 +188,7 @@ export default function PurchaseModal({
         artworkTitle: artwork.title,
         grossAmount: price,
         buyerName: formData.buyerName,
-        paymentType: 'QRIS DANA / Transfer Bank',
+        paymentType: 'QRIS (DANA / Bank / E-Wallet)',
       };
 
       setSuccessOrder(settledData);
@@ -168,8 +200,7 @@ export default function PurchaseModal({
     }
   };
 
-  // QR Code Image Fallback Generator
-  const qrisDisplayUrl = qrisSettings.qris_image_url || `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=QRIS_SENRUP_DANA_${price}`;
+  const qrisDisplayUrl = qrisSettings.qris_image_url || '/qris-dana.png';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in">
@@ -290,7 +321,7 @@ export default function PurchaseModal({
               </div>
 
               {/* ========================================================= */}
-              {/* KOTAK QRIS DAN PETUNJUK TRANSFER */}
+              {/* KOTAK QRIS RESMI (BISA DI-ZOOM & DI-DOWNLOAD) */}
               {/* ========================================================= */}
               <div className="bg-white border-3 border-black rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-retro">
                 <div className="flex items-center justify-between border-b-2 border-neutral-200 pb-2.5">
@@ -305,30 +336,65 @@ export default function PurchaseModal({
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                   
-                  {/* Gambar QRIS */}
-                  <div className="sm:col-span-5 flex flex-col items-center justify-center">
-                    <div className="w-44 h-44 sm:w-48 sm:h-48 bg-white border-2 border-black rounded-2xl p-2 shadow-retro-xs flex items-center justify-center overflow-hidden">
+                  {/* Gambar QRIS dengan tombol Zoom & Unduh */}
+                  <div className="sm:col-span-5 flex flex-col items-center justify-center space-y-2">
+                    
+                    {/* Klik Gambar untuk Zoom HD */}
+                    <div 
+                      onClick={() => setIsQrisZoomOpen(true)}
+                      className="relative group w-48 h-48 sm:w-52 sm:h-52 bg-white border-2 border-black rounded-2xl p-2 shadow-retro-xs flex items-center justify-center overflow-hidden cursor-zoom-in hover:scale-[1.02] transition-transform"
+                      title="Klik untuk memperbesar QRIS layar penuh"
+                    >
                       <img 
                         src={qrisDisplayUrl} 
                         alt="QRIS Panitia Seni Rupa" 
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=QRIS_SENRUP_DANA_${price}`;
+                          e.target.src = '/qris-dana.png';
                         }}
                         className="w-full h-full object-contain"
                       />
+
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="bg-white text-black font-display font-black text-[10px] px-2.5 py-1 rounded-lg border border-black shadow-retro-xs flex items-center gap-1">
+                          <ZoomIn className="w-3.5 h-3.5 text-[#FF3388]" /> Perbesar HD
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] text-neutral-500 font-mono mt-1 font-bold">
-                      Scan QRIS di atas
-                    </span>
+
+                    {/* Tombol Interaktif: Zoom & Unduh */}
+                    <div className="flex items-center gap-1.5 w-full justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setIsQrisZoomOpen(true)}
+                        className="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-black rounded-lg text-[10px] font-bold text-black flex items-center gap-1 shadow-retro-xs cursor-pointer active:scale-95 transition-transform"
+                      >
+                        <ZoomIn className="w-3 h-3 text-[#FF3388]" />
+                        <span>Perbesar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleDownloadQris}
+                        disabled={isDownloading}
+                        className="px-2.5 py-1 bg-[#00F0FF] hover:bg-[#33F3FF] border border-black rounded-lg text-[10px] font-bold text-black flex items-center gap-1 shadow-retro-xs cursor-pointer active:scale-95 transition-transform"
+                        title="Unduh QRIS untuk bayar dari galeri HP"
+                      >
+                        {isDownloading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3 text-black" />}
+                        <span>Unduh QR</span>
+                      </button>
+                    </div>
+
                   </div>
 
-                  {/* Nominal & Instruksi */}
+                  {/* Nominal & Petunjuk */}
                   <div className="sm:col-span-7 space-y-2.5 text-left">
                     <div className="bg-[#FAF7EE] border-2 border-black rounded-xl p-3 space-y-1">
                       <div className="text-[11px] font-bold text-neutral-600">Merchant Panitia:</div>
                       <div className="font-display font-black text-sm text-black uppercase">{qrisSettings.merchant_name}</div>
-                      <div className="text-[11px] text-neutral-500 pt-1">Nominal Pas yang Harus Ditransfer:</div>
+                      <div className="text-[10px] text-neutral-500 font-mono">NMID: ID1025452455724 (A01)</div>
+                      
+                      <div className="text-[11px] text-neutral-500 pt-1.5 border-t border-black/10">Nominal Pas yang Harus Ditransfer:</div>
                       <div className="font-display font-black text-xl text-[#FF3388]">{priceFormatted}</div>
                     </div>
 
@@ -336,9 +402,9 @@ export default function PurchaseModal({
                       <div className="font-bold text-black flex items-center gap-1">
                         <Sparkles className="w-3 h-3 text-[#FF3388]" /> Cara Pembayaran:
                       </div>
-                      <p>1. Buka aplikasi <strong>DANA, BCA, Mandiri, GoPay, OVO, ShopeePay</strong>.</p>
-                      <p>2. Scan QRIS di samping dan transfer <strong>{priceFormatted}</strong>.</p>
-                      <p>3. Ambil <strong>screenshot / foto struk</strong> dan upload di bawah.</p>
+                      <p>1. <strong>Scan langsung</strong> atau klik <strong>"Unduh QR"</strong> lalu bayar dari galeri.</p>
+                      <p>2. Transfer tepat nominal <strong>{priceFormatted}</strong>.</p>
+                      <p>3. Upload <strong>screenshot / struk pembayaran</strong> di bawah.</p>
                     </div>
                   </div>
 
@@ -437,9 +503,7 @@ export default function PurchaseModal({
                   </div>
                 </div>
 
-                {/* ========================================================= */}
-                {/* UPLOAD BUKTI TRANSFER BOX */}
-                {/* ========================================================= */}
+                {/* Upload Bukti Transfer Box */}
                 <div className="space-y-1.5 pt-1">
                   <label className="block text-[11px] font-bold text-neutral-800 flex items-center justify-between">
                     <span>Upload Foto / Screenshot Bukti Transfer <span className="text-red-500">*</span></span>
@@ -525,6 +589,76 @@ export default function PurchaseModal({
         </div>
 
       </div>
+
+      {/* ========================================================= */}
+      {/* MODAL LIGHTBOX QRIS HD (LAYAR PENUH & DOWNLOAD) */}
+      {/* ========================================================= */}
+      {isQrisZoomOpen && (
+        <div 
+          onClick={() => setIsQrisZoomOpen(false)}
+          className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border-3 border-black rounded-3xl p-4 sm:p-6 max-w-md w-full max-h-[92vh] flex flex-col space-y-4 shadow-retro-xl"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b-2 border-black pb-2.5">
+              <div>
+                <h4 className="font-display font-black text-sm sm:text-base text-black flex items-center gap-1.5">
+                  <QrCode className="w-5 h-5 text-[#FF3388]" /> QRIS Pembayaran Resmi
+                </h4>
+                <p className="text-[10px] text-neutral-600 font-bold">{qrisSettings.merchant_name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQrisZoomOpen(false)}
+                className="p-1.5 bg-[#FAF7EE] hover:bg-[#FF3388] hover:text-white border-2 border-black rounded-xl shadow-retro-xs transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* QR Image Big Display */}
+            <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center p-2 bg-white rounded-2xl border-2 border-black shadow-inner">
+              <img 
+                src={qrisDisplayUrl} 
+                alt="QRIS HD"
+                className="max-h-[58vh] w-full object-contain rounded-xl"
+              />
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="text-[11px] font-display font-black text-[#FF3388]">
+                Nominal: {priceFormatted}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadQris}
+                  disabled={isDownloading}
+                  className="btn-retro-cyan px-4 py-2 text-xs font-display font-black flex items-center gap-1.5 shadow-retro-xs cursor-pointer active:scale-95"
+                >
+                  {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  <span>Unduh Gambar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsQrisZoomOpen(false)}
+                  className="btn-retro-yellow px-4 py-2 text-xs font-display font-black shadow-retro-xs cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

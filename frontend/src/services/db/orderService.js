@@ -259,10 +259,10 @@ export const OrderService = {
     }
 
     return {
-      merchant_name: 'SENI RUPA POLIBATAM',
+      merchant_name: 'CHARMY LUCK ART OFFICIAL',
       qris_image_url: '/qris-dana.png',
-      dana_number: '0812-3456-7890 (DANA Panitia Seni Rupa)',
-      bank_name: 'Bank BCA / DANA Bisnis',
+      dana_number: 'NMID: ID1025452455724',
+      bank_name: 'QRIS Standar Pembayaran Nasional (GPN)',
       instructions: 'Scan QRIS di atas melalui DANA, GoPay, OVO, ShopeePay, BCA Mobile, atau Livin Mandiri sesuai nominal karya. Upload screenshot bukti pembayaran Anda di bawah.',
     };
   },
@@ -271,28 +271,44 @@ export const OrderService = {
    * Simpan Foto QRIS Pameran
    */
   async saveQrisSettings(fileOrData) {
+    let finalImageUrl = '/qris-dana.png';
+
     if (fileOrData instanceof File || fileOrData instanceof Blob) {
-      const formData = new FormData();
-      formData.append('qris_image', fileOrData);
+      // 1. Baca langsung sebagai Base64 Data URL untuk update instan
+      const base64Url = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result || '/qris-dana.png');
+        reader.onerror = () => resolve('/qris-dana.png');
+        reader.readAsDataURL(fileOrData);
+      });
+
+      finalImageUrl = base64Url;
+
+      // 2. Upload ke backend Laravel jika online
       try {
+        const formData = new FormData();
+        formData.append('qris_image', fileOrData);
         const res = await apiClient.post('/settings/qris', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        if (res.data && res.data.success) {
-          return res.data.data;
+        if (res.data && res.data.success && res.data.data?.qris_image_url) {
+          finalImageUrl = res.data.data.qris_image_url;
         }
       } catch (err) {
-        console.warn('Gagal upload QRIS ke server, simpan lokal:', err);
+        console.warn('Gagal upload QRIS ke server, menggunakan penyimpanan lokal:', err);
       }
+    } else if (typeof fileOrData === 'string') {
+      finalImageUrl = fileOrData;
     }
 
-    // Simpan data URL secara lokal
     const settings = {
       merchant_name: 'SENI RUPA POLIBATAM',
-      qris_image_url: typeof fileOrData === 'string' ? fileOrData : '/qris-dana.png',
+      qris_image_url: finalImageUrl,
       dana_number: '0812-3456-7890 (DANA Panitia Seni Rupa)',
       bank_name: 'Bank BCA / DANA Bisnis',
+      updated_at: new Date().toISOString(),
     };
+
     localStorage.setItem(LOCAL_QRIS_KEY, JSON.stringify(settings));
     return settings;
   },

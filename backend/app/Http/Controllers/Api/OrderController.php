@@ -370,17 +370,19 @@ class OrderController extends Controller
     public function getQrisSettings()
     {
         $customQrisPath = storage_path('app/public/qris/qris-active.png');
+        $timestamp = file_exists($customQrisPath) ? filemtime($customQrisPath) : time();
+        
         $qrisImageUrl = file_exists($customQrisPath) 
-            ? asset('storage/qris/qris-active.png') 
-            : asset('qris-dana.png');
+            ? asset('storage/qris/qris-active.png') . '?v=' . $timestamp 
+            : asset('qris-dana.png') . '?v=' . $timestamp;
 
         return response()->json([
             'success' => true,
             'data' => [
-                'merchant_name' => 'SENI RUPA POLIBATAM',
+                'merchant_name' => 'CHARMY LUCK ART OFFICIAL',
                 'qris_image_url' => $qrisImageUrl,
-                'dana_number' => '0812-3456-7890 (DANA Panitia Seni Rupa)',
-                'bank_name' => 'Bank BCA / Mandiri / DANA Bisnis',
+                'dana_number' => 'NMID: ID1025452455724 (A01)',
+                'bank_name' => 'QRIS Standar Pembayaran Nasional (GPN)',
                 'instructions' => 'Scan QRIS di atas melalui DANA, GoPay, OVO, ShopeePay, BCA Mobile, atau Livin Mandiri sesuai nominal karya. Upload screenshot bukti pembayaran Anda di bawah.',
             ],
         ]);
@@ -396,7 +398,7 @@ class OrderController extends Controller
         ]);
 
         $path = $request->file('qris_image')->storeAs('qris', 'qris-active.png', 'public');
-        $qrisImageUrl = asset('storage/' . $path);
+        $qrisImageUrl = asset('storage/' . $path) . '?v=' . time();
 
         return response()->json([
             'success' => true,

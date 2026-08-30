@@ -228,10 +228,11 @@ export default function PanitiaDashboard({
     if (!file) return;
     setIsSavingQris(true);
     try {
-      const res = await OrderService.saveQrisSettings(file);
+      const updated = await OrderService.saveQrisSettings(file);
+      if (updated && updated.qris_image_url) {
+        setQrisSettings(updated);
+      }
       showToast('success', 'Gambar QRIS Pameran berhasil diperbarui!');
-      loadQrisSettings();
-      setIsQrisModalOpen(false);
     } catch (err) {
       showToast('error', 'Gagal memperbarui gambar QRIS.');
     } finally {
@@ -1356,15 +1357,23 @@ export default function PanitiaDashboard({
 
               {/* Current QR Image */}
               <div className="text-center space-y-2">
-                <div className="w-48 h-48 mx-auto bg-white border-2 border-black rounded-xl p-2 shadow-retro-xs flex items-center justify-center overflow-hidden">
-                  <img 
-                    src={qrisSettings.qris_image_url || '/qris-dana.png'} 
-                    alt="QRIS Aktif"
-                    className="w-full h-full object-contain"
-                  />
+                <div className="relative w-52 h-52 mx-auto bg-white border-2 border-black rounded-2xl p-2.5 shadow-retro-xs flex items-center justify-center overflow-hidden">
+                  {isSavingQris ? (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="w-8 h-8 text-black animate-spin" />
+                      <span className="text-xs font-bold text-black">Menyimpan QRIS...</span>
+                    </div>
+                  ) : (
+                    <img 
+                      key={qrisSettings.qris_image_url || 'default'}
+                      src={qrisSettings.qris_image_url || '/qris-dana.png'} 
+                      alt="QRIS Aktif"
+                      className="w-full h-full object-contain"
+                    />
+                  )}
                 </div>
-                <div className="text-xs font-bold text-black">
-                  QRIS Aktif: {qrisSettings.merchant_name}
+                <div className="text-xs font-display font-black text-black">
+                  Merchant: <span className="text-[#FF3388]">{qrisSettings.merchant_name}</span>
                 </div>
               </div>
 
@@ -1376,14 +1385,15 @@ export default function PanitiaDashboard({
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/jpg,image/webp"
+                  disabled={isSavingQris}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleUploadQrisImage(file);
                   }}
-                  className="block w-full text-xs text-neutral-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-2 file:border-black file:text-xs file:font-bold file:bg-[#FFE600] hover:file:bg-[#FFE600]/80 cursor-pointer"
+                  className="block w-full text-xs text-neutral-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-2 file:border-black file:text-xs file:font-bold file:bg-[#FFE600] hover:file:bg-[#FFE600]/80 cursor-pointer disabled:opacity-50"
                 />
                 <p className="text-[10px] text-neutral-500">
-                  Pilih screenshot / file foto QR DANA dari HP Anda. Gambar ini akan langsung tampil di halaman checkout pembeli.
+                  Pilih screenshot / file foto QR DANA dari HP atau laptop Anda. Gambar ini akan langsung tampil di layar pembayaran pembeli secara realtime.
                 </p>
               </div>
 
@@ -1391,9 +1401,9 @@ export default function PanitiaDashboard({
                 <button
                   type="button"
                   onClick={() => setIsQrisModalOpen(false)}
-                  className="btn-retro-white px-4 py-2 text-xs font-bold"
+                  className="btn-retro-yellow px-5 py-2 text-xs font-display font-black shadow-retro-xs cursor-pointer"
                 >
-                  Tutup
+                  Selesai
                 </button>
               </div>
             </div>
