@@ -49,7 +49,10 @@ import {
   ShoppingBag,
   DollarSign,
   CreditCard,
-  Upload
+  Upload,
+  ExternalLink,
+  MessageSquare,
+  XCircle
 } from 'lucide-react';
 import { PanitiaService, RundownService, ArtworkService, OrderService } from '../../services/api';
 import { BOOTH_ZONES } from '../../data/mockData';
@@ -98,10 +101,12 @@ export default function PanitiaDashboard({
   const [orderStatusFilter, setOrderStatusFilter] = useState('Semua');
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [previewProofUrl, setPreviewProofUrl] = useState(null);
+  const [checkingOrder, setCheckingOrder] = useState(null);
+  const [adminCheckNotes, setAdminCheckNotes] = useState('');
   const [qrisSettings, setQrisSettings] = useState({
-    merchant_name: 'SENI RUPA POLIBATAM',
+    merchant_name: 'CHARMY LUCK ART OFFICIAL',
     qris_image_url: '/qris-dana.png',
-    dana_number: '0812-3456-7890 (DANA Panitia)',
+    dana_number: 'NMID: ID1025452455724',
   });
   const [isQrisModalOpen, setIsQrisModalOpen] = useState(false);
   const [isSavingQris, setIsSavingQris] = useState(false);
@@ -189,10 +194,13 @@ export default function PanitiaDashboard({
     }
   }, [activeTab]);
 
-  const handleVerifyOrder = async (orderId) => {
+  const handleVerifyOrder = async (orderId, notes = '') => {
     try {
-      const res = await OrderService.verifyOrder(orderId, currentUser?.nama || 'Panitia');
+      const notesToSave = notes || adminCheckNotes;
+      const res = await OrderService.verifyOrder(orderId, currentUser?.nama || 'Panitia', notesToSave);
       showToast('success', res.message || 'Pembayaran berhasil diverifikasi & karya resmi TERJUAL!');
+      setCheckingOrder(null);
+      setAdminCheckNotes('');
       loadOrders();
       loadLatestArtworks();
     } catch (err) {
@@ -200,13 +208,17 @@ export default function PanitiaDashboard({
     }
   };
 
-  const handleRejectOrder = async (orderId) => {
-    const reason = window.prompt('Masukkan alasan penolakan pesanan (opsional):', 'Bukti transfer tidak valid atau dana belum masuk.');
+  const handleRejectOrder = async (orderId, explicitReason = null) => {
+    let reason = explicitReason;
+    if (reason === null) {
+      reason = window.prompt('Masukkan alasan penolakan pesanan (opsional):', 'Bukti transfer tidak valid atau dana belum masuk.');
+    }
     if (reason === null) return; // User cancelled prompt
 
     try {
       const res = await OrderService.rejectOrder(orderId, currentUser?.nama || 'Panitia', reason);
       showToast('success', res.message || 'Pesanan ditolak & karya kembali tersedia di katalog.');
+      setCheckingOrder(null);
       loadOrders();
       loadLatestArtworks();
     } catch (err) {
@@ -1194,44 +1206,59 @@ export default function PanitiaDashboard({
                               {/* Status & Aksi Verifikasi Panitia */}
                               <td className="p-3.5 align-top text-center">
                                 {isPendingReview ? (
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-1.5 text-center">
                                     <span className="inline-flex items-center gap-1 bg-[#FFE600] text-black text-[10px] font-black px-2.5 py-0.5 rounded-lg border border-black shadow-retro-xs uppercase">
                                       <Clock className="w-3.5 h-3.5" /> Perlu Verifikasi
                                     </span>
-                                    <div className="flex items-center justify-center gap-1.5 pt-1">
+                                    <div className="pt-0.5">
                                       <button
                                         type="button"
-                                        onClick={() => handleVerifyOrder(order.id)}
-                                        className="px-2.5 py-1 bg-[#22C55E] hover:bg-green-600 text-white font-bold text-[11px] rounded-lg border border-black shadow-retro-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1"
-                                        title="Verifikasi Pembayaran Masuk & Tandai Karya Terjual"
+                                        onClick={() => {
+                                          setCheckingOrder(order);
+                                          setAdminCheckNotes(order.admin_notes || '');
+                                        }}
+                                        className="btn-retro-yellow text-xs px-3 py-1.5 font-display font-black flex items-center justify-center gap-1.5 shadow-retro-xs active:scale-95 transition-all cursor-pointer mx-auto"
+                                        title="Buka Layar Pengecekan Lengkap"
                                       >
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        <span>Terima (Lunas)</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRejectOrder(order.id)}
-                                        className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 font-bold text-[11px] rounded-lg border border-red-300 active:scale-95 transition-all cursor-pointer"
-                                        title="Tolak Bukti Tidak Valid"
-                                      >
-                                        Tolak
+                                        <Search className="w-3.5 h-3.5 text-black" />
+                                        <span>Cek Pesanan</span>
                                       </button>
                                     </div>
                                   </div>
                                 ) : isSettled ? (
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 text-center">
                                     <span className="inline-flex items-center gap-1 bg-[#22C55E] text-white text-[10px] font-black px-2.5 py-1 rounded-lg border border-black shadow-retro-xs uppercase">
                                       <CheckCircle2 className="w-3.5 h-3.5" /> Lunas Terverifikasi
                                     </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCheckingOrder(order);
+                                        setAdminCheckNotes(order.admin_notes || '');
+                                      }}
+                                      className="text-[10px] text-blue-700 font-bold hover:underline block mx-auto cursor-pointer pt-0.5"
+                                    >
+                                      Lihat Detail & Bukti
+                                    </button>
                                     <div className="text-[9px] text-neutral-500 font-mono">
                                       Oleh: {order.verified_by_admin || 'Panitia'}
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 text-center">
                                     <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-lg border border-red-300 uppercase">
                                       <AlertTriangle className="w-3.5 h-3.5" /> Ditolak
                                     </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCheckingOrder(order);
+                                        setAdminCheckNotes(order.admin_notes || '');
+                                      }}
+                                      className="text-[10px] text-red-700 font-bold hover:underline block mx-auto cursor-pointer pt-0.5"
+                                    >
+                                      Lihat Rincian
+                                    </button>
                                     {order.rejection_reason && (
                                       <div className="text-[9px] text-red-600 italic">
                                         "{order.rejection_reason}"
@@ -1284,6 +1311,277 @@ export default function PanitiaDashboard({
 
             </div>
 
+          </div>
+        )}
+
+        {/* ================= MODAL CEK PESANAN, DATA PEMBELI, BUKTI & KETERSEDIAAN KARYA ================= */}
+        {checkingOrder && (
+          <div 
+            onClick={() => setCheckingOrder(null)}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in overflow-y-auto"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#FAF7EE] border-3 border-black rounded-3xl p-5 sm:p-6 max-w-3xl w-full max-h-[92vh] flex flex-col space-y-4 shadow-retro-xl overflow-y-auto my-auto"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b-3 border-black pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-[#FFE600] border-2 border-black rounded-xl shadow-retro-xs">
+                    <Search className="w-5 h-5 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-black text-base sm:text-lg text-black flex items-center gap-2">
+                      <span>Pemeriksaan & Validasi Pesanan</span>
+                      <span className="text-xs bg-[#FF3388] text-white px-2 py-0.5 rounded-md border border-black font-mono">
+                        {checkingOrder.id}
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-neutral-600 font-medium">
+                      Periksa kecocokan data diri pembeli, ketersediaan karya fisik, dan validitas struk transfer.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCheckingOrder(null)}
+                  className="p-1.5 bg-white hover:bg-[#FF3388] hover:text-white border-2 border-black rounded-xl shadow-retro-xs transition-colors cursor-pointer text-black"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Main Grid Content */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                
+                {/* Kolom Kiri: Data Diri Pembeli & Ketersediaan Karya */}
+                <div className="md:col-span-6 space-y-3.5">
+                  
+                  {/* Card 1: Data Diri Pembeli */}
+                  <div className="bg-white border-2 border-black rounded-2xl p-4 space-y-2.5 shadow-retro-xs">
+                    <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                      <span className="text-xs font-display font-black text-black flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-[#FF3388]" /> 1. Data Diri Pembeli
+                      </span>
+                      <span className="text-[10px] text-neutral-500 font-mono">
+                        {checkingOrder.created_at ? new Date(checkingOrder.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Hari Ini'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-start justify-between">
+                        <span className="text-neutral-500 text-[11px]">Nama Lengkap:</span>
+                        <span className="font-bold text-black text-right">{checkingOrder.buyer_name}</span>
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <span className="text-neutral-500 text-[11px]">Alamat Email:</span>
+                        <span className="font-mono text-[11px] text-neutral-800 text-right">{checkingOrder.buyer_email}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-neutral-500 text-[11px]">No. WhatsApp:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-black">{checkingOrder.buyer_phone}</span>
+                          {checkingOrder.buyer_phone && (
+                            <a
+                              href={`https://wa.me/${checkingOrder.buyer_phone.replace(/[^0-9]/g, '').replace(/^0/, '62')}?text=${encodeURIComponent(`Halo Kak ${checkingOrder.buyer_name}, kami dari Panitia Pameran Seni Rupa Polibatam mengenai pesanan karya "${checkingOrder.artwork_title}" (ID: ${checkingOrder.id})...`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-1.5 py-0.5 bg-[#22C55E] hover:bg-green-600 text-white rounded border border-black text-[9px] font-black flex items-center gap-1 shadow-retro-xs"
+                              title="Hubungi Pembeli via WhatsApp"
+                            >
+                              <MessageSquare className="w-2.5 h-2.5" /> WA
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="pt-1 border-t border-dashed border-neutral-200">
+                        <span className="text-neutral-500 text-[10px] block">Opsi Serah Terima / Catatan Booth:</span>
+                        <span className="font-medium text-black text-[11px] bg-neutral-100 px-2 py-1 rounded block mt-0.5">
+                          {checkingOrder.pickup_notes || 'Ambil di Booth Pameran Lt. 3'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Ketersediaan Karya Seni */}
+                  {(() => {
+                    const art = artworksList.find((a) => a.id === checkingOrder.artwork_id);
+                    const isCurrentlySold = art?.saleStatus === 'sold' && checkingOrder.transaction_status !== 'settlement';
+                    return (
+                      <div className="bg-white border-2 border-black rounded-2xl p-4 space-y-2.5 shadow-retro-xs">
+                        <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                          <span className="text-xs font-display font-black text-black flex items-center gap-1.5">
+                            <ShoppingBag className="w-4 h-4 text-[#00F0FF]" /> 2. Ketersediaan & Info Karya
+                          </span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded border border-black uppercase ${isCurrentlySold ? 'bg-red-200 text-red-900' : 'bg-[#CCFF00] text-black'}`}>
+                            {isCurrentlySold ? '⚠️ Sudah Terjual' : '🟢 1-of-1 Tersedia'}
+                          </span>
+                        </div>
+
+                        <div className="flex gap-3 items-center">
+                          {art?.imageUrl || checkingOrder.artwork?.imageUrl ? (
+                            <img 
+                              src={art?.imageUrl || checkingOrder.artwork?.imageUrl} 
+                              alt={checkingOrder.artwork_title}
+                              className="w-14 h-14 object-cover rounded-xl border-2 border-black shadow-retro-xs shrink-0"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 bg-neutral-200 border-2 border-black rounded-xl flex items-center justify-center shrink-0">
+                              <ImageIcon className="w-6 h-6 text-neutral-400" />
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <h5 className="font-display font-black text-xs sm:text-sm text-black truncate">
+                              {checkingOrder.artwork_title}
+                            </h5>
+                            <div className="text-[10px] text-neutral-600 truncate">
+                              Seniman: <strong className="text-black">{art?.artist || 'Divisi Seni Rupa'}</strong>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 truncate">
+                              Lokasi: <span className="font-semibold text-black">{art?.boothName || 'Zona Pameran Lt. 3'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#FAF7EE] border border-black rounded-xl p-2.5 flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-neutral-700">Nominal Pas Tagihan:</span>
+                          <span className="font-display font-black text-sm sm:text-base text-[#FF3388]">
+                            Rp {(checkingOrder.gross_amount || 150000).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                </div>
+
+                {/* Kolom Kanan: Bukti Transfer & Catatan Verifikasi */}
+                <div className="md:col-span-6 space-y-3.5">
+                  
+                  {/* Card 3: Foto Bukti Transfer Struk */}
+                  <div className="bg-white border-2 border-black rounded-2xl p-4 space-y-2.5 shadow-retro-xs">
+                    <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                      <span className="text-xs font-display font-black text-black flex items-center gap-1.5">
+                        <ImageIcon className="w-4 h-4 text-[#FFE600]" /> 3. Bukti Struk Pembayaran
+                      </span>
+                      <span className="text-[10px] text-neutral-500 font-bold">
+                        {checkingOrder.payment_type || 'QRIS DANA'}
+                      </span>
+                    </div>
+
+                    {checkingOrder.payment_proof_url ? (
+                      <div className="space-y-2">
+                        <div 
+                          onClick={() => setPreviewProofUrl(checkingOrder.payment_proof_url)}
+                          className="relative group w-full h-44 bg-neutral-900 border-2 border-black rounded-xl overflow-hidden flex items-center justify-center cursor-zoom-in"
+                          title="Klik untuk perbesar HD"
+                        >
+                          <img 
+                            src={checkingOrder.payment_proof_url} 
+                            alt="Bukti Transfer Pembeli"
+                            className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-200"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="bg-white text-black font-display font-black text-[10px] px-2.5 py-1 rounded-lg border border-black shadow-retro-xs flex items-center gap-1">
+                              <Maximize2 className="w-3.5 h-3.5 text-[#FF3388]" /> Perbesar HD
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-neutral-500">
+                          <span>Pastikan tanggal transfer dan mutasi DANA sesuai.</span>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewProofUrl(checkingOrder.payment_proof_url)}
+                            className="text-blue-700 font-bold hover:underline cursor-pointer"
+                          >
+                            Buka Ukuran Asli
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-32 border-2 border-dashed border-neutral-300 rounded-xl flex flex-col items-center justify-center text-neutral-400 space-y-1">
+                        <ImageIcon className="w-8 h-8" />
+                        <span className="text-xs italic">Tidak ada lampiran bukti transfer</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 4: Catatan Panitia & Checklist */}
+                  <div className="bg-white border-2 border-black rounded-2xl p-4 space-y-2 shadow-retro-xs">
+                    <label className="block text-xs font-display font-black text-black">
+                      4. Catatan Verifikasi Panitia (Opsional):
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={adminCheckNotes}
+                      onChange={(e) => setAdminCheckNotes(e.target.value)}
+                      placeholder="Contoh: Mutasi DANA Rp 150.000 atas nama pengirim sudah masuk jam 15:20 WIB."
+                      className="w-full text-xs p-2.5 bg-[#FAF7EE] border-2 border-black rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-[#FFE600]"
+                    />
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Modal Actions Footer */}
+              <div className="pt-2 border-t-2 border-black flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                
+                {/* Status Info */}
+                <div className="text-xs">
+                  {checkingOrder.transaction_status === 'pending_review' ? (
+                    <span className="text-neutral-600 font-medium">
+                      Status: <strong className="text-[#FF3388]">Menunggu Konfirmasi Panitia</strong>
+                    </span>
+                  ) : checkingOrder.transaction_status === 'settlement' ? (
+                    <span className="text-green-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" /> Lunas Terverifikasi ({checkingOrder.verified_by_admin || 'Panitia'})
+                    </span>
+                  ) : (
+                    <span className="text-red-600 font-bold flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4" /> Ditolak ({checkingOrder.rejection_reason || 'Bukti tidak valid'})
+                    </span>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  {checkingOrder.transaction_status === 'pending_review' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleRejectOrder(checkingOrder.id)}
+                        className="px-3.5 py-2.5 bg-red-100 hover:bg-red-200 text-red-800 border-2 border-red-300 font-display font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      >
+                        Tolak Pesanan
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyOrder(checkingOrder.id, adminCheckNotes)}
+                        className="btn-retro-yellow px-5 py-2.5 text-xs font-display font-black shadow-retro-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-black" />
+                        <span>Terima (Lunas) & Tandai Terjual</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setCheckingOrder(null)}
+                      className="btn-retro-yellow px-5 py-2 text-xs font-display font-black shadow-retro-xs cursor-pointer"
+                    >
+                      Tutup Rincian
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
           </div>
         )}
 
