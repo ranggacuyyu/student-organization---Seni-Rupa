@@ -82,6 +82,13 @@ class ArtworkController extends Controller
             'category' => $art->kategori,
             'medium' => $art->medium_bahan,
             'dimensions' => $art->dimensi,
+            'price' => (int)($art->price ?: 150000),
+            'isForSale' => (bool)($art->is_for_sale ?? true),
+            'saleStatus' => (string)($art->sale_status ?: 'available'),
+            'buyerName' => $art->buyer_name,
+            'buyerEmail' => $art->buyer_email,
+            'buyerPhone' => $art->buyer_phone,
+            'bookedUntil' => $art->booked_until?->toIso8601String(),
             'year' => $art->tahun_pembuatan,
             'imageUrl' => $imageUrl,
             'description' => $art->deskripsi_filosofi,
@@ -100,6 +107,10 @@ class ArtworkController extends Controller
 
         if ($request->filled('category') && $request->category !== 'Semua Kategori') {
             $query->where('kategori', $request->category);
+        }
+
+        if ($request->filled('sale_status')) {
+            $query->where('sale_status', $request->sale_status);
         }
 
         if ($request->filled('booth_id')) {
@@ -157,6 +168,7 @@ class ArtworkController extends Controller
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:10240',
             'imageUrl' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $imageUrl = $request->imageUrl;
@@ -192,6 +204,9 @@ class ArtworkController extends Controller
             'deskripsi_filosofi' => $request->description,
             'medium_bahan' => $request->medium ?? 'Mixed Media',
             'dimensi' => $request->dimensions ?? 'Ukuran Standar',
+            'price' => (int) ($request->price ?: 150000),
+            'is_for_sale' => $request->has('isForSale') ? filter_var($request->isForSale, FILTER_VALIDATE_BOOLEAN) : true,
+            'sale_status' => $request->saleStatus ?? 'available',
             'tahun_pembuatan' => $request->year ?? '2024',
             'foto_utama_url' => $imageUrl,
             'booth_id' => $resolvedBoothId,
@@ -230,6 +245,9 @@ class ArtworkController extends Controller
         if ($request->filled('description')) $art->deskripsi_filosofi = $request->description;
         if ($request->filled('medium')) $art->medium_bahan = $request->medium;
         if ($request->filled('dimensions')) $art->dimensi = $request->dimensions;
+        if ($request->filled('price')) $art->price = (int) $request->price;
+        if ($request->has('isForSale')) $art->is_for_sale = filter_var($request->isForSale, FILTER_VALIDATE_BOOLEAN);
+        if ($request->filled('saleStatus')) $art->sale_status = $request->saleStatus;
         if ($request->filled('year')) $art->tahun_pembuatan = $request->year;
         if ($request->filled('boothId')) $art->booth_id = $request->boothId;
         if ($request->filled('boothName')) $art->booth_name = $request->boothName;

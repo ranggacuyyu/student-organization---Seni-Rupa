@@ -327,14 +327,18 @@ function ArtworkCategoryRail({
                         {art.category || section.categoryName}
                       </div>
 
-                      {/* Confidential Artist Badge on image if secret */}
-                      {isSecret ? (
+                      {/* Sale Status / Price Tag */}
+                      {art.saleStatus === 'sold' ? (
+                        <div className="absolute top-3 right-3 bg-[#FF3388] text-white text-[10px] font-black px-2.5 py-0.5 rounded-lg border-2 border-black shadow-retro-sm flex items-center gap-1 pointer-events-none uppercase">
+                          <Lock className="w-3 h-3" /> Terjual
+                        </div>
+                      ) : isSecret ? (
                         <div className="absolute top-3 right-3 bg-[#7B2CBF] text-[#FFE600] text-[10px] font-black px-2.5 py-0.5 rounded-lg border-2 border-black shadow-retro-sm flex items-center gap-1 pointer-events-none">
                           <Lock className="w-3 h-3" /> Dirahasiakan
                         </div>
                       ) : (
-                        <div className="absolute top-3 right-3 bg-black/80 text-white text-[10px] font-mono px-2 py-0.5 rounded border border-white/30 pointer-events-none">
-                          {art.dimensions || 'Karya Seni'}
+                        <div className="absolute top-3 right-3 bg-black/85 text-[#CCFF00] text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border border-white/30 pointer-events-none">
+                          {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(art.price || 150000)}
                         </div>
                       )}
 

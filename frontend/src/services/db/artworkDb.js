@@ -85,6 +85,14 @@ export const formatArtItem = (art) => {
     category: art.category || art.kategori || 'Lukis',
     medium: art.medium || art.medium_bahan || 'Mixed Media',
     dimensions: art.dimensions || art.dimensi || 'Ukuran Standar',
+    price: Number(art.price ?? art.harga ?? 150000),
+    isForSale: Boolean(art.isForSale ?? art.is_for_sale ?? true),
+    saleStatus: String(art.saleStatus || art.sale_status || 'available'),
+    buyerName: art.buyerName || art.buyer_name || null,
+    buyerEmail: art.buyerEmail || art.buyer_email || null,
+    buyerPhone: art.buyerPhone || art.buyer_phone || null,
+    bookedUntil: art.bookedUntil || art.booked_until || null,
+    currentOrderId: art.currentOrderId || art.current_order_id || null,
     year: String(art.year || art.tahun_pembuatan || '2024'),
     imageUrl: art.imageUrl || art.foto_utama_url || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80',
     description: art.description || art.deskripsi_filosofi || '',
@@ -494,4 +502,23 @@ export const ArtworkDb = {
       return [];
     }
   },
+
+  /**
+   * Memperbarui status penjualan karya di cache lokal / DB
+   */
+  updateArtworkSaleStatus(artworkId, saleStatus, buyerData = {}) {
+    const list = getLocalArtworks();
+    const idx = list.findIndex((a) => String(a.id) === String(artworkId));
+    if (idx !== -1) {
+      list[idx].saleStatus = saleStatus;
+      if (buyerData.buyerName) list[idx].buyerName = buyerData.buyerName;
+      if (buyerData.buyerEmail) list[idx].buyerEmail = buyerData.buyerEmail;
+      if (buyerData.buyerPhone) list[idx].buyerPhone = buyerData.buyerPhone;
+      if (buyerData.orderId) list[idx].currentOrderId = buyerData.orderId;
+      saveLocalArtworks(list);
+      return list[idx];
+    }
+    return null;
+  },
 };
+

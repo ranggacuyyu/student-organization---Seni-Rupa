@@ -23,6 +23,14 @@ class Artwork extends Model
         'deskripsi_filosofi',
         'medium_bahan',
         'dimensi',
+        'price',
+        'is_for_sale',
+        'sale_status',
+        'buyer_name',
+        'buyer_email',
+        'buyer_phone',
+        'current_order_id',
+        'booked_until',
         'tahun_pembuatan',
         'foto_utama_url',
         'foto_tambahan_urls',
@@ -34,8 +42,11 @@ class Artwork extends Model
     ];
 
     protected $casts = [
+        'price' => 'integer',
+        'is_for_sale' => 'boolean',
         'is_highlighted' => 'boolean',
         'likes_count' => 'integer',
+        'booked_until' => 'datetime',
         'foto_tambahan_urls' => 'array',
         'tags' => 'array',
     ];
@@ -48,5 +59,10 @@ class Artwork extends Model
     public function likes()
     {
         return $this->hasMany(ArtworkLike::class, 'artwork_id', 'id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'artwork_id', 'id');
     }
 }

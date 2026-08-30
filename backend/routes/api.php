@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoothController;
 use App\Http\Controllers\Api\GuestbookController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PanitiaController;
+use App\Http\Controllers\Api\PaymentCallbackController;
 use App\Http\Controllers\Api\RundownController;
 use Illuminate\Support\Facades\Route;
 
@@ -95,3 +97,25 @@ Route::prefix('panitia')->group(function () {
     // Kebutuhan Peserta
     Route::get('/participant-needs', [PanitiaController::class, 'getParticipantNeeds']);
 });
+
+// === 9. Transaksi Pembelian Karya Seni (QRIS Transfer & Verifikasi Bukti) ===
+Route::prefix('orders')->group(function () {
+    Route::get('/', [OrderController::class, 'index']);
+    Route::post('/', [OrderController::class, 'store']);
+    Route::post('/create-snap-token', [OrderController::class, 'createSnapToken']);
+    Route::get('/{id}', [OrderController::class, 'show']);
+    Route::patch('/{id}/verify', [OrderController::class, 'verify']);
+    Route::patch('/{id}/reject', [OrderController::class, 'reject']);
+    Route::patch('/{id}/pickup', [OrderController::class, 'togglePickup']);
+});
+
+// === 10. Pengaturan QRIS Pameran ===
+Route::prefix('settings')->group(function () {
+    Route::get('/qris', [OrderController::class, 'getQrisSettings']);
+    Route::post('/qris', [OrderController::class, 'saveQrisSettings']);
+});
+
+// === 11. Webhook Notifikasi Pembayaran (Opsional Fallback) ===
+Route::post('/payment/notification', [PaymentCallbackController::class, 'handle']);
+
+

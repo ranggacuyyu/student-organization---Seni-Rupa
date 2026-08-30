@@ -12,6 +12,7 @@ import { GuestbookDb } from './db/guestbookDb';
 import { AuthDb } from './db/authDb';
 import { PanitiaDb } from './db/panitiaDb';
 import { BoothDb } from './db/boothDb';
+import { OrderService } from './db/orderService';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
@@ -76,5 +77,7 @@ export const GuestbookService = GuestbookDb;
 export const AuthService = AuthDb;
 export const PanitiaService = PanitiaDb;
 export const BoothService = BoothDb;
+export { OrderService };
 
 export { supabase, isSupabaseConfigured, testDatabaseConnection };
+

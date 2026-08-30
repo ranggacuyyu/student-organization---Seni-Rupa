@@ -11,6 +11,9 @@ import {
   Clock, 
   Sparkles, 
   MapPin, 
+  User,
+  Mail,
+  Phone,
   UserCheck, 
   Users, 
   Package, 
@@ -42,9 +45,13 @@ import {
   RotateCcw,
   Maximize2,
   FileText,
-  Compass
+  Compass,
+  ShoppingBag,
+  DollarSign,
+  CreditCard,
+  Upload
 } from 'lucide-react';
-import { PanitiaService, RundownService, ArtworkService } from '../../services/api';
+import { PanitiaService, RundownService, ArtworkService, OrderService } from '../../services/api';
 import { BOOTH_ZONES } from '../../data/mockData';
 import { resolveBoothId, resolveBoothName } from '../../services/db/artworkDb';
 import CameraQrScanner from '../../components/panitia/CameraQrScanner';
@@ -59,6 +66,8 @@ const INITIAL_ARTWORK_FORM = {
   category: 'Lukis',
   medium: 'Acrylic on Canvas',
   dimensions: '100 x 80 cm',
+  price: 150000,
+  isForSale: true,
   year: '2024',
   imageUrl: '',
   imageFile: null,
@@ -80,7 +89,22 @@ export default function PanitiaDashboard({
   const containerRef = useRef(null);
   const tabContentRef = useRef(null);
 
-  const [activeTab, setActiveTab] = useState('artworks'); // 'artworks' | 'scanner' | 'participants' | 'monitoring'
+  const [activeTab, setActiveTab] = useState('artworks'); // 'artworks' | 'transactions' | 'scanner' | 'participants' | 'monitoring'
+
+  // ================= TRANSACTIONS & MANUAL QRIS VERIFICATION STATE =================
+  const [orders, setOrders] = useState([]);
+  const [orderStats, setOrderStats] = useState({});
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('Semua');
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [previewProofUrl, setPreviewProofUrl] = useState(null);
+  const [qrisSettings, setQrisSettings] = useState({
+    merchant_name: 'SENI RUPA POLIBATAM',
+    qris_image_url: '/qris-dana.png',
+    dana_number: '0812-3456-7890 (DANA Panitia)',
+  });
+  const [isQrisModalOpen, setIsQrisModalOpen] = useState(false);
+  const [isSavingQris, setIsSavingQris] = useState(false);
 
   // ================= SCANNER STATE =================
   const [scanQuery, setScanQuery] = useState('');
@@ -132,6 +156,86 @@ export default function PanitiaDashboard({
       }
     } catch (e) {
       console.warn('Failed to load live artworks in PanitiaDashboard:', e);
+    }
+  };
+
+  // Load orders
+  const loadOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      const res = await OrderService.getOrders();
+      setOrders(res.orders || []);
+      setOrderStats(res.stats || {});
+    } catch (err) {
+      console.warn('Failed to load orders in PanitiaDashboard:', err);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  const loadQrisSettings = async () => {
+    try {
+      const data = await OrderService.getQrisSettings();
+      if (data) setQrisSettings(data);
+    } catch (err) {
+      console.warn('Failed to load QRIS settings:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'transactions') {
+      loadOrders();
+      loadQrisSettings();
+    }
+  }, [activeTab]);
+
+  const handleVerifyOrder = async (orderId) => {
+    try {
+      const res = await OrderService.verifyOrder(orderId, currentUser?.nama || 'Panitia');
+      showToast('success', res.message || 'Pembayaran berhasil diverifikasi & karya resmi TERJUAL!');
+      loadOrders();
+      loadLatestArtworks();
+    } catch (err) {
+      showToast('error', err.message || 'Gagal memverifikasi pesanan.');
+    }
+  };
+
+  const handleRejectOrder = async (orderId) => {
+    const reason = window.prompt('Masukkan alasan penolakan pesanan (opsional):', 'Bukti transfer tidak valid atau dana belum masuk.');
+    if (reason === null) return; // User cancelled prompt
+
+    try {
+      const res = await OrderService.rejectOrder(orderId, currentUser?.nama || 'Panitia', reason);
+      showToast('success', res.message || 'Pesanan ditolak & karya kembali tersedia di katalog.');
+      loadOrders();
+      loadLatestArtworks();
+    } catch (err) {
+      showToast('error', err.message || 'Gagal menolak pesanan.');
+    }
+  };
+
+  const handleTogglePickup = async (orderId) => {
+    try {
+      const res = await OrderService.togglePickup(orderId, currentUser?.nama || 'Panitia Booth');
+      showToast('success', res.message || 'Status serah terima berhasil diperbarui!');
+      loadOrders();
+    } catch (err) {
+      showToast('error', err.message || 'Gagal memperbarui status serah terima.');
+    }
+  };
+
+  const handleUploadQrisImage = async (file) => {
+    if (!file) return;
+    setIsSavingQris(true);
+    try {
+      const res = await OrderService.saveQrisSettings(file);
+      showToast('success', 'Gambar QRIS Pameran berhasil diperbarui!');
+      loadQrisSettings();
+      setIsQrisModalOpen(false);
+    } catch (err) {
+      showToast('error', 'Gagal memperbarui gambar QRIS.');
+    } finally {
+      setIsSavingQris(false);
     }
   };
 
@@ -216,6 +320,8 @@ export default function PanitiaDashboard({
       category: art.category || art.kategori || 'Lukis',
       medium: art.medium || art.medium_bahan || 'Acrylic on Canvas',
       dimensions: art.dimensions || art.dimensi || '100 x 80 cm',
+      price: Number(art.price ?? art.harga ?? 150000),
+      isForSale: art.isForSale !== undefined ? Boolean(art.isForSale) : (art.is_for_sale !== undefined ? Boolean(art.is_for_sale) : true),
       year: String(art.year || art.tahun_pembuatan || '2024'),
       imageUrl: art.imageUrl || art.foto_utama_url || '',
       imageFile: null,
@@ -495,6 +601,18 @@ export default function PanitiaDashboard({
         </button>
 
         <button
+          onClick={() => setActiveTab('transactions')}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
+            activeTab === 'transactions'
+              ? 'bg-[#CCFF00] text-black border-black shadow-retro-sm -translate-y-0.5 scale-105'
+              : 'bg-white text-neutral-700 border-black/30 hover:bg-neutral-50'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 text-black" />
+          <span>Penjualan & Transaksi ({orders.length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('scanner')}
           className={`px-4 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm border-2 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap ${
             activeTab === 'scanner'
@@ -753,6 +871,532 @@ export default function PanitiaDashboard({
 
             </div>
 
+          </div>
+        )}
+
+        {/* ================= TAB 1.5: TRANSAKSI & VERIFIKASI QRIS BUKTI TRANSFER ================= */}
+        {activeTab === 'transactions' && (
+          <div className="space-y-6">
+            
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Total Revenue */}
+              <div className="card-retro p-4 sm:p-5 bg-white space-y-1">
+                <div className="flex items-center justify-between text-neutral-500 text-xs font-bold uppercase">
+                  <span>Total Omzet Terverifikasi</span>
+                  <div className="p-1.5 bg-[#CCFF00] text-black border border-black rounded-lg">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="font-display font-black text-xl sm:text-2xl text-black">
+                  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(orderStats.total_sales_amount || 0)}
+                </div>
+                <div className="text-[11px] text-neutral-600 font-medium">
+                  Dari {orderStats.total_sold_artworks || 0} karya lunas terverifikasi
+                </div>
+              </div>
+
+              {/* Menunggu Review */}
+              <div className="card-retro p-4 sm:p-5 bg-white space-y-1">
+                <div className="flex items-center justify-between text-neutral-500 text-xs font-bold uppercase">
+                  <span>Menunggu Verifikasi</span>
+                  <div className="p-1.5 bg-[#FFE600] text-black border border-black rounded-lg">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="font-display font-black text-xl sm:text-2xl text-black">
+                  {orderStats.pending_orders || 0} Pesanan
+                </div>
+                <div className="text-[11px] text-neutral-600 font-medium">
+                  Ada bukti transfer baru perlu dicek
+                </div>
+              </div>
+
+              {/* Total Artworks Sold */}
+              <div className="card-retro p-4 sm:p-5 bg-white space-y-1">
+                <div className="flex items-center justify-between text-neutral-500 text-xs font-bold uppercase">
+                  <span>Karya Terjual (1-of-1)</span>
+                  <div className="p-1.5 bg-[#FF3388] text-white border border-black rounded-lg">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="font-display font-black text-xl sm:text-2xl text-black">
+                  {orderStats.total_sold_artworks || 0} Karya
+                </div>
+                <div className="text-[11px] text-neutral-600 font-medium">
+                  Karya resmi menjadi milik kolektor
+                </div>
+              </div>
+
+              {/* Physical Artwork Picked Up */}
+              <div className="card-retro p-4 sm:p-5 bg-white space-y-1">
+                <div className="flex items-center justify-between text-neutral-500 text-xs font-bold uppercase">
+                  <span>Serah Terima Fisik</span>
+                  <div className="p-1.5 bg-[#00F0FF] text-black border border-black rounded-lg">
+                    <Package className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="font-display font-black text-xl sm:text-2xl text-black">
+                  {orderStats.picked_up_count || 0} / {orderStats.total_sold_artworks || 0}
+                </div>
+                <div className="text-[11px] text-neutral-600 font-medium">
+                  Karya fisik diambil di booth pameran
+                </div>
+              </div>
+
+            </div>
+
+            {/* QRIS Settings Banner for Panitia */}
+            <div className="card-retro p-4 sm:p-5 bg-gradient-to-r from-[#FFE600]/30 to-[#00F0FF]/20 border-3 border-black flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white border-2 border-black rounded-xl p-1 shadow-retro-xs shrink-0 flex items-center justify-center">
+                  <QrCode className="w-8 h-8 text-black" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-display font-black text-sm text-black">QRIS Pembayaran Pameran Aktif</h4>
+                    <span className="bg-[#22C55E] text-white text-[9px] font-black px-2 py-0.5 rounded border border-black uppercase">Aktif</span>
+                  </div>
+                  <p className="text-xs text-neutral-700 font-medium mt-0.5">
+                    Merchant: <strong>{qrisSettings.merchant_name}</strong> • Pengunjung scan QRIS ini saat memesan karya.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsQrisModalOpen(true)}
+                className="btn-retro-yellow text-xs px-4 py-2 flex items-center gap-1.5 shrink-0 shadow-retro-xs active:scale-95 cursor-pointer"
+              >
+                <QrCode className="w-4 h-4" />
+                <span>Lihat / Ganti Gambar QRIS</span>
+              </button>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="card-retro p-4 sm:p-5 bg-white space-y-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto flex-1">
+                  
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                    <input
+                      type="text"
+                      value={orderSearch}
+                      onChange={(e) => setOrderSearch(e.target.value)}
+                      placeholder="Cari ID Pesanan, Nama Pembeli, Karya..."
+                      className="w-full pl-10 pr-4 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#CCFF00]"
+                    />
+                    {orderSearch && (
+                      <button onClick={() => setOrderSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Status Filter */}
+                  <select
+                    value={orderStatusFilter}
+                    onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    className="w-full sm:w-auto px-3 py-2 bg-[#FAF7EE] border-2 border-black rounded-xl text-xs font-bold focus:outline-none"
+                  >
+                    <option value="Semua">Semua Status Pesanan</option>
+                    <option value="pending_review">🟡 Menunggu Verifikasi Bukti Transfer</option>
+                    <option value="settlement">🟢 Lunas Terverifikasi (Karya Terjual)</option>
+                    <option value="not_picked_up">📦 Lunas, Belum Diambil di Booth</option>
+                    <option value="picked_up">✅ Lunas & Sudah Diserahkan</option>
+                    <option value="rejected">🔴 Pesanan Ditolak</option>
+                  </select>
+
+                </div>
+
+                {/* Refresh Orders Button */}
+                <button
+                  onClick={loadOrders}
+                  disabled={isLoadingOrders}
+                  className="btn-retro-yellow text-xs sm:text-sm px-4 py-2 flex items-center justify-center gap-2 w-full md:w-auto shrink-0 active:scale-95 cursor-pointer"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoadingOrders ? 'animate-spin' : ''}`} />
+                  <span>Refresh Pesanan</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Orders Table Container */}
+            <div className="card-retro bg-white overflow-hidden">
+              <div className="p-4 sm:p-5 border-b-2 border-black flex items-center justify-between bg-[#FAF7EE]">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-black" />
+                  <h3 className="font-display font-black text-base sm:text-lg text-black">
+                    Kelola Pesanan & Verifikasi Bukti Transfer Masuk
+                  </h3>
+                </div>
+                <span className="text-xs font-bold font-mono bg-black text-[#FFE600] px-2.5 py-1 rounded-lg">
+                  {orders.length} Total Pesanan
+                </span>
+              </div>
+
+              {orders.length === 0 ? (
+                <div className="py-16 px-4 text-center space-y-3">
+                  <div className="w-16 h-16 bg-[#FFE600] border-2 border-black rounded-2xl mx-auto flex items-center justify-center shadow-retro-sm">
+                    <ShoppingBag className="w-8 h-8 text-black" />
+                  </div>
+                  <h4 className="font-display font-black text-lg text-black">Belum Ada Pesanan Masuk</h4>
+                  <p className="text-xs text-neutral-600 max-w-md mx-auto">
+                    Saat pengunjung memesan karya dan mengunggah screenshot bukti transfer, data pembeli dan bukti struk akan otomatis muncul di sini untuk Anda verifikasi.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-neutral-100 border-b-2 border-black text-neutral-700 font-bold uppercase tracking-wider text-[10px]">
+                        <th className="p-3.5">ID Pesanan & Waktu</th>
+                        <th className="p-3.5">Karya Seni & Nominal</th>
+                        <th className="p-3.5">Data Pembeli / Kolektor</th>
+                        <th className="p-3.5 text-center">Bukti Transfer</th>
+                        <th className="p-3.5 text-center">Status & Aksi Verifikasi</th>
+                        <th className="p-3.5 text-center">Serah Terima Fisik (Booth)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-200">
+                      {orders
+                        .filter((ord) => {
+                          const q = orderSearch.toLowerCase();
+                          const matchSearch =
+                            !orderSearch ||
+                            ord.id?.toLowerCase().includes(q) ||
+                            ord.artwork_title?.toLowerCase().includes(q) ||
+                            ord.artwork?.judul?.toLowerCase().includes(q) ||
+                            ord.buyer_name?.toLowerCase().includes(q) ||
+                            ord.buyer_email?.toLowerCase().includes(q) ||
+                            ord.buyer_phone?.toLowerCase().includes(q);
+
+                          const status = (ord.transaction_status || 'pending_review').toLowerCase();
+                          let matchStatus = true;
+                          if (orderStatusFilter === 'settlement') matchStatus = ['settlement', 'verified', 'success'].includes(status);
+                          else if (orderStatusFilter === 'pending_review') matchStatus = ['pending_review', 'pending'].includes(status);
+                          else if (orderStatusFilter === 'rejected') matchStatus = ['rejected', 'cancel', 'expire'].includes(status);
+                          else if (orderStatusFilter === 'picked_up') matchStatus = Boolean(ord.is_picked_up);
+                          else if (orderStatusFilter === 'not_picked_up') matchStatus = !ord.is_picked_up && ['settlement', 'verified', 'success'].includes(status);
+
+                          return matchSearch && matchStatus;
+                        })
+                        .map((order) => {
+                          const status = (order.transaction_status || 'pending_review').toLowerCase();
+                          const isSettled = ['settlement', 'verified', 'success'].includes(status);
+                          const isPendingReview = ['pending_review', 'pending'].includes(status);
+                          const isRejected = ['rejected', 'cancel', 'expire'].includes(status);
+
+                          const grossFormatted = new Intl.NumberFormat('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                            maximumFractionDigits: 0,
+                          }).format(order.gross_amount || 0);
+
+                          const artworkTitle = order.artwork?.judul || order.artwork_title || 'Karya Seni Unik';
+
+                          return (
+                            <tr key={order.id} className="hover:bg-[#FAF7EE] transition-colors">
+                              
+                              {/* Order ID & Date */}
+                              <td className="p-3.5 align-top">
+                                <div className="font-mono font-bold text-black text-[11px]">
+                                  {order.id}
+                                </div>
+                                <div className="text-[10px] text-neutral-500 font-medium mt-0.5">
+                                  {order.created_at ? new Date(order.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-'}
+                                </div>
+                              </td>
+
+                              {/* Artwork details & Price */}
+                              <td className="p-3.5 align-top">
+                                <div className="font-display font-black text-black text-xs sm:text-sm">
+                                  {artworkTitle}
+                                </div>
+                                <div className="font-display font-black text-[#FF3388] text-xs mt-0.5">
+                                  {grossFormatted}
+                                </div>
+                                <div className="text-[10px] text-neutral-500 font-medium">
+                                  Metode: <span className="font-bold text-neutral-700">{order.payment_type || 'QRIS DANA'}</span>
+                                </div>
+                              </td>
+
+                              {/* Buyer info */}
+                              <td className="p-3.5 align-top space-y-0.5">
+                                <div className="font-bold text-black flex items-center gap-1.5">
+                                  <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                                  <span className="truncate max-w-[160px]">{order.buyer_name || '-'}</span>
+                                </div>
+                                <div className="text-[11px] text-neutral-600 flex items-center gap-1.5">
+                                  <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                                  <a href={`mailto:${order.buyer_email}`} className="hover:underline hover:text-[#FF3388] truncate max-w-[160px]">
+                                    {order.buyer_email || '-'}
+                                  </a>
+                                </div>
+                                <div className="text-[11px] text-neutral-600 flex items-center gap-1.5">
+                                  <Phone className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                                  {order.buyer_phone ? (
+                                    <a
+                                      href={`https://wa.me/${order.buyer_phone.replace(/[^0-9]/g, '')}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-green-700 font-bold hover:underline"
+                                    >
+                                      {order.buyer_phone} (WA)
+                                    </a>
+                                  ) : '-'}
+                                </div>
+                                {order.pickup_notes && (
+                                  <div className="text-[10px] text-neutral-500 italic pt-0.5">
+                                    Catatan: "{order.pickup_notes}"
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Bukti Transfer (Thumbnail click to open Lightbox) */}
+                              <td className="p-3.5 align-top text-center">
+                                {order.payment_proof_url ? (
+                                  <div className="inline-flex flex-col items-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewProofUrl(order.payment_proof_url)}
+                                      className="relative group border-2 border-black rounded-xl overflow-hidden w-14 h-14 bg-neutral-100 shadow-retro-xs cursor-pointer hover:scale-105 transition-transform"
+                                      title="Ketuk untuk melihat foto bukti transfer penuh"
+                                    >
+                                      <img 
+                                        src={order.payment_proof_url} 
+                                        alt="Bukti Transfer"
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                        <Eye className="w-4 h-4" />
+                                      </div>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewProofUrl(order.payment_proof_url)}
+                                      className="text-[10px] text-blue-700 font-bold hover:underline mt-1 block"
+                                    >
+                                      Lihat Struk
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-neutral-400 italic">
+                                    Tidak ada lampiran
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Status & Aksi Verifikasi Panitia */}
+                              <td className="p-3.5 align-top text-center">
+                                {isPendingReview ? (
+                                  <div className="space-y-1.5">
+                                    <span className="inline-flex items-center gap-1 bg-[#FFE600] text-black text-[10px] font-black px-2.5 py-0.5 rounded-lg border border-black shadow-retro-xs uppercase">
+                                      <Clock className="w-3.5 h-3.5" /> Perlu Verifikasi
+                                    </span>
+                                    <div className="flex items-center justify-center gap-1.5 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleVerifyOrder(order.id)}
+                                        className="px-2.5 py-1 bg-[#22C55E] hover:bg-green-600 text-white font-bold text-[11px] rounded-lg border border-black shadow-retro-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                                        title="Verifikasi Pembayaran Masuk & Tandai Karya Terjual"
+                                      >
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        <span>Terima (Lunas)</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRejectOrder(order.id)}
+                                        className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 font-bold text-[11px] rounded-lg border border-red-300 active:scale-95 transition-all cursor-pointer"
+                                        title="Tolak Bukti Tidak Valid"
+                                      >
+                                        Tolak
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : isSettled ? (
+                                  <div className="space-y-1">
+                                    <span className="inline-flex items-center gap-1 bg-[#22C55E] text-white text-[10px] font-black px-2.5 py-1 rounded-lg border border-black shadow-retro-xs uppercase">
+                                      <CheckCircle2 className="w-3.5 h-3.5" /> Lunas Terverifikasi
+                                    </span>
+                                    <div className="text-[9px] text-neutral-500 font-mono">
+                                      Oleh: {order.verified_by_admin || 'Panitia'}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-lg border border-red-300 uppercase">
+                                      <AlertTriangle className="w-3.5 h-3.5" /> Ditolak
+                                    </span>
+                                    {order.rejection_reason && (
+                                      <div className="text-[9px] text-red-600 italic">
+                                        "{order.rejection_reason}"
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Pickup verification */}
+                              <td className="p-3.5 align-top text-center">
+                                {isSettled ? (
+                                  order.is_picked_up ? (
+                                    <div className="space-y-1">
+                                      <span className="inline-flex items-center gap-1 bg-[#00F0FF] text-black text-[10px] font-black px-2.5 py-1 rounded-lg border border-black shadow-retro-xs">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-black" /> Sudah Diserahkan
+                                      </span>
+                                      <div className="text-[9px] text-neutral-500 font-mono">
+                                        PIC: {order.picked_up_by_admin || 'Panitia'}
+                                      </div>
+                                      <button
+                                        onClick={() => handleTogglePickup(order.id)}
+                                        className="text-[10px] text-neutral-500 underline hover:text-red-600 block mx-auto cursor-pointer"
+                                      >
+                                        Batal Serah Terima
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleTogglePickup(order.id)}
+                                      className="btn-retro-yellow text-[11px] font-display font-black px-3 py-1.5 shadow-retro-xs active:scale-95 cursor-pointer"
+                                    >
+                                      📦 Serahkan Karya Fisik
+                                    </button>
+                                  )
+                                ) : (
+                                  <span className="text-[10px] text-neutral-400 italic">
+                                    Verifikasi Lunas Dulu
+                                  </span>
+                                )}
+                              </td>
+
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ================= MODAL LIGHTBOX BUKTI TRANSFER ================= */}
+        {previewProofUrl && (
+          <div 
+            onClick={() => setPreviewProofUrl(null)}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white border-3 border-black rounded-2xl p-4 max-w-lg w-full max-h-[90vh] flex flex-col space-y-3 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b-2 border-black pb-2">
+                <h4 className="font-display font-black text-sm text-black flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#FF3388]" /> Foto Bukti Transfer Pembeli
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setPreviewProofUrl(null)}
+                  className="p-1 bg-[#FAF7EE] hover:bg-[#FF3388] hover:text-white border-2 border-black rounded-lg shadow-retro-xs transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center p-2 bg-neutral-900 rounded-xl border-2 border-black">
+                <img 
+                  src={previewProofUrl} 
+                  alt="Bukti Transfer Penuh"
+                  className="max-h-[65vh] w-auto object-contain rounded-lg"
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-neutral-600 pt-1">
+                <span>Periksa nama pengirim, nominal, dan tanggal mutasi rekening.</span>
+                <button
+                  type="button"
+                  onClick={() => setPreviewProofUrl(null)}
+                  className="btn-retro-yellow px-4 py-1.5 text-xs font-bold cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL GANTI GAMBAR QRIS PAMERAN ================= */}
+        {isQrisModalOpen && (
+          <div 
+            onClick={() => setIsQrisModalOpen(false)}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white border-3 border-black rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b-2 border-black pb-2">
+                <h4 className="font-display font-black text-base text-black flex items-center gap-2">
+                  <QrCode className="w-5 h-5 text-black" /> Pengaturan QRIS Pameran
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsQrisModalOpen(false)}
+                  className="p-1 bg-[#FAF7EE] hover:bg-[#FF3388] hover:text-white border-2 border-black rounded-lg cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Current QR Image */}
+              <div className="text-center space-y-2">
+                <div className="w-48 h-48 mx-auto bg-white border-2 border-black rounded-xl p-2 shadow-retro-xs flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={qrisSettings.qris_image_url || '/qris-dana.png'} 
+                    alt="QRIS Aktif"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="text-xs font-bold text-black">
+                  QRIS Aktif: {qrisSettings.merchant_name}
+                </div>
+              </div>
+
+              {/* Upload New QRIS Image */}
+              <div className="space-y-2 border-t border-neutral-200 pt-3">
+                <label className="block text-xs font-bold text-neutral-800">
+                  Upload Gambar QRIS DANA / Toko Baru:
+                </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUploadQrisImage(file);
+                  }}
+                  className="block w-full text-xs text-neutral-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-2 file:border-black file:text-xs file:font-bold file:bg-[#FFE600] hover:file:bg-[#FFE600]/80 cursor-pointer"
+                />
+                <p className="text-[10px] text-neutral-500">
+                  Pilih screenshot / file foto QR DANA dari HP Anda. Gambar ini akan langsung tampil di halaman checkout pembeli.
+                </p>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsQrisModalOpen(false)}
+                  className="btn-retro-white px-4 py-2 text-xs font-bold"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1328,6 +1972,41 @@ export default function PanitiaDashboard({
                       placeholder="Contoh: 100 x 80 cm / A3 / 30 x 20 x 15 cm"
                       className="input-retro text-xs bg-white"
                     />
+                  </div>
+                </div>
+
+                {/* Harga & Status Penjualan (Midtrans) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-black/10">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">
+                      Harga Jual Karya (IDR) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-bold text-neutral-500">Rp</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="10000"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                        placeholder="150000"
+                        className="input-retro pl-9 text-xs bg-white font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-black">
+                      Status Penjualan untuk Kolektor
+                    </label>
+                    <select
+                      value={formData.isForSale ? 'true' : 'false'}
+                      onChange={(e) => setFormData({ ...formData, isForSale: e.target.value === 'true' })}
+                      className="input-retro text-xs bg-white font-bold text-black"
+                    >
+                      <option value="true">🟢 Boleh Dibeli / Dikoleksi (Midtrans)</option>
+                      <option value="false">⚪ Hanya Pameran (Tidak Dijual)</option>
+                    </select>
                   </div>
                 </div>
               </div>
