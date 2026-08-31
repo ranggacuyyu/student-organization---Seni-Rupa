@@ -49,6 +49,26 @@ CREATE INDEX IF NOT EXISTS idx_orders_artwork_id ON orders(artwork_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(transaction_status);
 CREATE INDEX IF NOT EXISTS idx_artworks_sale_status ON artworks(sale_status);
 
+-- 4. Pastikan RLS (Row Level Security) & Izin Akses Tabel Berfungsi di Hosting Supabase
+ALTER TABLE artworks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies jika sudah ada untuk menghindari duplikasi error
+DROP POLICY IF EXISTS "Public can view artworks" ON artworks;
+DROP POLICY IF EXISTS "Panitia can manage artworks" ON artworks;
+DROP POLICY IF EXISTS "Public can insert orders" ON orders;
+DROP POLICY IF EXISTS "Public can view orders" ON orders;
+DROP POLICY IF EXISTS "Panitia can manage orders" ON orders;
+
+-- Kebijakan Akses Artworks
+CREATE POLICY "Public can view artworks" ON artworks FOR SELECT USING (true);
+CREATE POLICY "Panitia can manage artworks" ON artworks FOR ALL USING (true) WITH CHECK (true);
+
+-- Kebijakan Akses Orders
+CREATE POLICY "Public can insert orders" ON orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can view orders" ON orders FOR SELECT USING (true);
+CREATE POLICY "Panitia can manage orders" ON orders FOR ALL USING (true) WITH CHECK (true);
+
 -- ==============================================================================
 -- SELESAI! Database hosting / Supabase Anda kini 100% siap untuk transaksi pameran.
 -- ==============================================================================

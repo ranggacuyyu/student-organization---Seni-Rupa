@@ -338,7 +338,7 @@ function ArtworkCategoryRail({
                         </div>
                       ) : (
                         <div className="absolute top-3 right-3 bg-black/85 text-[#CCFF00] text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border border-white/30 pointer-events-none">
-                          {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(art.price || 150000)}
+                          {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(art.price ?? 150000)}
                         </div>
                       )}
 

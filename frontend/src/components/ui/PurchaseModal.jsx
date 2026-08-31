@@ -82,7 +82,7 @@ export default function PurchaseModal({
 
   if (!isOpen || !artwork) return null;
 
-  const price = artwork.price || 150000;
+  const price = artwork.price ?? 150000;
   const priceFormatted = new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',

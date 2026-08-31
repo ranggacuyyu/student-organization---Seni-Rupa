@@ -82,7 +82,7 @@ class ArtworkController extends Controller
             'category' => $art->kategori,
             'medium' => $art->medium_bahan,
             'dimensions' => $art->dimensi,
-            'price' => (int)($art->price ?: 150000),
+            'price' => (int)($art->price !== null ? $art->price : 150000),
             'isForSale' => (bool)($art->is_for_sale ?? true),
             'saleStatus' => (string)($art->sale_status ?: 'available'),
             'buyerName' => $art->buyer_name,
@@ -204,7 +204,7 @@ class ArtworkController extends Controller
             'deskripsi_filosofi' => $request->description,
             'medium_bahan' => $request->medium ?? 'Mixed Media',
             'dimensi' => $request->dimensions ?? 'Ukuran Standar',
-            'price' => (int) ($request->price ?: 150000),
+            'price' => (int) ($request->has('price') && $request->price !== null ? $request->price : 150000),
             'is_for_sale' => $request->has('isForSale') ? filter_var($request->isForSale, FILTER_VALIDATE_BOOLEAN) : true,
             'sale_status' => $request->saleStatus ?? 'available',
             'tahun_pembuatan' => $request->year ?? '2024',
@@ -245,9 +245,9 @@ class ArtworkController extends Controller
         if ($request->filled('description')) $art->deskripsi_filosofi = $request->description;
         if ($request->filled('medium')) $art->medium_bahan = $request->medium;
         if ($request->filled('dimensions')) $art->dimensi = $request->dimensions;
-        if ($request->filled('price')) $art->price = (int) $request->price;
+        if ($request->has('price')) $art->price = (int) $request->price;
         if ($request->has('isForSale')) $art->is_for_sale = filter_var($request->isForSale, FILTER_VALIDATE_BOOLEAN);
-        if ($request->filled('saleStatus')) $art->sale_status = $request->saleStatus;
+        if ($request->has('saleStatus')) $art->sale_status = $request->saleStatus;
         if ($request->filled('year')) $art->tahun_pembuatan = $request->year;
         if ($request->filled('boothId')) $art->booth_id = $request->boothId;
         if ($request->filled('boothName')) $art->booth_name = $request->boothName;

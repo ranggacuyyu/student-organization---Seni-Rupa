@@ -111,7 +111,7 @@ export default function ArtworkModal({ artwork, isOpen, onClose, onLike, isLiked
     style: 'currency',
     currency: 'IDR',
     maximumFractionDigits: 0,
-  }).format(artwork.price || 150000);
+  }).format(artwork.price ?? 150000);
 
   const saleStatus = artwork.saleStatus || artwork.sale_status || 'available';
   const isSold = saleStatus === 'sold';

@@ -374,8 +374,13 @@ export default function PanitiaDashboard({
 
     setIsSubmitting(true);
     try {
+      const parsedPrice = formData.price === '' || formData.price === null || formData.price === undefined 
+        ? 150000 
+        : Math.max(0, parseInt(formData.price, 10) || 0);
+
       const payload = {
         ...formData,
+        price: parsedPrice,
         tags: typeof formData.tags === 'string' 
           ? formData.tags.split(',').map(t => t.trim()).filter(Boolean)
           : (formData.tags || ['Retro Pop', 'History']),
@@ -2295,8 +2300,14 @@ export default function PanitiaDashboard({
                         type="number"
                         min="0"
                         step="10000"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                        value={formData.price ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({
+                            ...formData,
+                            price: val === '' ? '' : Math.max(0, parseInt(val, 10) || 0)
+                          });
+                        }}
                         placeholder="150000"
                         className="input-retro pl-9 text-xs bg-white font-mono font-bold"
                       />

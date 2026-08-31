@@ -243,6 +243,9 @@ export const ArtworkDb = {
               deskripsi_filosofi: created.description,
               medium_bahan: created.medium,
               dimensi: created.dimensions,
+              price: Number(created.price !== undefined && created.price !== null ? created.price : 150000),
+              is_for_sale: created.isForSale !== undefined ? Boolean(created.isForSale) : true,
+              sale_status: created.saleStatus || 'available',
               tahun_pembuatan: created.year || '2024',
               foto_utama_url: created.imageUrl,
               booth_name: created.boothName,
@@ -351,6 +354,9 @@ export const ArtworkDb = {
             deskripsi_filosofi: formatted.description,
             medium_bahan: formatted.medium,
             dimensi: formatted.dimensions,
+            price: Number(formatted.price !== undefined && formatted.price !== null ? formatted.price : 150000),
+            is_for_sale: formatted.isForSale !== undefined ? Boolean(formatted.isForSale) : true,
+            sale_status: formatted.saleStatus || 'available',
             tahun_pembuatan: formatted.year || '2024',
             foto_utama_url: formatted.imageUrl,
             booth_name: formatted.boothName,
@@ -506,9 +512,10 @@ export const ArtworkDb = {
   /**
    * Memperbarui status penjualan karya di cache lokal / DB
    */
-  updateArtworkSaleStatus(artworkId, saleStatus, buyerData = {}) {
+  async updateArtworkSaleStatus(artworkId, saleStatus, buyerData = {}) {
     const list = getLocalArtworks();
     const idx = list.findIndex((a) => String(a.id) === String(artworkId));
+    let updatedItem = null;
     if (idx !== -1) {
       list[idx].saleStatus = saleStatus;
       if (buyerData.buyerName) list[idx].buyerName = buyerData.buyerName;
@@ -516,9 +523,27 @@ export const ArtworkDb = {
       if (buyerData.buyerPhone) list[idx].buyerPhone = buyerData.buyerPhone;
       if (buyerData.orderId) list[idx].currentOrderId = buyerData.orderId;
       saveLocalArtworks(list);
-      return list[idx];
+      updatedItem = list[idx];
     }
-    return null;
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const updatePayload = { sale_status: saleStatus };
+        if (buyerData.buyerName) updatePayload.buyer_name = buyerData.buyerName;
+        if (buyerData.buyerEmail) updatePayload.buyer_email = buyerData.buyerEmail;
+        if (buyerData.buyerPhone) updatePayload.buyer_phone = buyerData.buyerPhone;
+        if (buyerData.orderId) updatePayload.current_order_id = buyerData.orderId;
+
+        await supabase
+          .from('artworks')
+          .update(updatePayload)
+          .eq('id', artworkId);
+      } catch (err) {
+        console.warn('Supabase update sale status failed:', err);
+      }
+    }
+
+    return updatedItem;
   },
 };
 
