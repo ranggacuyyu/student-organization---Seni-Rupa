@@ -2299,7 +2299,7 @@ export default function PanitiaDashboard({
                       <input
                         type="number"
                         min="0"
-                        step="10000"
+                        step="any"
                         value={formData.price ?? ''}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -2308,7 +2308,7 @@ export default function PanitiaDashboard({
                             price: val === '' ? '' : Math.max(0, parseInt(val, 10) || 0)
                           });
                         }}
-                        placeholder="150000"
+                        placeholder="Contoh: 25000 / 150000"
                         className="input-retro pl-9 text-xs bg-white font-mono font-bold"
                       />
                     </div>
