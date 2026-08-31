@@ -62,7 +62,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
     }
   }, [mobileMenuOpen, showCurtain]);
 
-  const isProtectedItem = (id) => ['katalog', 'rundown', 'pesan-kesan'].includes(id);
+  const isProtectedItem = (id) => ['rundown', 'pesan-kesan'].includes(id);
   const isItemLocked = (id) => !currentUser && !isVerified && isProtectedItem(id);
 
   const publicNavItems = [
@@ -72,8 +72,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
       id: 'katalog', 
       label: 'Katalog', 
       icon: ImageIcon, 
-      isLocked: isItemLocked('katalog'), 
-      desc: isItemLocked('katalog') ? 'Wajib Verifikasi QR' : 'Karya lukis & kriya kerajinan' 
+      isLocked: false, 
+      desc: 'Karya lukis & kriya kerajinan' 
     },
     { id: 'denah', label: 'Denah', icon: Map, desc: 'Peta booth Student Centre Lt 3' },
     { 

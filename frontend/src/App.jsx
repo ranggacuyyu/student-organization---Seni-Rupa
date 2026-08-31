@@ -96,13 +96,18 @@ export default function App() {
   const [isTicketOpen, setIsTicketOpen] = useState(false);
   const [targetBoothId, setTargetBoothId] = useState('booth-a');
 
-  // Calculate if visitor is verified (or is Panitia / Super Admin)
+  // Calculate if visitor is verified (or is Panitia / Super Admin / already has attendance ticket)
   const isVerified = useMemo(() => {
     if (currentUser) return true; // Panitia & Super Admin always have full access
 
+    // 1. Pengunjung yang telah mengisi absensi / memiliki tiket presensi otomatis diverifikasi
+    if (myTicket && (myTicket.id || myTicket.nama_lengkap || myTicket.nama || myTicket.identifier)) {
+      return true;
+    }
+
     const checkedInList = JSON.parse(localStorage.getItem('senrup_checked_in_tickets_v1') || '[]');
 
-    // 1. Check if myTicket is in checkedInList
+    // 2. Check if myTicket is in checkedInList
     if (myTicket && myTicket.id && checkedInList.includes(myTicket.id)) {
       return true;
     }
@@ -110,7 +115,7 @@ export default function App() {
       return true;
     }
 
-    // 2. Check if any attendance with the user's IP or ticket ID is checked in
+    // 3. Check if any attendance with the user's IP or ticket ID is checked in
     if (myTicket && myTicket.ip_address) {
       const match = attendances.find(a => (a.ip_address && a.ip_address === myTicket.ip_address) || (a.id && a.id === myTicket.id));
       if (match && (checkedInList.includes(match.id) || match.isCheckedIn || match.is_checked_in)) {
@@ -314,24 +319,12 @@ export default function App() {
         )}
 
         {activeTab === 'katalog' && (
-          isVerified ? (
-            <CataloguePage
-              artworks={artworks}
-              onSelectArtwork={handleOpenArtworkModal}
-              onLikeArtwork={handleLikeArtwork}
-              likedIds={likedIds}
-            />
-          ) : (
-            <LockedAccessGate
-              pageTitle="Katalog Karya Seni"
-              myTicket={myTicket}
-              onOpenTicket={() => setIsTicketOpen(true)}
-              onNavigatePresensi={() => handleSetActiveTab('presensi')}
-              onNavigateDenah={() => handleSetActiveTab('denah')}
-              onNavigateHome={() => handleSetActiveTab('home')}
-              onRefreshStatus={loadAllData}
-            />
-          )
+          <CataloguePage
+            artworks={artworks}
+            onSelectArtwork={handleOpenArtworkModal}
+            onLikeArtwork={handleLikeArtwork}
+            likedIds={likedIds}
+          />
         )}
 
         {activeTab === 'denah' && (
