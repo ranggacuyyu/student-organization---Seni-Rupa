@@ -2294,8 +2294,10 @@ export default function PanitiaDashboard({
                     <label className="block text-xs font-bold text-black">
                       Harga Jual Karya (IDR) <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-xs font-bold text-neutral-500">Rp</span>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 font-mono font-black text-xs text-neutral-600 select-none pointer-events-none z-10">
+                        Rp
+                      </span>
                       <input
                         type="number"
                         min="0"
@@ -2309,7 +2311,7 @@ export default function PanitiaDashboard({
                           });
                         }}
                         placeholder="Contoh: 25000 / 150000"
-                        className="input-retro pl-9 text-xs bg-white font-mono font-bold"
+                        className="input-retro !pl-11 text-xs bg-white font-mono font-bold"
                       />
                     </div>
                   </div>
