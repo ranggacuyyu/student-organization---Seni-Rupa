@@ -35,27 +35,52 @@ function sanitizeFilename(name) {
  * 100% compatible with optical camera scanner and file upload in Panitia Dashboard.
  */
 export async function downloadQrCode(ticket, qrSourceCanvas) {
-  let dataUrl = '';
+  let canvas = qrSourceCanvas;
+  if (canvas && typeof canvas.toDataURL !== 'function') {
+    if (typeof canvas.querySelector === 'function') {
+      canvas = canvas.querySelector('canvas') || canvas;
+    }
+  }
 
-  if (qrSourceCanvas && typeof qrSourceCanvas.toDataURL === 'function') {
-    // qrSourceCanvas is rendered by QRCodeCanvas with pure white background, black modules, and quiet zone margin
-    dataUrl = qrSourceCanvas.toDataURL('image/png');
-  } else {
-    // Fallback: create high-res canvas
-    const canvas = document.createElement('canvas');
+  let dataUrl = '';
+  if (canvas && typeof canvas.toDataURL === 'function') {
+    // Render high-res 512x512 with pure white background and 28px quiet-zone padding for guaranteed 100% optical readability
+    const highResCanvas = document.createElement('canvas');
     const size = 512;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
+    highResCanvas.width = size;
+    highResCanvas.height = size;
+    const ctx = highResCanvas.getContext('2d');
+    
+    // Fill solid white background
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, size, size);
-    if (qrSourceCanvas) {
-      ctx.drawImage(qrSourceCanvas, 0, 0, size, size);
+    
+    // Draw QR Code centered with crisp pixel preservation
+    const padding = 28;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(canvas, padding, padding, size - (padding * 2), size - (padding * 2));
+    dataUrl = highResCanvas.toDataURL('image/png');
+  } else {
+    // Fallback: search for existing QRCodeCanvas in DOM
+    const domCanvas = document.querySelector('canvas');
+    if (domCanvas && typeof domCanvas.toDataURL === 'function') {
+      const highResCanvas = document.createElement('canvas');
+      const size = 512;
+      highResCanvas.width = size;
+      highResCanvas.height = size;
+      const ctx = highResCanvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, size, size);
+      const padding = 28;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(domCanvas, padding, padding, size - (padding * 2), size - (padding * 2));
+      dataUrl = highResCanvas.toDataURL('image/png');
     }
-    dataUrl = canvas.toDataURL('image/png');
   }
 
   const filename = `QR-Presensi-${sanitizeFilename(ticket?.nama_lengkap)}-${ticket?.id || 'pass'}.png`;
-  downloadDataUrl(dataUrl, filename);
+  if (dataUrl) {
+    downloadDataUrl(dataUrl, filename);
+  }
   return dataUrl;
 }

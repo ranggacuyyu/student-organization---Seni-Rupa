@@ -37,6 +37,18 @@ export const PanitiaDb = {
       }
     }
 
+    // Check if query is a URL with id/ticket/identifier parameter
+    if (cleanQ.includes('?') || cleanQ.includes('#') || cleanQ.includes('/')) {
+      try {
+        const matchParam = cleanQ.match(/[?&#](id|ticket|pass|nim|identifier)=([^&#]+)/i);
+        if (matchParam && matchParam[2]) {
+          cleanQ = decodeURIComponent(matchParam[2]).trim().toLowerCase();
+        }
+      } catch {
+        // Ignore URL parsing fallback
+      }
+    }
+
     // Check if query has prefix ART-PASS:id:nim:nama
     if (cleanQ.startsWith('art-pass:')) {
       const parts = cleanQ.split(':');
@@ -65,15 +77,62 @@ export const PanitiaDb = {
   },
 
   async verifyTicketRemote(query) {
+    if (!query) return null;
+    const cleanQ = String(query).trim();
+
+    // 1. Coba verifikasi dari cache lokal terlebih dahulu
+    const localMatch = this.verifyTicket(cleanQ);
+    if (localMatch) return localMatch;
+
+    // 2. Coba verifikasi dengan Laravel REST API
     try {
-      const res = await axios.get(`${API_BASE_URL}/attendance/verify?q=${encodeURIComponent(query)}`, { timeout: 3000 });
+      const res = await axios.get(`${API_BASE_URL}/attendance/verify?q=${encodeURIComponent(cleanQ)}`, { timeout: 3000 });
       if (res.data && res.data.success && res.data.ticket) {
         return res.data.ticket;
       }
     } catch {
-      // fallback
+      // lanjut ke Supabase
     }
-    return this.verifyTicket(query);
+
+    // 3. Coba verifikasi langsung dari Cloud Supabase
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('attendances')
+          .select('*')
+          .or(`id.eq.${cleanQ},identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) {
+          const checkedInList = JSON.parse(localStorage.getItem(CHECKED_IN_KEY) || '[]');
+          const souvenirList = JSON.parse(localStorage.getItem(SOUVENIR_KEY) || '[]');
+          const formatted = {
+            id: data.id,
+            nama_lengkap: data.nama_lengkap,
+            identifier: data.identifier,
+            kategori: data.kategori,
+            jurusan_prodi: data.jurusan_prodi,
+            ip_address: data.ip_address,
+            waktu_kehadiran: data.waktu_kehadiran,
+            catatan: data.catatan,
+            isCheckedIn: data.is_checked_in || checkedInList.includes(data.id),
+            isSouvenirClaimed: data.is_souvenir_claimed || souvenirList.includes(data.id),
+          };
+
+          // Sinkronkan ke local cache agar query berikutnya instan
+          const attendances = JSON.parse(localStorage.getItem(ATTENDANCES_KEY) || '[]');
+          if (!attendances.some((a) => a.id === data.id)) {
+            localStorage.setItem(ATTENDANCES_KEY, JSON.stringify([formatted, ...attendances]));
+          }
+          return formatted;
+        }
+      } catch (err) {
+        console.warn('Supabase remote ticket verify failed:', err);
+      }
+    }
+
+    return null;
   },
 
   toggleCheckIn(ticketId) {

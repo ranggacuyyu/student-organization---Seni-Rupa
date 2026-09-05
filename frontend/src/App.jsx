@@ -319,12 +319,24 @@ export default function App() {
         )}
 
         {activeTab === 'katalog' && (
-          <CataloguePage
-            artworks={artworks}
-            onSelectArtwork={handleOpenArtworkModal}
-            onLikeArtwork={handleLikeArtwork}
-            likedIds={likedIds}
-          />
+          isVerified ? (
+            <CataloguePage
+              artworks={artworks}
+              onSelectArtwork={handleOpenArtworkModal}
+              onLikeArtwork={handleLikeArtwork}
+              likedIds={likedIds}
+            />
+          ) : (
+            <LockedAccessGate
+              pageTitle="Katalog Karya & Apresiasi Seni"
+              myTicket={myTicket}
+              onOpenTicket={() => setIsTicketOpen(true)}
+              onNavigatePresensi={() => handleSetActiveTab('presensi')}
+              onNavigateDenah={() => handleSetActiveTab('denah')}
+              onNavigateHome={() => handleSetActiveTab('home')}
+              onRefreshStatus={loadAllData}
+            />
+          )
         )}
 
         {activeTab === 'denah' && (

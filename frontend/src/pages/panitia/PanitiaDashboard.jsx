@@ -458,9 +458,12 @@ export default function PanitiaDashboard({
   }, [artworksList]);
 
   // Scanner handlers
-  const handleVerifyTicket = (query) => {
+  const handleVerifyTicket = async (query) => {
     setScanFeedback(null);
-    const result = PanitiaService.verifyTicket(query);
+    let result = PanitiaService.verifyTicket(query);
+    if (!result) {
+      result = await PanitiaService.verifyTicketRemote(query);
+    }
     if (result) {
       setScannedTicket(result);
       setScanFeedback({
