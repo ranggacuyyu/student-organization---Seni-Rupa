@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
-import { 
-  Palette, 
-  UserCheck, 
-  Image as ImageIcon, 
-  Map, 
-  Clock, 
-  MessageSquare, 
-  ShieldAlert, 
-  Menu, 
-  X, 
-  Ticket, 
-  Sparkles, 
-  QrCode, 
-  Lock, 
-  LogOut, 
+import {
+  Palette,
+  UserCheck,
+  Image as ImageIcon,
+  Map,
+  Clock,
+  MessageSquare,
+  ShieldAlert,
+  Menu,
+  X,
+  Ticket,
+  Sparkles,
+  QrCode,
+  Lock,
+  LogOut,
   User,
   Shield,
   ChevronRight,
@@ -68,46 +68,46 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
   const publicNavItems = [
     { id: 'home', label: 'Beranda', icon: Palette, desc: 'Halaman utama showcase' },
     ...(!currentUser ? [{ id: 'presensi', label: 'Presensi', icon: UserCheck, highlight: true, desc: 'Check-in cepat deteksi IP' }] : []),
-    { 
-      id: 'katalog', 
-      label: 'Katalog', 
-      icon: ImageIcon, 
-      isLocked: isItemLocked('katalog'), 
-      desc: isItemLocked('katalog') ? 'Wajib Verifikasi QR' : 'Karya lukis & kriya kerajinan' 
+    {
+      id: 'katalog',
+      label: 'Katalog',
+      icon: ImageIcon,
+      isLocked: isItemLocked('katalog'),
+      desc: isItemLocked('katalog') ? 'Wajib Verifikasi QR' : 'Karya lukis & kriya kerajinan'
     },
     { id: 'denah', label: 'Denah', icon: Map, desc: 'Peta booth Student Centre Lt 3' },
-    { 
-      id: 'rundown', 
-      label: 'Rundown', 
-      icon: Clock, 
-      isLocked: isItemLocked('rundown'), 
-      desc: isItemLocked('rundown') ? 'Wajib Verifikasi QR' : 'Jadwal & live acara pameran' 
+    {
+      id: 'rundown',
+      label: 'Rundown',
+      icon: Clock,
+      isLocked: isItemLocked('rundown'),
+      desc: isItemLocked('rundown') ? 'Wajib Verifikasi QR' : 'Jadwal & live acara pameran'
     },
-    { 
-      id: 'pesan-kesan', 
-      label: 'Pojok Ekspresi', 
-      icon: MessageSquare, 
-      isLocked: isItemLocked('pesan-kesan'), 
-      desc: isItemLocked('pesan-kesan') ? 'Wajib Verifikasi QR' : 'Papan ulasan & sticky notes' 
+    {
+      id: 'pesan-kesan',
+      label: 'Pojok Ekspresi',
+      icon: MessageSquare,
+      isLocked: isItemLocked('pesan-kesan'),
+      desc: isItemLocked('pesan-kesan') ? 'Wajib Verifikasi QR' : 'Papan ulasan & sticky notes'
     },
   ];
 
   const adminNavItems = [];
   if (currentUser) {
-    adminNavItems.push({ 
-      id: 'panitia', 
-      label: 'Portal Panitia', 
-      icon: QrCode, 
+    adminNavItems.push({
+      id: 'panitia',
+      label: 'Portal Panitia',
+      icon: QrCode,
       badgeColor: 'bg-[#FFE600] text-black',
-      desc: 'Scan QR & kelola kebutuhan peserta' 
+      desc: 'Scan QR & kelola kebutuhan peserta'
     });
     if (currentUser.role === 'admin') {
-      adminNavItems.push({ 
-        id: 'admin', 
-        label: 'Super Admin', 
-        icon: ShieldAlert, 
+      adminNavItems.push({
+        id: 'admin',
+        label: 'Super Admin',
+        icon: ShieldAlert,
         badgeColor: 'bg-[#FF3388] text-white',
-        desc: 'Kelola akun panitia & master data' 
+        desc: 'Kelola akun panitia & master data'
       });
     }
   }
@@ -146,7 +146,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
           onComplete: () => {
             setActiveTab('coming-soon');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            
+
             // Roll curtain back up smoothly to reveal the Coming Soon page
             gsap.to(curtainRef.current, {
               y: '-100%',
@@ -187,10 +187,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
               <span className="flex items-center gap-1.5 bg-black text-white px-2 py-0.5 rounded-md text-[10px] uppercase font-bold border border-black">
                 <Sparkles className="w-3 h-3 text-[#FFE600] animate-spin" /> PROKER RESMI
               </span>
-              <span className="text-black font-black">DIVISI SENI RUPA POLIBATAM</span>
+              <span className="text-black font-black">KUMPULAN ANAK SENI DIVISI SENI RUPA</span>
               <span className="text-black/40">★</span>
               <span className="text-black font-black flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-[#FF3388]" /> TEMA: HISTORY (MENGGALI JEJAK KARYA & PERJALANAN)
+                <Palette className="w-3.5 h-3.5 text-[#FF3388]" /> TEMA: HISTORY (IMAGINATION PLAYGROUND)
               </span>
               <span className="text-black/40">★</span>
               <span className="text-black font-black flex items-center gap-1.5">
@@ -204,14 +204,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
             </div>
 
             {/* Track 2 (Identical Duplicate for 100% Seamless Infinite Loop) */}
-            <div className="flex items-center gap-6 px-4 shrink-0" aria-hidden="true">
+            <div className="flex items-center gap-6 px-4 shrink-0">
               <span className="flex items-center gap-1.5 bg-black text-white px-2 py-0.5 rounded-md text-[10px] uppercase font-bold border border-black">
                 <Sparkles className="w-3 h-3 text-[#FFE600] animate-spin" /> PROKER RESMI
               </span>
-              <span className="text-black font-black">DIVISI SENI RUPA POLIBATAM</span>
+              <span className="text-black font-black">KUMPULAN ANAK SENI DIVISI SENI RUPA</span>
               <span className="text-black/40">★</span>
               <span className="text-black font-black flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-[#FF3388]" /> TEMA: HISTORY (MENGGALI JEJAK KARYA & PERJALANAN)
+                <Palette className="w-3.5 h-3.5 text-[#FF3388]" /> TEMA: HISTORY (IMAGINATION PLAYGROUND)
               </span>
               <span className="text-black/40">★</span>
               <span className="text-black font-black flex items-center gap-1.5">
@@ -228,9 +228,9 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
 
         {/* Main Navigation Bar */}
         <div className="w-full mx-auto py-3 sm:py-4 px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between relative">
-          
+
           {/* Brand Logo */}
-          <button 
+          <button
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-2.5 sm:gap-3 text-left group transition-transform active:scale-95 shrink-0"
           >
@@ -244,7 +244,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                 </span>
               </div>
               <p className="text-[9px] sm:text-[11px] font-semibold text-neutral-600 tracking-tight truncate">
-                Divisi Seni Rupa Polibatam
+                Divisi Seni Rupa
               </p>
             </div>
           </button>
@@ -261,21 +261,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`flex items-center gap-1.5 lg:px-2.5 lg:py-1.5 xl:px-3.5 xl:py-2 rounded-xl font-display text-xs xl:text-sm font-bold border-2 transition-all duration-150 active:scale-95 ${
-                    isActive
+                  className={`flex items-center gap-1.5 lg:px-2.5 lg:py-1.5 xl:px-3.5 xl:py-2 rounded-xl font-display text-xs xl:text-sm font-bold border-2 transition-all duration-150 active:scale-95 ${isActive
                       ? 'bg-[#121212] text-white border-black shadow-retro-sm -translate-y-0.5'
                       : isSpecialAdmin
-                      ? 'bg-[#FF3388]/15 text-black border-black hover:bg-[#FF3388] hover:text-white hover:-translate-y-0.5 shadow-retro-sm'
-                      : isSpecialPanitia
-                      ? 'bg-[#FFE600]/30 text-black border-black hover:bg-[#FFE600] hover:-translate-y-0.5 shadow-retro-sm'
-                      : item.highlight
-                      ? 'bg-[#FFE600] text-black border-black hover:bg-[#FFF04D] hover:-translate-y-0.5 shadow-retro-sm'
-                      : 'bg-transparent text-neutral-800 border-transparent hover:bg-[#00F0FF] hover:border-black/30'
-                  }`}
+                        ? 'bg-[#FF3388]/15 text-black border-black hover:bg-[#FF3388] hover:text-white hover:-translate-y-0.5 shadow-retro-sm'
+                        : isSpecialPanitia
+                          ? 'bg-[#FFE600]/30 text-black border-black hover:bg-[#FFE600] hover:-translate-y-0.5 shadow-retro-sm'
+                          : item.highlight
+                            ? 'bg-[#FFE600] text-black border-black hover:bg-[#FFF04D] hover:-translate-y-0.5 shadow-retro-sm'
+                            : 'bg-transparent text-neutral-800 border-transparent hover:bg-[#00F0FF] hover:border-black/30'
+                    }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${
-                    isActive ? 'text-[#00F0FF]' : isSpecialAdmin ? 'text-[#FF3388]' : item.highlight ? 'text-black' : 'text-neutral-700'
-                  }`} />
+                  <Icon className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${isActive ? 'text-[#00F0FF]' : isSpecialAdmin ? 'text-[#FF3388]' : item.highlight ? 'text-black' : 'text-neutral-700'
+                    }`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                   {item.isLocked && (
                     <span className="text-[10px] opacity-70 ml-0.5">
@@ -289,7 +287,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
 
           {/* Action Buttons (User / Login / Ticket / Mobile Toggle) */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            
+
             {/* Digital Ticket Button (Only for visitors / not logged in) */}
             {!currentUser && (
               <button
@@ -300,7 +298,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                 <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
                 <span className="inline sm:inline">Tiket</span>
                 {ticketCount > 0 && (
-                  <span className="w-4 h-4 sm:w-5 sm:h-5 bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black rounded-full border border-black flex items-center justify-center animate-bounce shrink-0">
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black rounded-full border border-black flex items-center justify-center shrink-0">
                     1
                   </span>
                 )}
@@ -310,14 +308,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
             {/* User Auth Status / Login Button (Desktop / Tablet) */}
             {currentUser ? (
               <div className="hidden sm:flex items-center gap-2">
-                <div 
+                <div
                   onClick={() => handleNavClick(currentUser.role === 'admin' ? 'admin' : 'panitia')}
                   className="flex items-center gap-2 bg-white border-2 sm:border-3 border-black px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-retro-sm cursor-pointer hover:bg-[#FFE600]/20 transition-all"
                   title="Buka Portal Petugas"
                 >
-                  <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg border border-black flex items-center justify-center font-black text-[9px] sm:text-[10px] ${
-                    currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
-                  }`}>
+                  <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg border border-black flex items-center justify-center font-black text-[9px] sm:text-[10px] ${currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
+                    }`}>
                     {currentUser.role === 'admin' ? <Shield className="w-3 h-3 text-white" /> : <User className="w-3 h-3 text-black" />}
                   </div>
                   <span className="text-xs font-black text-black max-w-[90px] xl:max-w-[120px] truncate">
@@ -346,9 +343,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`lg:hidden p-2 border-2 sm:border-3 border-black rounded-xl shadow-retro-sm sm:shadow-retro transition-colors active:translate-x-0.5 active:translate-y-0.5 ${
-                mobileMenuOpen ? 'bg-[#FF3388] text-white' : 'bg-white text-black hover:bg-[#FFE600]'
-              }`}
+              className={`lg:hidden p-2 border-2 sm:border-3 border-black rounded-xl shadow-retro-sm sm:shadow-retro transition-colors active:translate-x-0.5 active:translate-y-0.5 ${mobileMenuOpen ? 'bg-[#FF3388] text-white' : 'bg-white text-black hover:bg-[#FFE600]'
+                }`}
               aria-label={mobileMenuOpen ? 'Tutup Menu' : 'Buka Menu Navigasi'}
               aria-expanded={mobileMenuOpen}
             >
@@ -363,22 +359,20 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
           <div className="w-2.5 h-1.5 bg-[#FFE600] border-2 border-black rounded-t -mt-0.5" />
 
           {/* Elastic Hanging Cord String */}
-          <div 
-            className={`w-[2.5px] bg-black transition-all duration-300 origin-top shadow-[1px_0px_0px_#fff] ${
-              isPulling ? 'h-9 bg-[#FF3388]' : 'h-4'
-            }`} 
+          <div
+            className={`w-[2.5px] bg-black transition-all duration-300 origin-top shadow-[1px_0px_0px_#fff] ${isPulling ? 'h-9 bg-[#FF3388]' : 'h-4'
+              }`}
           />
 
           {/* Pull Knob / Charm Badge */}
           <button
             onClick={handlePullCurtain}
-            className={`-mt-0.5 group flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border-2 border-black font-display font-black text-[9px] sm:text-[10px] tracking-wider transition-all duration-200 active:scale-90 shadow-retro-sm ${
-              isPulling 
-                ? 'bg-[#FF3388] text-white translate-y-3 rotate-6' 
+            className={`-mt-0.5 group flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border-2 border-black font-display font-black text-[9px] sm:text-[10px] tracking-wider transition-all duration-200 active:scale-90 shadow-retro-sm ${isPulling
+                ? 'bg-[#FF3388] text-white translate-y-3 rotate-6'
                 : activeTab === 'coming-soon'
-                ? 'bg-[#CCFF00] text-black hover:bg-[#FFE600]'
-                : 'bg-[#FFE600] text-black hover:bg-[#FF3388] hover:text-white animate-bounce'
-            }`}
+                  ? 'bg-[#CCFF00] text-black hover:bg-[#FFE600]'
+                  : 'bg-[#FFE600] text-black hover:bg-[#FF3388] hover:text-white animate-bounce'
+              }`}
             title="Tarik untuk melihat Coming Soon!"
             aria-label="Tarik horden Coming Soon"
           >
@@ -392,14 +386,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
         {/* Mobile Drawer Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden bg-[#FAF7EE] border-t-2 border-black/10 border-b-3 border-black px-3.5 sm:px-5 pt-3 pb-8 max-h-[calc(100dvh-4.5rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain animate-in slide-in-from-top-2 duration-200">
-            
+
             {/* Logged-In User Profile Card Banner on Mobile */}
             {currentUser && (
               <div className="mb-3.5 p-3 sm:p-3.5 bg-white border-2 border-black rounded-2xl shadow-retro-sm flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={`w-9 h-9 rounded-xl border-2 border-black flex items-center justify-center text-base shrink-0 ${
-                    currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
-                  }`}>
+                  <div className={`w-9 h-9 rounded-xl border-2 border-black flex items-center justify-center text-base shrink-0 ${currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
+                    }`}>
                     {currentUser.role === 'admin' ? <Shield className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-black" />}
                   </div>
                   <div className="min-w-0">
@@ -409,9 +402,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.2 rounded border border-black ${
-                        currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
-                      }`}>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.2 rounded border border-black ${currentUser.role === 'admin' ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black'
+                        }`}>
                         {currentUser.role === 'admin' ? 'SUPER ADMIN' : 'PANITIA'}
                       </span>
                       <span className="text-[10px] text-neutral-500 font-medium truncate">
@@ -453,20 +445,18 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                       <button
                         key={item.id}
                         onClick={() => handleNavClick(item.id)}
-                        className={`w-full flex items-center justify-between p-2.5 sm:p-3 rounded-xl font-display text-sm sm:text-base font-bold border-2 text-left transition-all active:scale-98 ${
-                          isActive
+                        className={`w-full flex items-center justify-between p-2.5 sm:p-3 rounded-xl font-display text-sm sm:text-base font-bold border-2 text-left transition-all active:scale-98 ${isActive
                             ? 'bg-[#121212] text-white border-black shadow-retro-sm'
                             : isSuperAdmin
-                            ? 'bg-[#FF3388]/10 hover:bg-[#FF3388]/20 text-black border-black shadow-retro-sm'
-                            : 'bg-[#FFE600]/20 hover:bg-[#FFE600]/30 text-black border-black shadow-retro-sm'
-                        }`}
+                              ? 'bg-[#FF3388]/10 hover:bg-[#FF3388]/20 text-black border-black shadow-retro-sm'
+                              : 'bg-[#FFE600]/20 hover:bg-[#FFE600]/30 text-black border-black shadow-retro-sm'
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`p-1.5 rounded-lg border border-black shrink-0 ${
-                            isActive 
+                          <div className={`p-1.5 rounded-lg border border-black shrink-0 ${isActive
                               ? (isSuperAdmin ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black')
                               : (isSuperAdmin ? 'bg-[#FF3388] text-white' : 'bg-[#FFE600] text-black')
-                          }`}>
+                            }`}>
                             <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
                           <div className="min-w-0">
@@ -509,17 +499,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
                     <button
                       key={item.id}
                       onClick={() => handleNavClick(item.id)}
-                      className={`w-full flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl font-display text-xs sm:text-sm font-bold border-2 text-left transition-all active:scale-98 ${
-                        isActive
+                      className={`w-full flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl font-display text-xs sm:text-sm font-bold border-2 text-left transition-all active:scale-98 ${isActive
                           ? 'bg-[#121212] text-white border-black shadow-retro-sm'
                           : item.highlight
-                          ? 'bg-[#FFE600] text-black border-black shadow-retro-sm'
-                          : 'bg-white text-black border-black/25 hover:bg-neutral-50'
-                      }`}
+                            ? 'bg-[#FFE600] text-black border-black shadow-retro-sm'
+                            : 'bg-white text-black border-black/25 hover:bg-neutral-50'
+                        }`}
                     >
-                      <div className={`p-1.5 rounded-lg border border-black shrink-0 ${
-                        isActive ? 'bg-[#00F0FF] text-black' : 'bg-[#FAF7EE] text-black'
-                      }`}>
+                      <div className={`p-1.5 rounded-lg border border-black shrink-0 ${isActive ? 'bg-[#00F0FF] text-black' : 'bg-[#FAF7EE] text-black'
+                        }`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -571,13 +559,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
       {/* ================= THEATRICAL CURTAIN DROP ANIMATION OVERLAY ================= */}
       {showCurtain && (
         <div className="fixed inset-0 top-0 z-50 pointer-events-none flex flex-col justify-start overflow-hidden">
-          <div 
+          <div
             ref={curtainRef}
             className="w-full bg-[#121212] border-b-6 border-[#FFE600] shadow-[0_25px_60px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center p-6 text-center text-white relative overflow-hidden bg-retro-dots"
           >
             {/* Memphis Pattern overlay inside curtain */}
             <div className="absolute inset-0 bg-retro-stripes opacity-15 pointer-events-none" />
-            
+
             <div className="relative z-10 space-y-3.5 py-10 sm:py-14">
               <div className="inline-flex items-center gap-2 bg-[#FFE600] text-black font-display font-black text-xs sm:text-sm px-4 py-1.5 rounded-full border-3 border-black shadow-retro-sm animate-bounce">
                 <Sparkles className="w-4 h-4 text-[#FF3388] animate-spin" /> MEMBUKA TIRAI RAHASIA...
@@ -586,7 +574,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
               <h2 className="font-display font-black text-3xl sm:text-5xl text-white tracking-tight leading-tight">
                 COMING{' '}
                 <span className="bg-[#FF3388] text-white px-3.5 py-1 rounded-2xl border-3 border-black shadow-retro inline-block rotate-[-3deg]">
-                  SOON! 
+                  SOON!
                 </span>
               </h2>
 
@@ -607,8 +595,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTicket, ticketCo
 
       {/* Backdrop Overlay when Mobile Menu is Open */}
       {mobileMenuOpen && (
-        <div 
-          onClick={() => setMobileMenuOpen(false)} 
+        <div
+          onClick={() => setMobileMenuOpen(false)}
           className="fixed inset-0 top-[100px] bg-black/40 backdrop-blur-xs z-30 lg:hidden transition-opacity"
           aria-hidden="true"
         />

@@ -278,6 +278,7 @@ export default function App() {
             onSelectArtwork={handleOpenArtworkModal}
             currentLiveSession={currentLiveSession}
             currentUser={currentUser}
+            myTicket={myTicket}
           />
         )}
 

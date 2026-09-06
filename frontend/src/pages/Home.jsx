@@ -23,6 +23,7 @@ import {
 import { EVENT_INFO, BOOTH_ZONES } from '../data/mockData';
 import senrupLogo from '../assets/SENRUP.png';
 import { useHomeAnimations } from '../hooks/useHomeAnimations';
+import ArtPhotobooth from '../components/ui/ArtPhotobooth';
 
 export default function Home({
   onNavigate,
@@ -30,7 +31,8 @@ export default function Home({
   attendancesCount,
   onSelectArtwork,
   currentLiveSession,
-  currentUser
+  currentUser,
+  myTicket
 }) {
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
@@ -439,6 +441,13 @@ export default function Home({
           </div>
         </div>
       </section>
+
+      {/* ================= INTERACTIVE ART PHOTOBOOTH (ZONA E) ================= */}
+      <ArtPhotobooth
+        currentUser={currentUser}
+        myTicket={myTicket}
+        onNavigate={onNavigate}
+      />
 
       {/* Floating Scroll-To-Top Button */}
       {showScrollTop && (

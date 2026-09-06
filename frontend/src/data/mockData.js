@@ -5,7 +5,7 @@
 
 export const EVENT_INFO = {
   title: "ART SHOW CASE",
-  theme: "History",
+  theme: "Imagination Playground",
   subTheme: "Jejak Langkah, Karya & Sejarah Divisi Seni Rupa",
   organizer: "Kumpulan Anak Seni - Divisi Seni Rupa Politeknik Negeri Batam",
   targetAudience: "Mahasiswa Baru & Civitas Akademika Polibatam",
