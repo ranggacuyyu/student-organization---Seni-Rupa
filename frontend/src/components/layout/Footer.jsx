@@ -48,7 +48,7 @@ export default function Footer({ onNavigateAdmin }) {
               <div className="flex items-start gap-2.5 bg-neutral-900/60 border border-neutral-800/80 p-2.5 rounded-xl">
                 <Calendar className="w-4 h-4 text-[#FFE600] shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                  <p className="font-bold text-white text-xs sm:text-sm">Sabtu, 12 September 2026</p>
+                  <p className="font-bold text-white text-xs sm:text-sm">Minggu, 13 September 2026</p>
                   <p className="text-neutral-400 text-[11px] mt-0.5">{EVENT_INFO.timeRange}</p>
                 </div>
               </div>
@@ -135,9 +135,7 @@ export default function Footer({ onNavigateAdmin }) {
             © 2026 Divisi Seni Rupa Politeknik Negeri Batam. All Rights Reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 text-[11px]">
-            <span className="px-2.5 py-0.5 bg-neutral-900 border border-neutral-800 rounded-md font-mono text-[10px]">
-              React + Laravel + Supabase
-            </span>
+            
             <span className="text-[#FF3388] flex items-center gap-1 font-semibold">
               Made with <Heart className="w-3 h-3 fill-[#FF3388]" /> for Art Showcase
             </span>

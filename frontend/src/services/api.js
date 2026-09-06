@@ -36,11 +36,11 @@ export const detectClientInfo = async () => {
   // 1. Coba deteksi via Backend Laravel API
   try {
     const res = await apiClient.get('/client-info');
-    if (res.data && res.data.ipAddress) {
+    if (res.data && (res.data.ipAddress || res.data.ip_address)) {
       return {
-        ipAddress: res.data.ipAddress,
-        userAgent: res.data.userAgent || navigator.userAgent,
-        deviceType: res.data.deviceType || 'Desktop',
+        ip_address: res.data.ipAddress || res.data.ip_address,
+        user_agent: res.data.userAgent || res.data.user_agent || navigator.userAgent,
+        device_type: res.data.deviceType || res.data.device_type || 'Desktop',
       };
     }
   } catch {
@@ -48,25 +48,25 @@ export const detectClientInfo = async () => {
   }
 
   // 2. Fallback via ipify & browser navigator
-  let ipAddress = '180.254.88.99'; // Default Batam fallback IP
+  let ip_address = '180.254.88.99'; // Default Batam fallback IP
   try {
     const res = await axios.get('https://api64.ipify.org?format=json', { timeout: 2500 });
     if (res.data && res.data.ip) {
-      ipAddress = res.data.ip;
+      ip_address = res.data.ip;
     }
   } catch (err) {
-    console.log('Menggunakan simulated network IP:', ipAddress);
+    console.log('Menggunakan simulated network IP:', ip_address);
   }
 
-  const userAgent = navigator.userAgent;
-  let deviceType = 'Desktop';
-  if (/Android/i.test(userAgent)) deviceType = 'Mobile (Android)';
-  else if (/iPhone|iPad|iPod/i.test(userAgent)) deviceType = 'Mobile (iOS)';
-  else if (/Macintosh/i.test(userAgent)) deviceType = 'Desktop (macOS)';
-  else if (/Windows/i.test(userAgent)) deviceType = 'Desktop (Windows)';
-  else if (/Linux/i.test(userAgent)) deviceType = 'Desktop (Linux)';
+  const user_agent = navigator.userAgent;
+  let device_type = 'Desktop';
+  if (/Android/i.test(user_agent)) device_type = 'Mobile (Android)';
+  else if (/iPhone|iPad|iPod/i.test(user_agent)) device_type = 'Mobile (iOS)';
+  else if (/Macintosh/i.test(user_agent)) device_type = 'Desktop (macOS)';
+  else if (/Windows/i.test(user_agent)) device_type = 'Desktop (Windows)';
+  else if (/Linux/i.test(user_agent)) device_type = 'Desktop (Linux)';
 
-  return { ipAddress, userAgent, deviceType };
+  return { ip_address, user_agent, device_type };
 };
 
 // ================= RE-EXPORT MODULAR DATABASE SERVICES =================

@@ -11,7 +11,7 @@ export const EVENT_INFO = {
   targetAudience: "Mahasiswa Baru & Civitas Akademika Polibatam",
   venue: "Student Centre Lantai 3, Politeknik Negeri Batam",
   venueSpecs: "Sirkulasi Udara Terbuka, Pencahayaan Alami & Spot Art Gallery",
-  date: "2026-09-12",
+  date: "2026-09-13",
   timeRange: "10:00 - 17:00 WIB",
   paletteTheme: "Retro (Pop Colors & Geometric Accents)",
   heroBadge: "PROKER RESMI DIVISI SENI RUPA",

@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { 
   Sparkles, 
-  ArrowLeft, 
   Palette, 
   Calendar, 
   Rocket, 
@@ -50,7 +49,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
       id: 'proker-1',
       title: 'Open Recruitment Anggota 2027',
       tag: 'Segera Hadir',
-      date: 'Oktober 2026',
+      date: '',
       color: 'bg-[#FFE600]',
       desc: 'Pendaftaran terbuka untuk mahasiswa baru & civitas Polibatam yang memiliki minat dalam seni lukis, digital art, sketsa, dan kriya 3D.',
       icon: Palette
@@ -59,7 +58,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
       id: 'proker-2',
       title: 'Workshop Mural & Live Illustration',
       tag: 'Edisi Khusus',
-      date: 'November 2026',
+      date: '',
       color: 'bg-[#00F0FF]',
       desc: 'Sesi belajar langsung bersama seniman mural Batam untuk mengeksplorasi teknik kuas, spray paint, dan komposisi warna kontemporer.',
       icon: Brush
@@ -68,7 +67,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
       id: 'proker-3',
       title: 'Art Showcase Merch Drop Vol. 2',
       tag: 'Official Drop',
-      date: 'Desember 2026',
+      date: '',
       color: 'bg-[#FF3388]',
       textColor: 'text-white',
       desc: 'Koleksi merchandise eksklusif: T-Shirt sablon retro, gantungan kunci resin daur ulang, tote bag kanvas, dan vinyl sticker pack.',
@@ -78,7 +77,7 @@ export default function ComingSoonPage({ onNavigateHome }) {
       id: 'proker-4',
       title: 'Pameran Akhir Tahun & Art Awarding',
       tag: 'Main Event',
-      date: 'Januari 2027',
+      date: '',
       color: 'bg-[#CCFF00]',
       desc: 'Eksibisi akbar tahunan penutup kepengurusan dengan panggung pertunjukan seni kolaboratif & apresiasi karya mahasiswa terfavorit.',
       icon: Star
@@ -97,19 +96,6 @@ export default function ComingSoonPage({ onNavigateHome }) {
 
         {/* Big Header Banner */}
         <div className="space-y-3 sm:space-y-4">
-          
-          {/* Animated Badge & Logo */}
-          <div className="coming-soon-badge inline-flex items-center gap-2 sm:gap-3 bg-[#FFE600] border-2 sm:border-3 border-black px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-retro-xs sm:shadow-retro max-w-full">
-            <img src={senrupLogo} alt="Logo Seni Rupa" className="w-7 h-7 sm:w-10 sm:h-10 object-contain drop-shadow shrink-0" />
-            <div className="text-left min-w-0">
-              <span className="text-[8.5px] sm:text-[10px] font-black tracking-wider text-black/70 block uppercase truncate">
-                DIVISI SENI RUPA POLIBATAM
-              </span>
-              <span className="font-display font-black text-xs sm:text-sm text-black truncate block">
-                AGENDA PROGRAM KERJA RESMI
-              </span>
-            </div>
-          </div>
 
           <div className="coming-soon-title space-y-2 sm:space-y-3">
             <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-black tracking-tight leading-tight">

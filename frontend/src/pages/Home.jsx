@@ -180,7 +180,6 @@ export default function Home({
                   <span className="bg-[#FF3388] text-white text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 rounded-full border border-black uppercase flex items-center gap-1.5 animate-pulse">
                     <Radio className="w-3 h-3 text-white" /> SEDANG BERLANGSUNG (LIVE)
                   </span>
-                  <span className="font-mono text-[11px] sm:text-xs font-bold text-black">{currentLiveSession.time} WIB</span>
                 </div>
                 <h3 className="font-display font-black text-lg sm:text-2xl text-black truncate">
                   {currentLiveSession.title}
