@@ -585,105 +585,15 @@ export const RUNDOWN_SCHEDULE = [
   }
 ];
 
-export const INITIAL_ATTENDANCES = [
-  {
-    id: "att-1",
-    nama_lengkap: "Fajar Nugraha",
-    identifier: "3312401032",
-    kategori: "Mahasiswa Baru",
-    jurusan_prodi: "D4 Teknik Informatika",
-    ip_address: "180.254.68.12",
-    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0",
-    device_type: "Desktop (Windows)",
-    waktu_kehadiran: "2024-10-28 09:12:45",
-    catatan: "Sangat kagum dengan karya lukis retro di Zona A!"
-  },
-  {
-    id: "att-2",
-    nama_lengkap: "Nadia Putri Lestari",
-    identifier: "3312401089",
-    kategori: "Mahasiswa Baru",
-    jurusan_prodi: "D4 Animasi & Desain Grafis",
-    ip_address: "114.122.34.90",
-    user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Safari/605.1",
-    device_type: "Mobile (iPhone)",
-    waktu_kehadiran: "2024-10-28 09:18:22",
-    catatan: "Tertarik ikut live painting dan join divisi seni rupa."
-  },
-  {
-    id: "att-3",
-    nama_lengkap: "Bayu Pratama",
-    identifier: "3312201011",
-    kategori: "Mahasiswa Polibatam",
-    jurusan_prodi: "D3 Teknik Mesin",
-    ip_address: "182.1.240.55",
-    user_agent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) Mobile Chrome/127.0",
-    device_type: "Mobile (Android)",
-    waktu_kehadiran: "2024-10-28 09:25:04",
-    catatan: "Keren sekali kriya resin tiga dimensinya."
-  },
-  {
-    id: "att-4",
-    nama_lengkap: "Dr. Ir. Hendra Prasetyo, M.T.",
-    identifier: "198204152008121002",
-    kategori: "Dosen/Staff",
-    jurusan_prodi: "Teknik Informatika Polibatam",
-    ip_address: "103.111.201.5",
-    user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/128.0",
-    device_type: "Desktop (macOS)",
-    waktu_kehadiran: "2024-10-28 09:40:11",
-    catatan: "Apresiasi tinggi untuk kreativitas mahasiswa divisi seni rupa!"
-  },
-  {
-    id: "att-5",
-    nama_lengkap: "Riska Septiani",
-    identifier: "3312301055",
-    kategori: "Mahasiswa Polibatam",
-    jurusan_prodi: "D4 Rekayasa Keamanan Siber",
-    ip_address: "180.254.70.88",
-    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/129.0",
-    device_type: "Desktop (Windows)",
-    waktu_kehadiran: "2024-10-28 10:05:30",
-    catatan: "Konsep website dan pamerannya sangat futuristik tapi retro!"
-  }
-];
+export const INITIAL_ATTENDANCES = [];
 
-export const INITIAL_GUESTBOOKS = [
-  {
-    id: "gb-1",
-    name: "Alifia Zahra",
-    role: "Mahasiswa Baru (IF)",
-    message: "Pamerannya seru banget! Warna-warni retromya bikin betah keliling Student Centre Lt. 3. Sukses terus Divisi Seni Rupa!",
-    sticker: "retro-star",
-    color: "bg-[#FFE600]",
-    createdAt: "10:15 WIB"
-  },
-  {
-    id: "gb-2",
-    name: "Dimas Anggara",
-    role: "Mahasiswa Polibatam (EL)",
-    message: "Karya totem resin kayu daur ulang sangat berkesan. Makna filosofinya dalem banget. Ditunggu open recruitmentnya!",
-    sticker: "retro-heart",
-    color: "bg-[#FF3388]",
-    textColor: "text-white",
-    createdAt: "10:24 WIB"
-  },
-  {
-    id: "gb-3",
-    name: "Clara Salsabila",
-    role: "Pengunjung Umum",
-    message: "Live paintingnya keren parah! Sempat nyoba corat-coret di pojok buku sketsa bersama. Seru pol!",
-    sticker: "retro-brush",
-    color: "bg-[#00F0FF]",
-    createdAt: "10:48 WIB"
-  }
-];
+export const INITIAL_GUESTBOOKS = [];
 
 // ================= AKUN MASTER: ADMIN & PANITIA =================
 export const INITIAL_PANITIA_ACCOUNTS = [
   {
-    id: "user-admin-1",
-    username: "admin_senrup",
+    id: "a1000000-0000-4000-8000-000000000001",
+    username: "admin_senrupaaja",
     password: "admin123",
     nama: "Muhammad Rangga",
     role: "admin", // 'admin' | 'panitia'
@@ -692,54 +602,6 @@ export const INITIAL_PANITIA_ACCOUNTS = [
     kontak: "0812-3456-7890",
     status: "active",
     avatarBg: "bg-[#FF3388]"
-  },
-  {
-    id: "user-panitia-1",
-    username: "panitia_registrasi",
-    password: "panitia123",
-    nama: "Samuel Siregar",
-    role: "panitia",
-    divisi: "Divisi Registrasi & Presensi",
-    assignedBooth: "Pintu Masuk (Lobby Lt. 3)",
-    kontak: "0813-8899-1122",
-    status: "active",
-    avatarBg: "bg-[#FFE600]"
-  },
-  {
-    id: "user-panitia-2",
-    username: "panitia_acara",
-    password: "panitia123",
-    nama: "Aiko Valerie",
-    role: "panitia",
-    divisi: "Divisi Acara & Rundown",
-    assignedBooth: "Zona D - Panggung Utama",
-    kontak: "0821-4455-6677",
-    status: "active",
-    avatarBg: "bg-[#00F0FF]"
-  },
-  {
-    id: "user-panitia-3",
-    username: "panitia_galeri",
-    password: "panitia123",
-    nama: "Ibra Pratama",
-    role: "panitia",
-    divisi: "Divisi Perlengkapan & Display",
-    assignedBooth: "Zona A & Zona B (Galeri)",
-    kontak: "0856-7788-9900",
-    status: "active",
-    avatarBg: "bg-[#7B2CBF]"
-  },
-  {
-    id: "user-panitia-4",
-    username: "panitia_souvenir",
-    password: "panitia123",
-    nama: "Yurila Ananda",
-    role: "panitia",
-    divisi: "Divisi Suvenir & Photobooth",
-    assignedBooth: "Zona E - Photobooth Retro",
-    kontak: "0877-1122-3344",
-    status: "active",
-    avatarBg: "bg-[#22C55E]"
   }
 ];
 

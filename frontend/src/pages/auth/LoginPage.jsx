@@ -92,7 +92,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateHome }) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: admin_senrup / panitia_registrasi"
+                  placeholder="Masukkan username admin / panitia..."
                   required
                   className="input-retro pl-10 text-sm bg-[#FAF7EE]"
                 />

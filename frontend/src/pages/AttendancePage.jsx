@@ -284,19 +284,10 @@ export default function AttendancePage({
   };
 
   const prodiOptions = [
-    'D4 Teknik Informatika',
-    'D4 Rekayasa Keamanan Siber',
-    'D4 Animasi & Desain Grafis',
-    'D4 Rekayasa Perangkat Lunak',
-    'D3 Teknik Informatika',
-    'D3 Teknik Geomatika',
-    'D4 Teknik Mekatronika',
-    'D3 Teknik Mesin',
-    'D4 Administrasi Bisnis Terapan',
-    'D4 Akuntansi Manajerial',
-    'D4 Manajemen Bisnis Internasional',
-    'Dosen / Tenaga Kependidikan',
-    'Umum / Luar Kampus'
+    'INFORMATIKA',
+    'MANAJEMEN BISNIS',
+    'ELEKTRONIKA',
+    'MESIN'
   ];
 
   return (

@@ -17,7 +17,9 @@ import {
   ChevronRight,
   Compass,
   EyeOff,
-  MoveHorizontal
+  MoveHorizontal,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 
 /**
@@ -449,6 +451,8 @@ export default function CataloguePage({
   const [onlySecret, setOnlySecret] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular'); // 'popular' | 'newest' | 'title'
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const filterBarRef = useRef(null);
 
   // Ekstrak daftar pencipta unik dan hitung karya dirahasiakan
   const { artistList, secretCount, totalCount } = useMemo(() => {
@@ -567,6 +571,35 @@ export default function CataloguePage({
     return map;
   }, [globallyFilteredArtworks]);
   
+  // Tutup dropdown ketika klik di luar area filter
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const creatorOptions = [
+    { value: 'Semua', label: `Semua Pencipta`, count: totalCount },
+    ...(secretCount > 0
+      ? [{ value: '__anonymous__', label: 'Pencipta Dirahasiakan', count: secretCount, secret: true }]
+      : []),
+    ...artistList.map(({ name, count }) => ({ value: name, label: name, count }))
+  ];
+
+  const sortOptions = [
+    { value: 'popular', label: 'Paling Disukai', description: 'Terpopuler' },
+    { value: 'newest', label: 'Tahun Rilis', description: 'Terbaru' },
+    { value: 'title', label: 'Judul Karya', description: 'A - Z' }
+  ];
+
+  const selectedCreator = creatorOptions.find(option => option.value === selectedArtist) || creatorOptions[0];
+  const selectedSort = sortOptions.find(option => option.value === sortBy) || sortOptions[0];
+
   // Initial Entrance Animation
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -611,7 +644,7 @@ export default function CataloguePage({
       </div>
 
       {/* ================= 2. FILTER & SEARCH CONTROLS BAR ================= */}
-      <div className="cat-filter-bar bg-white border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-retro-sm sm:shadow-retro space-y-3 sm:space-y-4">
+      <div ref={filterBarRef} className="cat-filter-bar relative z-10 overflow-visible bg-white border-2 sm:border-3 border-black rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-retro-sm sm:shadow-retro space-y-3 sm:space-y-4">
         
         {/* Top: Category Quick Jump & Secret Filter Toggle */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-neutral-100">
@@ -641,57 +674,120 @@ export default function CataloguePage({
             )}
           </div>
 
-          {/* 2. Dropdown Filter Pencipta (4 cols on md) */}
+          {/* 2. Custom Dropdown Filter Pencipta */}
           <div className="md:col-span-4 relative">
-            <div className="flex items-center gap-2 bg-[#FAF7EE] border-2 border-black rounded-xl px-3 py-1 focus-within:ring-2 focus-within:ring-[#00F0FF]">
-              <User className="w-4 h-4 text-[#00F0FF] shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="block text-[10px] font-bold text-neutral-500 uppercase leading-none pt-1">
-                  Filter Pencipta:
+            <div className={`relative transition-all duration-200 ${openDropdown === 'creator' ? 'z-50' : 'z-20'}`}>
+              <button
+                type="button"
+                onClick={() => setOpenDropdown(openDropdown === 'creator' ? null : 'creator')}
+                className={`w-full flex items-center gap-2 bg-[#FAF7EE] border-2 border-black rounded-xl px-3 py-2 text-left transition-all duration-200 ${openDropdown === 'creator' ? 'ring-2 ring-[#00F0FF] shadow-[4px_4px_0_#00F0FF]' : 'hover:-translate-y-0.5 hover:shadow-retro-sm'}`}
+                aria-expanded={openDropdown === 'creator'}
+              >
+                <User className="w-4 h-4 text-[#00F0FF] shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[10px] font-black text-neutral-500 uppercase leading-none mb-1">
+                    Filter Pencipta
+                  </span>
+                  <span className={`block text-xs sm:text-sm font-black truncate ${selectedCreator.secret ? 'text-[#7B2CBF]' : 'text-black'}`}>
+                    {selectedCreator.label} ({selectedCreator.count})
+                  </span>
                 </span>
-                <select
-                  value={selectedArtist}
-                  onChange={(e) => handleArtistChange(e.target.value)}
-                  className="w-full bg-transparent text-xs sm:text-sm font-bold text-black focus:outline-none truncate py-1 cursor-pointer"
-                >
-                  <option value="Semua">Semua Pencipta ({totalCount})</option>
-                  
-                  {secretCount > 0 && (
-                    <option value="__anonymous__" className="font-bold text-purple-700 bg-purple-50">
-                      Pencipta Dirahasiakan ({secretCount} Karya)
-                    </option>
-                  )}
+                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${openDropdown === 'creator' ? 'rotate-180 text-[#FF3388]' : 'text-neutral-600'}`} />
+              </button>
 
-                  <optgroup label="Seniman & Anggota Terdaftar">
-                    {artistList.map(({ name, count }) => (
-                      <option key={name} value={name}>
-                        {name} ({count})
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
+              {openDropdown === 'creator' && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-black rounded-xl shadow-[5px_5px_0_#000] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-3 py-2 bg-black text-white text-[10px] font-black uppercase tracking-wider">
+                    Pilih Pencipta
+                  </div>
+                  <div className="max-h-64 overflow-y-auto p-1.5">
+                    {creatorOptions.map((option) => {
+                      const active = selectedArtist === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            handleArtistChange(option.value);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all ${active ? 'bg-[#FFE600] text-black font-black' : 'hover:bg-[#FAF7EE] text-neutral-800'} ${option.secret ? 'text-[#7B2CBF]' : ''}`}
+                        >
+                          <span className={`w-5 h-5 rounded-md border-2 border-black flex items-center justify-center shrink-0 ${active ? 'bg-black text-[#FFE600]' : 'bg-white'}`}>
+                            {active && <Check className="w-3 h-3" strokeWidth={4} />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-xs sm:text-sm truncate">{option.label}</span>
+                            {option.secret ? (
+                              <span className="block text-[10px] font-bold opacity-70">Karya anonim</span>
+                            ) : option.value !== 'Semua' ? (
+                              <span className="block text-[10px] font-bold text-neutral-500">Seniman & anggota terdaftar</span>
+                            ) : null}
+                          </span>
+                          <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md border border-black ${active ? 'bg-white' : 'bg-neutral-100'}`}>
+                            {option.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* 3. Sort Selector (3 cols on md) */}
-          <div className="md:col-span-3 flex items-center gap-2 justify-end">
-            <div className="flex items-center gap-2 bg-[#FAF7EE] border-2 border-black rounded-xl px-3 py-1 w-full focus-within:ring-2 focus-within:ring-[#00F0FF]">
-              <SlidersHorizontal className="w-4 h-4 text-neutral-600 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="block text-[10px] font-bold text-neutral-500 uppercase leading-none pt-1">
-                  Urutkan:
+          {/* 3. Custom Dropdown Sort */}
+          <div className="md:col-span-3 relative">
+            <div className={`relative transition-all duration-200 ${openDropdown === 'sort' ? 'z-50' : 'z-10'}`}>
+              <button
+                type="button"
+                onClick={() => setOpenDropdown(openDropdown === 'sort' ? null : 'sort')}
+                className={`w-full flex items-center gap-2 bg-[#FAF7EE] border-2 border-black rounded-xl px-3 py-2 text-left transition-all duration-200 ${openDropdown === 'sort' ? 'ring-2 ring-[#00F0FF] shadow-[4px_4px_0_#00F0FF]' : 'hover:-translate-y-0.5 hover:shadow-retro-sm'}`}
+                aria-expanded={openDropdown === 'sort'}
+              >
+                <SlidersHorizontal className="w-4 h-4 text-neutral-600 shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[10px] font-black text-neutral-500 uppercase leading-none mb-1">
+                    Urutkan
+                  </span>
+                  <span className="block text-xs sm:text-sm font-black text-black truncate">
+                    {selectedSort.label} <span className="text-neutral-500">({selectedSort.description})</span>
+                  </span>
                 </span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full bg-transparent text-xs sm:text-sm font-bold text-black focus:outline-none truncate py-1 cursor-pointer"
-                >
-                  <option value="popular">Paling Disukai (Terpopuler)</option>
-                  <option value="newest">Tahun Rilis Terbaru</option>
-                  <option value="title">Judul Karya (A - Z)</option>
-                </select>
-              </div>
+                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${openDropdown === 'sort' ? 'rotate-180 text-[#FF3388]' : 'text-neutral-600'}`} />
+              </button>
+
+              {openDropdown === 'sort' && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-black rounded-xl shadow-[5px_5px_0_#000] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-3 py-2 bg-black text-white text-[10px] font-black uppercase tracking-wider">
+                    Urutan Karya
+                  </div>
+                  <div className="p-1.5">
+                    {sortOptions.map((option) => {
+                      const active = sortBy === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            setSortBy(option.value);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all ${active ? 'bg-[#00F0FF] text-black font-black' : 'hover:bg-[#FAF7EE] text-neutral-800'}`}
+                        >
+                          <span className={`w-5 h-5 rounded-md border-2 border-black flex items-center justify-center shrink-0 ${active ? 'bg-black text-[#00F0FF]' : 'bg-white'}`}>
+                            {active && <Check className="w-3 h-3" strokeWidth={4} />}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-xs sm:text-sm truncate">{option.label}</span>
+                            <span className="block text-[10px] font-bold text-neutral-500">{option.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -751,7 +847,7 @@ export default function CataloguePage({
       </div>
 
       {/* ================= 3. THREE DIRECT CATEGORY SECTIONS (HORIZONTAL CAROUSELS) ================= */}
-      <div className="space-y-10 sm:space-y-14">
+      <div className="relative z-0 space-y-10 sm:space-y-14">
         {CATEGORY_SECTIONS.map((section) => {
           const sectionArtworks = categorizedArtworks[section.id] || [];
 

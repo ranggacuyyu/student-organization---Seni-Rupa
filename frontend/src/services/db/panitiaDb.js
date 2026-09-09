@@ -78,13 +78,31 @@ export const PanitiaDb = {
 
   async verifyTicketRemote(query) {
     if (!query) return null;
-    const cleanQ = String(query).trim();
+    let cleanQ = String(query).trim();
 
-    // 1. Coba verifikasi dari cache lokal terlebih dahulu
+    // 1. Ekstraksi jika query berupa JSON payload dari QR Code
+    if (cleanQ.startsWith('{') && cleanQ.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(cleanQ);
+        if (parsed.id) cleanQ = String(parsed.id).trim();
+        else if (parsed.identifier) cleanQ = String(parsed.identifier).trim();
+        else if (parsed.nim) cleanQ = String(parsed.nim).trim();
+      } catch {
+        // Abaikan parsing error, gunakan raw
+      }
+    }
+
+    // 2. Ekstraksi jika query memiliki format ART-PASS:id:...
+    if (cleanQ.toLowerCase().startsWith('art-pass:')) {
+      const parts = cleanQ.split(':');
+      if (parts[1]) cleanQ = parts[1].trim();
+    }
+
+    // 3. Coba verifikasi dari cache lokal terlebih dahulu
     const localMatch = this.verifyTicket(cleanQ);
     if (localMatch) return localMatch;
 
-    // 2. Coba verifikasi dengan Laravel REST API
+    // 4. Coba verifikasi dengan Laravel REST API
     try {
       const res = await axios.get(`${API_BASE_URL}/attendance/verify?q=${encodeURIComponent(cleanQ)}`, { timeout: 3000 });
       if (res.data && res.data.success && res.data.ticket) {
@@ -94,15 +112,18 @@ export const PanitiaDb = {
       // lanjut ke Supabase
     }
 
-    // 3. Coba verifikasi langsung dari Cloud Supabase
+    // 5. Coba verifikasi langsung dari Cloud Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
-        const { data, error } = await supabase
-          .from('attendances')
-          .select('*')
-          .or(`id.eq.${cleanQ},identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`)
-          .limit(1)
-          .maybeSingle();
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanQ);
+        let queryBuilder = supabase.from('attendances').select('*');
+        if (isUUID) {
+          queryBuilder = queryBuilder.or(`id.eq.${cleanQ},identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`);
+        } else {
+          queryBuilder = queryBuilder.or(`identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`);
+        }
+
+        const { data, error } = await queryBuilder.limit(1).maybeSingle();
 
         if (!error && data) {
           const checkedInList = JSON.parse(localStorage.getItem(CHECKED_IN_KEY) || '[]');
@@ -116,8 +137,8 @@ export const PanitiaDb = {
             ip_address: data.ip_address,
             waktu_kehadiran: data.waktu_kehadiran,
             catatan: data.catatan,
-            isCheckedIn: data.is_checked_in || checkedInList.includes(data.id),
-            isSouvenirClaimed: data.is_souvenir_claimed || souvenirList.includes(data.id),
+            isCheckedIn: Boolean(data.is_checked_in || checkedInList.includes(data.id)),
+            isSouvenirClaimed: Boolean(data.is_souvenir_claimed || souvenirList.includes(data.id)),
           };
 
           // Sinkronkan ke local cache agar query berikutnya instan

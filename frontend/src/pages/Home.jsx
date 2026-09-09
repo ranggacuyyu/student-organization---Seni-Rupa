@@ -99,7 +99,7 @@ export default function Home({
               </div>
               <div className="hero-meta-badge flex items-center justify-center gap-2 bg-[#FAF7EE] border-2 border-black px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-retro-sm hover:-translate-y-1 transition-transform">
                 <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00F0FF] shrink-0" />
-                <span className="truncate">Sabtu, 12 September 2026 (10:00 - 17:00 WIB)</span>
+                <span className="truncate">Minggu, 13 September 2026 (10:00 - 17:00 WIB)</span>
               </div>
             </div>
 

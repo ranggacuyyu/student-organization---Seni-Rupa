@@ -38,26 +38,6 @@ const ART_FRAMES = [
     innerBounds: { x: 0.198, y: 0.198, width: 0.604, height: 0.604, radius: 10 }
   },
   {
-    id: 'classic-gold',
-    name: 'Museum Gold Gallery',
-    badge: 'LUXURY CLASSIC',
-    badgeColor: 'bg-[#FFB703] text-black',
-    desc: 'Bingkai ukir emas mewah bernuansa galeri museum seni rupa klasik.',
-    type: 'ai-image',
-    imageSrc: frameClassicGold,
-    innerBounds: { x: 0.288, y: 0.288, width: 0.424, height: 0.424, radius: 4 }
-  },
-  {
-    id: 'cyber-neon',
-    name: 'Cyberpunk Neon Art',
-    badge: 'SYNTHWAVE GLOW',
-    badgeColor: 'bg-[#00F0FF] text-black',
-    desc: 'Sentuhan masa depan dengan garis neon menyala dan lorong pameran digital.',
-    type: 'ai-image',
-    imageSrc: frameCyberNeon,
-    innerBounds: { x: 0.252, y: 0.252, width: 0.496, height: 0.496, radius: 14 }
-  },
-  {
     id: 'polaroid-art',
     name: 'Aesthetic Polaroid & Tape',
     badge: 'WARM RETRO',
@@ -733,19 +713,11 @@ export default function ArtPhotobooth({ currentUser, myTicket, onNavigate }) {
         {/* Header Photobooth */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b-3 border-black">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#FF6B35] text-white text-xs font-black px-3 py-1 border-2 border-black rounded-lg shadow-retro-sm uppercase tracking-wider flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5" /> Zona E: Art Photobooth
-              </span>
-              <span className="bg-[#CCFF00] text-black text-xs font-bold px-2.5 py-1 border-2 border-black rounded-lg shadow-retro-sm">
-                AI Powered Frames
-              </span>
-            </div>
             <h2 className="font-display font-black text-2xl sm:text-4xl text-black">
               Kamera & Bingkai Tematik Seni Rupa
             </h2>
             <p className="text-neutral-600 text-xs sm:text-sm max-w-xl font-medium">
-              Abadikan momen spesialmu di Pameran Seni Rupa Polibatam 2026. Pilih bingkai estetik AI, pasang filter warna, dan unduh kartu kenanganmu!
+              Abadikan momen spesialmu di Pameran Seni Rupa Polibatam 2026. Pilih bingkai estetik, pasang filter warna, dan unduh kartu kenanganmu!
             </p>
           </div>
 

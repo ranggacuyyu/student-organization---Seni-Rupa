@@ -36,77 +36,71 @@ export const AttendanceDb = {
    * @param {Object} data - { nama_lengkap, identifier, kategori, jurusan_prodi, ip_address, user_agent, device_type, catatan }
    */
   async recordAttendance(data) {
-    // 1. Simpan ke Laravel REST API jika server berjalan
-    try {
-      const res = await axios.post(`${API_BASE_URL}/attendance`, data, { timeout: 4000 });
-      if (res.data && res.data.success && res.data.ticket) {
-        const ticket = res.data.ticket;
-        const currentList = getLocalAttendances();
-        const updatedList = [ticket, ...currentList.filter(item => item.id !== ticket.id)];
-        saveLocalAttendances(updatedList);
-        localStorage.setItem(MY_TICKET_KEY, JSON.stringify(ticket));
-        return {
-          success: true,
-          ticket: ticket,
-          data: ticket,
-          totalCount: res.data.totalCount || updatedList.length,
-        };
-      }
-    } catch (apiErr) {
-      console.warn('Laravel API attendance failed, checking cloud/local fallback:', apiErr.message);
-    }
+    let ticket = null;
 
-    const newEntry = {
-      id: 'att-' + Date.now(),
-      nama_lengkap: data.nama_lengkap.trim(),
-      identifier: data.identifier ? data.identifier.trim() : '-',
-      kategori: data.kategori || 'Mahasiswa Baru',
-      jurusan_prodi: data.jurusan_prodi || 'Politeknik Negeri Batam',
-      ip_address: data.ip_address || '180.254.88.99',
-      user_agent: data.user_agent || navigator.userAgent,
-      device_type: data.device_type || 'Desktop',
-      waktu_kehadiran: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      catatan: data.catatan || '',
-    };
-
-    // 2. Simpan ke Supabase jika terhubung
+    // 1. Simpan ke Supabase jika terhubung (Cloud First)
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data: inserted, error } = await supabase
           .from('attendances')
           .insert([
             {
-              nama_lengkap: newEntry.nama_lengkap,
-              identifier: newEntry.identifier,
-              kategori: newEntry.kategori,
-              jurusan_prodi: newEntry.jurusan_prodi,
-              ip_address: newEntry.ip_address,
-              user_agent: newEntry.user_agent,
-              device_type: newEntry.device_type,
-              catatan: newEntry.catatan,
+              nama_lengkap: data.nama_lengkap.trim(),
+              identifier: data.identifier ? data.identifier.trim() : '-',
+              kategori: data.kategori || 'Mahasiswa Baru',
+              jurusan_prodi: data.jurusan_prodi || 'Politeknik Negeri Batam',
+              ip_address: data.ip_address || '180.254.88.99',
+              user_agent: data.user_agent || navigator.userAgent,
+              device_type: data.device_type || 'Desktop',
+              catatan: data.catatan || '',
             },
           ])
           .select()
           .single();
 
         if (!error && inserted) {
-          newEntry.id = inserted.id;
+          ticket = inserted;
         }
       } catch (err) {
-        console.warn('Supabase insert failed, using local cache:', err);
+        console.warn('Supabase insert failed, checking Laravel/local:', err);
       }
     }
 
-    // 3. Simpan ke Local Storage Cache & Ticket Saya
+    // 2. Simpan juga ke Laravel REST API jika server berjalan
+    try {
+      const res = await axios.post(`${API_BASE_URL}/attendance`, data, { timeout: 3000 });
+      if (res.data && res.data.success && res.data.ticket) {
+        if (!ticket) ticket = res.data.ticket;
+      }
+    } catch (apiErr) {
+      // Laravel server offline atau fallback
+    }
+
+    // 3. Fallback jika offline / keduanya gagal
+    if (!ticket) {
+      ticket = {
+        id: 'att-' + Date.now(),
+        nama_lengkap: data.nama_lengkap.trim(),
+        identifier: data.identifier ? data.identifier.trim() : '-',
+        kategori: data.kategori || 'Mahasiswa Baru',
+        jurusan_prodi: data.jurusan_prodi || 'Politeknik Negeri Batam',
+        ip_address: data.ip_address || '180.254.88.99',
+        user_agent: data.user_agent || navigator.userAgent,
+        device_type: data.device_type || 'Desktop',
+        waktu_kehadiran: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        catatan: data.catatan || '',
+      };
+    }
+
     const currentList = getLocalAttendances();
-    const updatedList = [newEntry, ...currentList];
+    const updatedList = [ticket, ...currentList.filter(item => item.id !== ticket.id)];
     saveLocalAttendances(updatedList);
-    localStorage.setItem(MY_TICKET_KEY, JSON.stringify(newEntry));
+    localStorage.setItem(MY_TICKET_KEY, JSON.stringify(ticket));
 
     return {
       success: true,
-      ticket: newEntry,
-      data: newEntry,
+      ticket: ticket,
+      data: ticket,
       totalCount: updatedList.length,
     };
   },
