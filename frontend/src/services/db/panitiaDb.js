@@ -115,13 +115,8 @@ export const PanitiaDb = {
     // 5. Coba verifikasi langsung dari Cloud Supabase
     if (isSupabaseConfigured() && supabase) {
       try {
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanQ);
         let queryBuilder = supabase.from('attendances').select('*');
-        if (isUUID) {
-          queryBuilder = queryBuilder.or(`id.eq.${cleanQ},identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`);
-        } else {
-          queryBuilder = queryBuilder.or(`identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`);
-        }
+        queryBuilder = queryBuilder.or(`id.eq.${cleanQ},identifier.eq.${cleanQ},nama_lengkap.ilike.%${cleanQ}%`);
 
         const { data, error } = await queryBuilder.limit(1).maybeSingle();
 
